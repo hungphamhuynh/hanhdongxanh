@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/user_role.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../services/admin_user_service.dart';
 
@@ -71,7 +72,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       child: _buildStatCard(
                         title: 'Tổng số',
                         count: '$totalCount',
-                        color: Colors.indigo,
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -79,7 +80,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       child: _buildStatCard(
                         title: 'Hoạt động',
                         count: '$activeCount',
-                        color: Colors.green.shade700,
+                        color: AppColors.success,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -87,7 +88,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       child: _buildStatCard(
                         title: 'Đã khóa',
                         count: '$lockedCount',
-                        color: Colors.red.shade700,
+                        color: AppColors.error,
                       ),
                     ),
                   ],
@@ -218,7 +219,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.indigo.shade50,
+                                    color: AppColors.primaryMint,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
@@ -226,7 +227,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.indigo,
+                                      color: AppColors.primaryDark,
                                     ),
                                   ),
                                 ),
@@ -238,9 +239,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                               const SizedBox(height: 4),
                               Text(
                                 email,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 13,
-                                  color: Colors.grey.shade700,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 6),
@@ -255,7 +256,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    backgroundColor: _getRoleColor(role),
+                                    backgroundColor: role.color,
                                     side: BorderSide.none,
                                     padding: EdgeInsets.zero,
                                   ),
@@ -267,7 +268,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                                         'Lớp $assignedClass',
                                         style: const TextStyle(fontSize: 11),
                                       ),
-                                      backgroundColor: Colors.grey.shade200,
+                                      backgroundColor: AppColors.primaryMint,
                                       side: BorderSide.none,
                                       padding: EdgeInsets.zero,
                                     ),
@@ -278,13 +279,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                                         horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
                                       color: isActive
-                                          ? Colors.green.shade50
-                                          : Colors.red.shade50,
+                                          ? AppColors.successLight
+                                          : AppColors.errorLight,
                                       borderRadius: BorderRadius.circular(6),
                                       border: Border.all(
                                         color: isActive
-                                            ? Colors.green.shade300
-                                            : Colors.red.shade300,
+                                            ? AppColors.success.withValues(alpha: 0.3)
+                                            : AppColors.error.withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Text(
@@ -293,8 +294,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                         color: isActive
-                                            ? Colors.green.shade800
-                                            : Colors.red.shade800,
+                                            ? AppColors.success
+                                            : AppColors.error,
                                       ),
                                     ),
                                   ),
@@ -446,17 +447,6 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         ],
       ),
     );
-  }
-
-  Color _getRoleColor(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Colors.indigo;
-      case UserRole.leadTeacher:
-        return Colors.orange.shade800;
-      case UserRole.teacher:
-        return Colors.green.shade700;
-    }
   }
 
   void _showEditUserDialog({

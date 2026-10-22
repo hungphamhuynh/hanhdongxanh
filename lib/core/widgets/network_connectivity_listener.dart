@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../network/network_service.dart';
+import '../theme/app_colors.dart';
 
 class NetworkConnectivityListener extends StatefulWidget {
   final Widget child;
@@ -68,7 +69,7 @@ class _NetworkConnectivityListenerState
           firstChild: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            color: Colors.red.shade700,
+            color: AppColors.error,
             child: const SafeArea(
               bottom: false,
               child: Row(
@@ -93,7 +94,7 @@ class _NetworkConnectivityListenerState
                   width: double.infinity,
                   padding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  color: Colors.green.shade700,
+                  color: AppColors.primary,
                   child: const SafeArea(
                     bottom: false,
                     child: Row(

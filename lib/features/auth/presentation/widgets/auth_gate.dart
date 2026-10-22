@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/user_role.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../../lead_teacher/presentation/screens/lead_teacher_dashboard_screen.dart';
 import '../../../teacher/presentation/screens/teacher_dashboard_screen.dart';
@@ -73,14 +74,14 @@ class AuthGate extends StatelessWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
+                            decoration: const BoxDecoration(
+                              color: AppColors.errorLight,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.lock_person_rounded,
                               size: 72,
-                              color: Colors.red.shade700,
+                              color: AppColors.error,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -90,15 +91,15 @@ class AuthGate extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red,
+                              color: AppColors.error,
                             ),
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'Tài khoản (${user.email}) hiện đang bị tạm khóa bởi Ban Quản Trị hệ thống. Vui lòng liên hệ Quản trị viên để được hỗ trợ mở khóa.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
                               height: 1.5,
                             ),
                           ),
@@ -108,8 +109,8 @@ class AuthGate extends StatelessWidget {
                             icon: const Icon(Icons.logout),
                             label: const Text('Đăng Xuất'),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: BorderSide(color: Colors.red.shade300),
+                              foregroundColor: AppColors.error,
+                              side: const BorderSide(color: AppColors.error),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 24, vertical: 12),
                             ),

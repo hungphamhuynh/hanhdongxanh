@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/user_role.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
@@ -25,7 +26,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_currentTabIndex == 0 ? 'Admin Overview' : 'Quản Lý Tài Khoản'),
-        backgroundColor: Colors.indigo.shade50,
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -65,7 +65,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onPressed: () => _showAddUserDialog(context),
               icon: const Icon(Icons.person_add_rounded),
               label: const Text('Thêm Tài Khoản'),
-              backgroundColor: Colors.indigo.shade700,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             )
           : null,
@@ -96,15 +96,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.indigo.shade800, Colors.blue.shade700],
+              gradient: const LinearGradient(
+                colors: [AppColors.primaryDark, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.indigo.shade900.withValues(alpha: 0.2),
+                  color: AppColors.primaryDark.withValues(alpha: 0.25),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -113,14 +113,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'BẢNG ĐIỀU HÀNH TRUNG TÂM',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    letterSpacing: 1.2,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                const Row(
+                  children: [
+                    Icon(Icons.eco_rounded, color: AppColors.primaryContainer, size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      'BẢNG ĐIỀU HÀNH TRUNG TÂM',
+                      style: TextStyle(
+                        color: AppColors.primaryContainer,
+                        letterSpacing: 1.2,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -159,7 +165,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 title: 'Quản Lý Tài Khoản',
                 description: 'Cấp phát, chỉnh sửa, khóa và phân quyền người dùng',
                 badgeText: '$count tài khoản',
-                badgeColor: Colors.indigo,
+                badgeColor: AppColors.primary,
                 onTap: () {
                   setState(() => _currentTabIndex = 1); // Chuyển sang Tab 1
                 },
@@ -179,7 +185,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 title: 'Quản Lý Lớp Học',
                 description: 'Danh sách 36 lớp học, giáo viên phụ trách',
                 badgeText: '$classCount lớp học',
-                badgeColor: Colors.teal,
+                badgeColor: AppColors.secondary,
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Phân hệ Quản lý Lớp học đang sẵn sàng mở rộng!')),
@@ -196,7 +202,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             title: 'Cấu Hình Điểm Thưởng',
             description: 'Thiết lập danh mục hành động xanh và mức điểm thưởng',
             badgeText: 'Sắp tới',
-            badgeColor: Colors.orange.shade800,
+            badgeColor: AppColors.roleLeadTeacher,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Phân hệ Cấu hình Điểm thưởng sẽ triển khai tiếp theo!')),
@@ -356,7 +362,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                  backgroundColor: Colors.indigo.shade700),
+                  backgroundColor: AppColors.primary),
               onPressed: isLoading
                   ? null
                   : () async {

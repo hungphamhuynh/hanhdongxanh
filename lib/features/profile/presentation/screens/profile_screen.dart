@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/user_role.dart';
 import '../../../../core/network/network_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/services/auth_service.dart';
@@ -156,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('Hủy'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.green.shade700),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
               onPressed: isLoading
                   ? null
                   : () async {
@@ -346,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             width: double.infinity,
                             child: FilledButton(
                               style: FilledButton.styleFrom(
-                                backgroundColor: Colors.green.shade700,
+                                backgroundColor: AppColors.primary,
                               ),
                               onPressed: _isSavingInfo ? null : _updateProfileInfo,
                               child: _isSavingInfo
@@ -397,9 +398,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ListTile(
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue.shade50,
-                      child: const Icon(Icons.lock_outline, color: Colors.blue),
+                    leading: const CircleAvatar(
+                      backgroundColor: AppColors.primaryMint,
+                      child: Icon(Icons.lock_outline, color: AppColors.primary),
                     ),
                     title: const Text(
                       'Đổi Mật Khẩu',
@@ -421,15 +422,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ListTile(
                     contentPadding:
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.red.shade50,
-                      child: const Icon(Icons.logout, color: Colors.red),
+                    leading: const CircleAvatar(
+                      backgroundColor: AppColors.errorLight,
+                      child: Icon(Icons.logout, color: AppColors.error),
                     ),
                     title: const Text(
                       'Đăng Xuất',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                        color: AppColors.error,
                       ),
                     ),
                     subtitle: const Text('Thoát khỏi phiên đăng nhập hiện tại'),
@@ -446,7 +447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: const Text('Hủy'),
                             ),
                             FilledButton(
-                              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
                               onPressed: () => Navigator.pop(ctx, true),
                               child: const Text('Đăng xuất'),
                             ),
@@ -498,14 +499,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Color _getRoleColor(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Colors.indigo;
-      case UserRole.leadTeacher:
-        return Colors.orange.shade800;
-      case UserRole.teacher:
-        return Colors.green.shade700;
-    }
-  }
+  Color _getRoleColor(UserRole role) => role.color;
 }

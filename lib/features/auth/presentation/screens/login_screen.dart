@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/network_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../services/auth_service.dart';
@@ -100,14 +101,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     width: 80,
                     height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryMint,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.eco_rounded,
-                      size: 54,
-                      color: Colors.green.shade700,
+                      size: 50,
+                      color: AppColors.primary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -116,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.green.shade800,
+                      color: AppColors.primaryDark,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -124,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Hệ thống quản lý & tích điểm hành động bảo vệ môi trường',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 36),
@@ -133,13 +134,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Tài khoản Email',
                       hintText: 'vidu: 6a1@nth.com',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
@@ -167,9 +165,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           setState(() => _obscurePassword = !_obscurePassword);
                         },
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
                     validator: (val) {
                       if (val == null || val.isEmpty) {
@@ -184,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   FilledButton(
                     onPressed: _isLoading ? null : _submitLogin,
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -214,21 +209,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: AppColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.info_outline, size: 18, color: Colors.grey.shade700),
-                        const SizedBox(width: 8),
+                        Icon(Icons.eco_outlined, size: 18, color: AppColors.primary),
+                        SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Tài khoản do Quản trị viên cấp. Nếu chưa có tài khoản, vui lòng liên hệ Ban Quản Trị.',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade700,
+                              color: AppColors.textSecondary,
                               height: 1.4,
                             ),
                           ),

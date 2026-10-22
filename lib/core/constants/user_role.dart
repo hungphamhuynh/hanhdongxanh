@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+
 enum UserRole {
   admin,
   leadTeacher,
@@ -34,6 +37,28 @@ enum UserRole {
         return 'Lead Teacher';
       case UserRole.teacher:
         return 'Teacher';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case UserRole.admin:
+        return AppColors.roleAdmin;
+      case UserRole.leadTeacher:
+        return AppColors.roleLeadTeacher;
+      case UserRole.teacher:
+        return AppColors.roleTeacher;
+    }
+  }
+
+  Color get lightColor {
+    switch (this) {
+      case UserRole.admin:
+        return AppColors.roleAdminLight;
+      case UserRole.leadTeacher:
+        return AppColors.roleLeadTeacherLight;
+      case UserRole.teacher:
+        return AppColors.roleTeacherLight;
     }
   }
 }
