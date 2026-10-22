@@ -98,39 +98,18 @@ class PointRuleService {
 
     final defaultCategories = [
       {
-        'name': 'Pin cũ thu gom',
-        'unit': 'viên',
+        'name': 'Pin',
+        'unit': 'Số lượng',
         'pointsPerUnit': 5,
-        'description': 'Thu gom pin đã qua sử dụng ngăn rò rỉ kim loại nặng',
+        'description': 'Thu gom pin đã qua sử dụng (viên)',
         'iconName': 'battery',
       },
       {
-        'name': 'Chai nhựa tái chế',
-        'unit': 'chai',
+        'name': 'Vỏ chai',
+        'unit': 'Số lượng',
         'pointsPerUnit': 2,
-        'description': 'Chai nhựa nước khoáng, nước ngọt rửa sạch',
+        'description': 'Thu gom vỏ chai nhựa tái chế (chai)',
         'iconName': 'bottle',
-      },
-      {
-        'name': 'Vỏ lon nhôm',
-        'unit': 'lon',
-        'pointsPerUnit': 3,
-        'description': 'Vỏ lon nước giải khát, nước yến, sữa',
-        'iconName': 'can',
-      },
-      {
-        'name': 'Giấy vụn & Thùng carton',
-        'unit': 'kg',
-        'pointsPerUnit': 10,
-        'description': 'Giấy báo cũ, sách vở không còn sử dụng, thùng carton',
-        'iconName': 'paper',
-      },
-      {
-        'name': 'Trồng & Chăm sóc cây xanh',
-        'unit': 'cây',
-        'pointsPerUnit': 20,
-        'description': 'Trồng mới hoặc chăm sóc bồn hoa, cây cảnh sân trường',
-        'iconName': 'tree',
       },
     ];
 

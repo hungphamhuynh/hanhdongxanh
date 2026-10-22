@@ -709,21 +709,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _showAddPointRuleDialog(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final unitCtrl = TextEditingController(text: 'viên');
-    final pointsCtrl = TextEditingController(text: '5');
-    final descCtrl = TextEditingController();
-    String selectedIcon = 'battery';
+    String selectedCategory = 'Vỏ chai';
+    String selectedUnit = 'Số lượng';
+    final pointsCtrl = TextEditingController(text: '2');
+    final descCtrl =
+        TextEditingController(text: 'Thu gom vỏ chai nhựa tái chế');
     bool isLoading = false;
-
-    // Danh mục gợi ý nhanh
-    final suggestions = [
-      {'name': 'Pin cũ thu gom', 'unit': 'viên', 'points': 5, 'icon': 'battery', 'desc': 'Thu gom pin đã qua sử dụng'},
-      {'name': 'Chai nhựa tái chế', 'unit': 'chai', 'points': 2, 'icon': 'bottle', 'desc': 'Chai nhựa nước rửa sạch'},
-      {'name': 'Vỏ lon nhôm', 'unit': 'lon', 'points': 3, 'icon': 'can', 'desc': 'Vỏ lon nước giải khát'},
-      {'name': 'Giấy vụn & Carton', 'unit': 'kg', 'points': 10, 'icon': 'paper', 'desc': 'Sách báo cũ, thùng carton'},
-      {'name': 'Trồng cây xanh', 'unit': 'cây', 'points': 20, 'icon': 'tree', 'desc': 'Trồng và chăm sóc cây sân trường'},
-    ];
 
     showDialog(
       context: context,
@@ -741,77 +732,147 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Gợi ý chọn nhanh
                 const Text(
-                  'Gợi ý thể loại phổ biến:',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: suggestions.map((s) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: ActionChip(
-                          label: Text(s['name'] as String, style: const TextStyle(fontSize: 11)),
-                          onPressed: () {
-                            setDialogState(() {
-                              nameCtrl.text = s['name'] as String;
-                              unitCtrl.text = s['unit'] as String;
-                              pointsCtrl.text = '${s['points']}';
-                              descCtrl.text = s['desc'] as String;
-                              selectedIcon = s['icon'] as String;
-                            });
-                          },
-                        ),
-                      );
-                    }).toList(),
+                  'Thể loại thu gom:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 14),
-
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên thể loại *',
-                    hintText: 'Ví dụ: Pin cũ, Chai nhựa, Nắp chai...',
-                    prefixIcon: Icon(Icons.stars_rounded),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
-                      flex: 5,
-                      child: TextField(
-                        controller: unitCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Đơn vị tính *',
-                          hintText: 'viên, chai, kg, lon...',
-                          prefixIcon: Icon(Icons.straighten_rounded),
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          Icons.local_drink_rounded,
+                          size: 18,
+                          color: selectedCategory == 'Vỏ chai'
+                              ? Colors.white
+                              : AppColors.primary,
                         ),
+                        label: const Center(child: Text('Vỏ chai')),
+                        selected: selectedCategory == 'Vỏ chai',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedCategory == 'Vỏ chai'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedCategory == 'Vỏ chai'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) => setDialogState(() {
+                          selectedCategory = 'Vỏ chai';
+                          if (descCtrl.text.isEmpty ||
+                              descCtrl.text.contains('pin') ||
+                              descCtrl.text.contains('Pin')) {
+                            descCtrl.text = 'Thu gom vỏ chai nhựa tái chế';
+                          }
+                          if (pointsCtrl.text == '5') {
+                            pointsCtrl.text = '2';
+                          }
+                        }),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      flex: 5,
-                      child: TextField(
-                        controller: pointsCtrl,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: const InputDecoration(
-                          labelText: 'Điểm thưởng *',
-                          hintText: '5, 10, 20...',
-                          prefixIcon: Icon(Icons.add_circle_outline),
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          Icons.battery_charging_full_rounded,
+                          size: 18,
+                          color: selectedCategory == 'Pin'
+                              ? Colors.white
+                              : AppColors.primary,
                         ),
+                        label: const Center(child: Text('Pin')),
+                        selected: selectedCategory == 'Pin',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedCategory == 'Pin'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedCategory == 'Pin'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) => setDialogState(() {
+                          selectedCategory = 'Pin';
+                          if (descCtrl.text.isEmpty ||
+                              descCtrl.text.contains('chai') ||
+                              descCtrl.text.contains('Chai')) {
+                            descCtrl.text = 'Thu gom pin đã qua sử dụng';
+                          }
+                          if (pointsCtrl.text == '2') {
+                            pointsCtrl.text = '5';
+                          }
+                        }),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Đơn vị tính:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(child: Text('Số lượng')),
+                        selected: selectedUnit == 'Số lượng',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedUnit == 'Số lượng'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedUnit == 'Số lượng'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedUnit = 'Số lượng'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(child: Text('Kg')),
+                        selected: selectedUnit == 'Kg',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedUnit == 'Kg'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedUnit == 'Kg'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedUnit = 'Kg'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: pointsCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: 'Điểm thưởng trên 1 $selectedUnit *',
+                    hintText: 'Ví dụ: 2, 5, 10...',
+                    prefixIcon: const Icon(Icons.add_circle_outline),
+                  ),
+                ),
                 const SizedBox(height: 12),
-
                 TextField(
                   controller: descCtrl,
                   maxLines: 2,
@@ -819,24 +880,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     labelText: 'Mô tả quy đổi',
                     hintText: 'Ghi chú quy cách thu gom, tính điểm...',
                   ),
-                ),
-                const SizedBox(height: 14),
-
-                const Text(
-                  'Chọn biểu tượng nhận diện:',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    _buildIconChip('battery', 'Pin', Icons.battery_charging_full_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
-                    _buildIconChip('bottle', 'Chai', Icons.local_drink_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
-                    _buildIconChip('can', 'Lon', Icons.recycling_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
-                    _buildIconChip('paper', 'Giấy', Icons.newspaper_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
-                    _buildIconChip('tree', 'Cây', Icons.park_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
-                    _buildIconChip('eco', 'Khác', Icons.eco_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
-                  ],
                 ),
               ],
             ),
@@ -851,14 +894,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onPressed: isLoading
                   ? null
                   : () async {
-                      final name = nameCtrl.text.trim();
-                      final unit = unitCtrl.text.trim();
                       final points = int.tryParse(pointsCtrl.text.trim()) ?? 0;
 
-                      if (name.isEmpty || points <= 0) {
+                      if (points <= 0) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Vui lòng điền tên thể loại và điểm thưởng > 0!'),
+                            content: Text('Vui lòng nhập số điểm thưởng > 0!'),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -867,19 +908,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                       setDialogState(() => isLoading = true);
                       try {
+                        final icon =
+                            selectedCategory == 'Pin' ? 'battery' : 'bottle';
                         await _pointRuleService.createPointRule(
-                          name: name,
-                          unit: unit,
+                          name: selectedCategory,
+                          unit: selectedUnit,
                           pointsPerUnit: points,
                           description: descCtrl.text.trim(),
-                          iconName: selectedIcon,
+                          iconName: icon,
                         );
 
                         if (context.mounted) {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Đã thêm thể loại "$name" (+ $points điểm/$unit) thành công!'),
+                              content: Text(
+                                  'Đã thêm thể loại "$selectedCategory" (+ $points điểm/$selectedUnit) thành công!'),
                               backgroundColor: AppColors.success,
                             ),
                           );
@@ -887,7 +931,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+                            SnackBar(
+                                content: Text('Lỗi: $e'),
+                                backgroundColor: AppColors.error),
                           );
                         }
                       } finally {
@@ -898,39 +944,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : const Text('Tạo Thể Loại'),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildIconChip(
-    String iconKey,
-    String label,
-    IconData iconData,
-    String currentSelected,
-    void Function(String) onSelect,
-  ) {
-    final isSelected = iconKey == currentSelected;
-    return ChoiceChip(
-      selected: isSelected,
-      avatar: Icon(
-        iconData,
-        size: 16,
-        color: isSelected ? Colors.white : AppColors.primary,
-      ),
-      label: Text(label),
-      selectedColor: AppColors.primary,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : AppColors.textPrimary,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        fontSize: 12,
-      ),
-      onSelected: (_) => onSelect(iconKey),
     );
   }
 }
