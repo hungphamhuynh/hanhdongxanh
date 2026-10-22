@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/user_role.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../services/admin_user_service.dart';
 
 class AdminUsersTab extends StatefulWidget {
@@ -56,7 +57,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           return matchesSearch && matchesRole;
         }).toList();
 
-        return CustomScrollView(
+        return ResponsiveContainer(
+          maxWidth: 950,
+          child: CustomScrollView(
           slivers: [
             // Thống kê nhanh
             SliverToBoxAdapter(
@@ -403,8 +406,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 ),
               ),
           ],
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
@@ -416,9 +420,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -482,7 +486,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<UserRole>(
-                  value: selectedRole,
+                  initialValue: selectedRole,
                   decoration: const InputDecoration(labelText: 'Vai trò (Role)'),
                   items: UserRole.values.map((r) {
                     return DropdownMenuItem<UserRole>(

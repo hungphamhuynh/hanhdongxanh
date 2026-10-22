@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/network/network_service.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -84,7 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
+        child: ResponsiveContainer(
+          maxWidth: 440,
+          alignment: Alignment.center,
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Form(

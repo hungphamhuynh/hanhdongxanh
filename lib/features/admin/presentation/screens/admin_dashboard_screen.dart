@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/user_role.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../services/admin_user_service.dart';
@@ -84,11 +85,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildOverviewTab(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return ResponsiveContainer(
+      maxWidth: 900,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Banner Chào mừng
           Container(
             padding: const EdgeInsets.all(22),
@@ -101,7 +104,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.indigo.shade900.withOpacity(0.2),
+                  color: Colors.indigo.shade900.withValues(alpha: 0.2),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -202,6 +205,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -225,7 +229,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor: badgeColor.withOpacity(0.12),
+                backgroundColor: badgeColor.withValues(alpha: 0.12),
                 child: Icon(icon, color: badgeColor, size: 28),
               ),
               const SizedBox(width: 14),
@@ -318,7 +322,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<UserRole>(
-                  value: selectedRole,
+                  initialValue: selectedRole,
                   decoration: const InputDecoration(labelText: 'Vai trò (Role)'),
                   items: UserRole.values.map((r) {
                     return DropdownMenuItem<UserRole>(

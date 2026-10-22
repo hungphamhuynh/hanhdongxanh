@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/user_role.dart';
 import '../../../../core/network/network_service.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/services/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -41,6 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       return;
     }
+
+    if (!mounted) return;
 
     final newName = _nameController.text.trim();
     if (newName.isEmpty) {
@@ -255,7 +258,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _nameController.text = fullName;
           }
 
-          return SingleChildScrollView(
+          return ResponsiveContainer(
+            maxWidth: 650,
+            child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
@@ -459,8 +464,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-          );
-        },
+          ),
+        );
+      },
       ),
     );
   }

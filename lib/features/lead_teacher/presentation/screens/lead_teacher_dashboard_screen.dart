@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/responsive_container.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 
@@ -10,7 +11,7 @@ class LeadTeacherDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lead Teacher'),
+        title: const Text('Tổng Phụ Trách'),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -29,7 +30,10 @@ class LeadTeacherDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const SizedBox.expand(),
+      body: const ResponsiveContainer(
+        maxWidth: 850,
+        child: SizedBox.expand(),
+      ),
     );
   }
 }
