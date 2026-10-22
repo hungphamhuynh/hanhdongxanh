@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -32,10 +33,14 @@ class AuthGate extends StatelessWidget {
 
         final user = authSnapshot.data!;
 
-        return StreamBuilder<UserRole>(
-          stream: authService.getUserRoleStream(user.uid),
-          builder: (context, roleSnapshot) {
-            if (roleSnapshot.connectionState == ConnectionState.waiting) {
+        // Lắng nghe tài liệu người dùng thời gian thực để kiểm tra role và isActive
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .snapshots(),
+          builder: (context, docSnapshot) {
+            if (docSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 body: Center(
                   child: Column(
@@ -53,7 +58,71 @@ class AuthGate extends StatelessWidget {
               );
             }
 
-            final role = roleSnapshot.data ?? UserRole.teacher;
+            final data = docSnapshot.data?.data() as Map<String, dynamic>?;
+            final isActive = data?['isActive'] as bool? ?? true;
+
+            // NẾU TÀI KHOẢN BỊ KHÓA -> CHẶN NGAY LẬP TỨC
+            if (!isActive) {
+              return Scaffold(
+                body: SafeArea(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.lock_person_rounded,
+                              size: 72,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'Tài Khoản Đã Bị Tạm Khóa',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Tài khoản (${user.email}) hiện đang bị tạm khóa bởi Ban Quản Trị hệ thống. Vui lòng liên hệ Quản trị viên để được hỗ trợ mở khóa.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          OutlinedButton.icon(
+                            onPressed: () => authService.signOut(),
+                            icon: const Icon(Icons.logout),
+                            label: const Text('Đăng Xuất'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              side: BorderSide(color: Colors.red.shade300),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            final role = UserRole.fromString(data?['role']);
 
             switch (role) {
               case UserRole.admin:
