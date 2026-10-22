@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:flutter/services.dart';
+
 import '../../../../core/constants/user_role.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
@@ -9,7 +11,9 @@ import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../services/admin_class_service.dart';
 import '../../services/admin_user_service.dart';
+import '../../services/point_rule_service.dart';
 import '../widgets/admin_classes_tab.dart';
+import '../widgets/admin_point_rules_tab.dart';
 import '../widgets/admin_users_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -23,6 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _currentTabIndex = 0;
   final _adminUserService = AdminUserService();
   final _adminClassService = AdminClassService();
+  final _pointRuleService = PointRuleService();
 
   String get _appBarTitle {
     switch (_currentTabIndex) {
@@ -30,6 +35,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return 'Quản Lý Tài Khoản';
       case 2:
         return 'Quản Lý Lớp Học';
+      case 3:
+        return 'Cấu Hình Điểm Thưởng';
       case 0:
       default:
         return 'Admin Overview';
@@ -50,6 +57,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onPressed: () => _showAddClassDialog(context),
         icon: const Icon(Icons.add_home_work_rounded),
         label: const Text('Thêm Lớp Mới'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      );
+    } else if (_currentTabIndex == 3) {
+      return FloatingActionButton.extended(
+        onPressed: () => _showAddPointRuleDialog(context),
+        icon: const Icon(Icons.add_circle_outline_rounded),
+        label: const Text('Thêm Thể Loại'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       );
@@ -99,6 +114,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             selectedIcon: Icon(Icons.school_rounded),
             label: 'Lớp Học',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.stars_outlined),
+            selectedIcon: Icon(Icons.stars_rounded),
+            label: 'Điểm Thưởng',
+          ),
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(context),
@@ -113,6 +133,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
           // TAB 2: QUẢN LÝ LỚP HỌC & GIÁO VIÊN PHỤ TRÁCH
           const AdminClassesTab(),
+
+          // TAB 3: CẤU HÌNH THỂ LOẠI & ĐIỂM THƯỞNG
+          const AdminPointRulesTab(),
         ],
       ),
     );
@@ -231,15 +254,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 12),
 
           // Module 3: Cấu hình quy định điểm
-          _buildModuleCard(
-            icon: Icons.stars_rounded,
-            title: 'Cấu Hình Điểm Thưởng',
-            description: 'Thiết lập danh mục hành động xanh và mức điểm thưởng',
-            badgeText: 'Sắp tới',
-            badgeColor: AppColors.roleLeadTeacher,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Phân hệ Cấu hình Điểm thưởng sẽ triển khai tiếp theo!')),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('point_rules').snapshots(),
+            builder: (context, snapshot) {
+              final ruleCount = snapshot.data?.docs.length ?? 0;
+
+              return _buildModuleCard(
+                icon: Icons.stars_rounded,
+                title: 'Cấu Hình Điểm Thưởng',
+                description: 'Thiết lập danh mục hành động xanh (pin, chai...) và mức điểm thưởng',
+                badgeText: ruleCount > 0 ? '$ruleCount thể loại' : 'Cấu hình',
+                badgeColor: AppColors.roleLeadTeacher,
+                onTap: () {
+                  setState(() => _currentTabIndex = 3); // Chuyển sang Tab 3: Điểm Thưởng
+                },
               );
             },
           ),
@@ -677,6 +705,232 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           );
         },
       ),
+    );
+  }
+
+  void _showAddPointRuleDialog(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final unitCtrl = TextEditingController(text: 'viên');
+    final pointsCtrl = TextEditingController(text: '5');
+    final descCtrl = TextEditingController();
+    String selectedIcon = 'battery';
+    bool isLoading = false;
+
+    // Danh mục gợi ý nhanh
+    final suggestions = [
+      {'name': 'Pin cũ thu gom', 'unit': 'viên', 'points': 5, 'icon': 'battery', 'desc': 'Thu gom pin đã qua sử dụng'},
+      {'name': 'Chai nhựa tái chế', 'unit': 'chai', 'points': 2, 'icon': 'bottle', 'desc': 'Chai nhựa nước rửa sạch'},
+      {'name': 'Vỏ lon nhôm', 'unit': 'lon', 'points': 3, 'icon': 'can', 'desc': 'Vỏ lon nước giải khát'},
+      {'name': 'Giấy vụn & Carton', 'unit': 'kg', 'points': 10, 'icon': 'paper', 'desc': 'Sách báo cũ, thùng carton'},
+      {'name': 'Trồng cây xanh', 'unit': 'cây', 'points': 20, 'icon': 'tree', 'desc': 'Trồng và chăm sóc cây sân trường'},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('Thêm Thể Loại Tích Điểm'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Gợi ý chọn nhanh
+                const Text(
+                  'Gợi ý thể loại phổ biến:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: suggestions.map((s) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: ActionChip(
+                          label: Text(s['name'] as String, style: const TextStyle(fontSize: 11)),
+                          onPressed: () {
+                            setDialogState(() {
+                              nameCtrl.text = s['name'] as String;
+                              unitCtrl.text = s['unit'] as String;
+                              pointsCtrl.text = '${s['points']}';
+                              descCtrl.text = s['desc'] as String;
+                              selectedIcon = s['icon'] as String;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên thể loại *',
+                    hintText: 'Ví dụ: Pin cũ, Chai nhựa, Nắp chai...',
+                    prefixIcon: Icon(Icons.stars_rounded),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: TextField(
+                        controller: unitCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Đơn vị tính *',
+                          hintText: 'viên, chai, kg, lon...',
+                          prefixIcon: Icon(Icons.straighten_rounded),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 5,
+                      child: TextField(
+                        controller: pointsCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          labelText: 'Điểm thưởng *',
+                          hintText: '5, 10, 20...',
+                          prefixIcon: Icon(Icons.add_circle_outline),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Mô tả quy đổi',
+                    hintText: 'Ghi chú quy cách thu gom, tính điểm...',
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Chọn biểu tượng nhận diện:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    _buildIconChip('battery', 'Pin', Icons.battery_charging_full_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
+                    _buildIconChip('bottle', 'Chai', Icons.local_drink_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
+                    _buildIconChip('can', 'Lon', Icons.recycling_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
+                    _buildIconChip('paper', 'Giấy', Icons.newspaper_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
+                    _buildIconChip('tree', 'Cây', Icons.park_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
+                    _buildIconChip('eco', 'Khác', Icons.eco_rounded, selectedIcon, (v) => setDialogState(() => selectedIcon = v)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final name = nameCtrl.text.trim();
+                      final unit = unitCtrl.text.trim();
+                      final points = int.tryParse(pointsCtrl.text.trim()) ?? 0;
+
+                      if (name.isEmpty || points <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng điền tên thể loại và điểm thưởng > 0!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setDialogState(() => isLoading = true);
+                      try {
+                        await _pointRuleService.createPointRule(
+                          name: name,
+                          unit: unit,
+                          pointsPerUnit: points,
+                          description: descCtrl.text.trim(),
+                          iconName: selectedIcon,
+                        );
+
+                        if (context.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Đã thêm thể loại "$name" (+ $points điểm/$unit) thành công!'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+                          );
+                        }
+                      } finally {
+                        setDialogState(() => isLoading = false);
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Tạo Thể Loại'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconChip(
+    String iconKey,
+    String label,
+    IconData iconData,
+    String currentSelected,
+    void Function(String) onSelect,
+  ) {
+    final isSelected = iconKey == currentSelected;
+    return ChoiceChip(
+      selected: isSelected,
+      avatar: Icon(
+        iconData,
+        size: 16,
+        color: isSelected ? Colors.white : AppColors.primary,
+      ),
+      label: Text(label),
+      selectedColor: AppColors.primary,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : AppColors.textPrimary,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 12,
+      ),
+      onSelected: (_) => onSelect(iconKey),
     );
   }
 }
