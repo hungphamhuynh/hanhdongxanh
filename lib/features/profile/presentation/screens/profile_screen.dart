@@ -19,14 +19,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
 
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   bool _isEditingInfo = false;
   bool _isSavingInfo = false;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -60,11 +58,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .doc(_user.uid)
             .update({
           'fullName': newName,
-          'phoneNumber': _phoneController.text.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
 
-        // Cập nhật cả displayName trên Firebase Auth
         await _user.updateDisplayName(newName);
       }
 
@@ -72,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _isEditingInfo = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đã cập nhật thông tin cá nhân thành công!'),
+            content: Text('Đã cập nhật họ và tên thành công!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -254,11 +250,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final email = data['email'] ?? _user.email ?? '';
           final role = UserRole.fromString(data['role']);
           final assignedClass = data['assignedClass'] as String?;
-          final phoneNumber = data['phoneNumber'] ?? '';
 
           if (!_isEditingInfo) {
             _nameController.text = fullName;
-            _phoneController.text = phoneNumber;
           }
 
           return SingleChildScrollView(
@@ -325,7 +319,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   _isEditingInfo = !_isEditingInfo;
                                   if (!_isEditingInfo) {
                                     _nameController.text = fullName;
-                                    _phoneController.text = phoneNumber;
                                   }
                                 });
                               },
@@ -335,22 +328,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const Divider(),
                         const SizedBox(height: 8),
 
-                        // Họ và tên
                         if (_isEditingInfo) ...[
                           TextField(
                             controller: _nameController,
                             decoration: const InputDecoration(
                               labelText: 'Họ và tên',
                               prefixIcon: Icon(Icons.person_outline),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          TextField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Số điện thoại',
-                              prefixIcon: Icon(Icons.phone_outlined),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -384,12 +367,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.email_outlined,
                             label: 'Email (Cố định)',
                             value: email,
-                          ),
-                          const SizedBox(height: 14),
-                          _buildInfoRow(
-                            icon: Icons.phone_outlined,
-                            label: 'Số điện thoại',
-                            value: phoneNumber.isNotEmpty ? phoneNumber : 'Chưa cập nhật',
                           ),
                           if (assignedClass != null && assignedClass.isNotEmpty) ...[
                             const SizedBox(height: 14),
