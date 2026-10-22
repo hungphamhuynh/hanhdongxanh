@@ -61,12 +61,10 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
         final filteredClasses = allClasses.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
           final className = (data['className'] as String? ?? '').toLowerCase();
-          final teacherName = (data['teacherName'] as String? ?? '').toLowerCase();
           final teacherEmail = (data['teacherEmail'] as String? ?? '').toLowerCase();
 
           final matchesSearch = _searchQuery.isEmpty ||
               className.contains(_searchQuery.toLowerCase()) ||
-              teacherName.contains(_searchQuery.toLowerCase()) ||
               teacherEmail.contains(_searchQuery.toLowerCase());
 
           final matchesGrade = _selectedGradeFilter == null ||
@@ -210,7 +208,6 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                         final doc = filteredClasses[index];
                         final data = doc.data() as Map<String, dynamic>;
                         final className = data['className'] ?? doc.id;
-                        final teacherName = data['teacherName'] ?? 'Chưa phân công';
                         final teacherEmail = data['teacherEmail'] ?? 'Chưa có email';
 
                         return Card(
@@ -268,42 +265,17 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                             ),
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 6),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.person_outline,
-                                          size: 15, color: AppColors.textMuted),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          teacherName,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.email_outlined,
-                                          size: 15, color: AppColors.textMuted),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          teacherEmail,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  const Icon(Icons.account_circle_outlined,
+                                      size: 15, color: AppColors.textMuted),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    teacherEmail,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -398,7 +370,7 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
         title: Text('Xác nhận xóa lớp $className'),
         content: Text(
           'Bạn có chắc chắn muốn xóa lớp $className không?\n\n'
-          '⚠️ Thao tác này sẽ xóa đồng thời tài khoản giáo viên phụ trách ($teacherEmail).',
+          '⚠️ Thao tác này sẽ xóa đồng thời tài khoản $teacherEmail liên kết với lớp.',
           style: const TextStyle(height: 1.4),
         ),
         actions: [

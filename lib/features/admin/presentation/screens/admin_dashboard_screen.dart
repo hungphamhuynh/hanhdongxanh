@@ -463,193 +463,158 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _showAddClassDialog(BuildContext context) {
     final classCtrl = TextEditingController();
-    final teacherNameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final passCtrl = TextEditingController();
     bool isLoading = false;
-    bool obscurePass = true;
-
-    void onClassChanged(
-        String val, void Function(void Function()) setDialogState) {
-      final clean = val.trim().toLowerCase();
-      if (clean.isNotEmpty) {
-        setDialogState(() {
-          emailCtrl.text = '$clean@nth.com';
-          passCtrl.text = '$clean@nth.com';
-          teacherNameCtrl.text = 'GV ${val.trim().toUpperCase()}';
-        });
-      }
-    }
+    String previewClass = '';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.add_home_work_rounded, color: AppColors.primary),
-              SizedBox(width: 8),
-              Text('Thêm Lớp Học Mới'),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        builder: (context, setDialogState) {
+          final clean = previewClass.trim().toLowerCase();
+          final autoEmail = clean.isEmpty ? 'tenlop@nth.com' : '$clean@nth.com';
+
+          return AlertDialog(
+            title: const Row(
               children: [
-                TextField(
-                  controller: classCtrl,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên lớp học *',
-                    hintText: 'Ví dụ: 6A8, 7A4, 10A1',
-                    prefixIcon: Icon(Icons.class_outlined),
-                  ),
-                  onChanged: (val) => onClassChanged(val, setDialogState),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: teacherNameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Giáo viên chủ nhiệm *',
-                    hintText: 'Ví dụ: Thầy Nguyễn Văn A',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email tài khoản giáo viên *',
-                    hintText: 'Ví dụ: 6a8@nth.com',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: passCtrl,
-                  obscureText: obscurePass,
-                  decoration: InputDecoration(
-                    labelText: 'Mật khẩu tài khoản (>= 6 ký tự) *',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscurePass ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setDialogState(() => obscurePass = !obscurePass);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryMint,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          size: 16, color: AppColors.primary),
-                      SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Hệ thống sẽ tự động tạo tài khoản Giáo viên tương ứng với lớp này.',
-                          style: TextStyle(
-                              fontSize: 11, color: AppColors.primaryDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Icon(Icons.add_home_work_rounded, color: AppColors.primary),
+                SizedBox(width: 8),
+                Text('Thêm Lớp Học Mới'),
               ],
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      final className = classCtrl.text.trim();
-                      final teacherName = teacherNameCtrl.text.trim();
-                      final email = emailCtrl.text.trim();
-                      final pass = passCtrl.text.trim();
-
-                      if (className.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Vui lòng nhập tên lớp học!'),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
-                        return;
-                      }
-
-                      if (email.isEmpty || pass.length < 6) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Email không được trống và mật khẩu >= 6 ký tự!'),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
-                        return;
-                      }
-
-                      setDialogState(() => isLoading = true);
-                      try {
-                        await _adminClassService.createClassWithTeacher(
-                          className: className,
-                          teacherEmail: email,
-                          password: pass,
-                          teacherName: teacherName,
-                        );
-
-                        if (context.mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Đã tạo lớp $className và tài khoản $email thành công!',
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: classCtrl,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      labelText: 'Tên lớp học *',
+                      hintText: 'Ví dụ: 6A8, 7A4, 10A1...',
+                      prefixIcon: Icon(Icons.school_outlined),
+                    ),
+                    onChanged: (val) {
+                      setDialogState(() => previewClass = val);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.auto_awesome,
+                                size: 16, color: AppColors.primary),
+                            SizedBox(width: 6),
+                            Text(
+                              'Tự động cấp tài khoản liên kết',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryDark,
                               ),
-                              backgroundColor: AppColors.success,
                             ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '• Email: $autoEmail',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '• Mật khẩu: $autoEmail',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Hủy'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final className = classCtrl.text.trim();
+
+                        if (className.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('$e'),
+                            const SnackBar(
+                              content: Text('Vui lòng nhập tên lớp học!'),
                               backgroundColor: AppColors.error,
                             ),
                           );
+                          return;
                         }
-                      } finally {
-                        setDialogState(() => isLoading = false);
-                      }
-                    },
-              child: isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text('Tạo Lớp & Cấp Tài Khoản'),
-            ),
-          ],
-        ),
+
+                        setDialogState(() => isLoading = true);
+                        try {
+                          await _adminClassService.createClass(
+                            className: className,
+                          );
+
+                          if (context.mounted) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Đã tạo lớp $className và tài khoản ${className.toLowerCase()}@nth.com thành công!',
+                                ),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('$e'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        } finally {
+                          setDialogState(() => isLoading = false);
+                        }
+                      },
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Tạo Lớp Học'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
