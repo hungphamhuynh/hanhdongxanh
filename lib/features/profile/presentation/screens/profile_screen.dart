@@ -265,20 +265,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Avatar & Tên & Role Badge
+                // Tên & Role Badge
                 Center(
                   child: Column(
                     children: [
-                      CircleAvatar(
-                        radius: 46,
-                        backgroundColor: _getRoleColor(role).withOpacity(0.15),
-                        child: Icon(
-                          _getRoleIcon(role),
-                          size: 48,
-                          color: _getRoleColor(role),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       Text(
                         fullName,
                         style: const TextStyle(
@@ -533,17 +523,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Colors.orange.shade800;
       case UserRole.teacher:
         return Colors.green.shade700;
-    }
-  }
-
-  IconData _getRoleIcon(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Icons.admin_panel_settings;
-      case UserRole.leadTeacher:
-        return Icons.campaign;
-      case UserRole.teacher:
-        return Icons.school;
     }
   }
 }
