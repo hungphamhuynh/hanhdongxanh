@@ -19,6 +19,14 @@ class AdminClassService {
     required String className,
   }) async {
     final cleanClassName = className.trim().toUpperCase();
+
+    // Kiểm tra cú pháp bắt buộc: Khối + A + Số lớp (Ví dụ: 6A1, 7A5, 8A9, 9A12)
+    final classRegex = RegExp(r'^[6-9]A[1-9][0-9]?$');
+    if (!classRegex.hasMatch(cleanClassName)) {
+      throw Exception(
+          'Tên lớp phải đúng cú pháp: Khối (6-9) + A + Số lớp (Ví dụ: 6A1, 7A5, 9A12)!');
+    }
+
     final cleanLower = cleanClassName.toLowerCase();
     final email = '$cleanLower@nth.com';
     final password = '$cleanLower@nth.com';

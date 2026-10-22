@@ -462,16 +462,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _showAddClassDialog(BuildContext context) {
-    final classCtrl = TextEditingController();
+    int selectedGrade = 6;
+    int selectedClassNum = 1;
     bool isLoading = false;
-    String previewClass = '';
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
-          final clean = previewClass.trim().toLowerCase();
-          final autoEmail = clean.isEmpty ? 'tenlop@nth.com' : '$clean@nth.com';
+          final className = '${selectedGrade}A$selectedClassNum';
+          final email = '${selectedGrade}a$selectedClassNum@nth.com';
 
           return AlertDialog(
             title: const Row(
@@ -486,20 +486,93 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextField(
-                    controller: classCtrl,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Tên lớp học *',
-                      hintText: 'Ví dụ: 6A8, 7A4, 10A1...',
-                      prefixIcon: Icon(Icons.school_outlined),
+                  const Text(
+                    'Cú pháp lớp: Khối + A + Số lớp',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
                     ),
-                    onChanged: (val) {
-                      setDialogState(() => previewClass = val);
-                    },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+                  // Bộ chọn chuẩn hóa: Khối + 'A' + Số lớp (Không cho nhập tự do)
+                  Row(
+                    children: [
+                      // Chọn Khối (6, 7, 8, 9)
+                      Expanded(
+                        flex: 5,
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedGrade,
+                          decoration: const InputDecoration(
+                            labelText: 'Khối',
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                          items: [6, 7, 8, 9].map((g) {
+                            return DropdownMenuItem<int>(
+                              value: g,
+                              child: Text('Khối $g'),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() => selectedGrade = val);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Ký tự cố định 'A'
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryMint,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              width: 1.5),
+                        ),
+                        child: const Text(
+                          'A',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Chọn Số thứ tự lớp (1 -> 20)
+                      Expanded(
+                        flex: 5,
+                        child: DropdownButtonFormField<int>(
+                          initialValue: selectedClassNum,
+                          decoration: const InputDecoration(
+                            labelText: 'Số lớp',
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                          items: List.generate(20, (i) => i + 1).map((n) {
+                            return DropdownMenuItem<int>(
+                              value: n,
+                              child: Text('Lớp $n'),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setDialogState(() => selectedClassNum = val);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Khung xem trước thông tin lớp học và tài khoản tự động sinh
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -510,24 +583,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.auto_awesome,
+                            const Icon(Icons.verified_rounded,
                                 size: 16, color: AppColors.primary),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              'Tự động cấp tài khoản liên kết',
-                              style: TextStyle(
-                                fontSize: 12,
+                              'Lớp sẽ tạo: $className',
+                              style: const TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.primaryDark,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const Divider(height: 16),
                         Text(
-                          '• Email: $autoEmail',
+                          '• Tài khoản: $email',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -536,7 +609,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '• Mật khẩu: $autoEmail',
+                          '• Mật khẩu: $email',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -559,18 +632,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 onPressed: isLoading
                     ? null
                     : () async {
-                        final className = classCtrl.text.trim();
-
-                        if (className.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Vui lòng nhập tên lớp học!'),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                          return;
-                        }
-
                         setDialogState(() => isLoading = true);
                         try {
                           await _adminClassService.createClass(
@@ -582,7 +643,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Đã tạo lớp $className và tài khoản ${className.toLowerCase()}@nth.com thành công!',
+                                  'Đã tạo lớp $className và cấp tài khoản $email thành công!',
                                 ),
                                 backgroundColor: AppColors.success,
                               ),
