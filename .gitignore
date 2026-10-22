@@ -1,0 +1,94 @@
+# ==========================================
+# 1. OS Generated Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+$RECYCLE.BIN/
+
+# ==========================================
+# 2. Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.local
+
+# Firebase / Google Services Credentials
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+**/ios/Firebase/*.plist
+
+# Keystores & Certificates
+*.jks
+*.keystore
+*.p12
+*.cer
+*.mobileprovision
+key.properties
+
+# ==========================================
+# 3. IDEs & Editors
+# ==========================================
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+.idea_modules/
+
+# VS Code (Giữ lại cấu hình debug chung, bỏ file cá nhân)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Other editors
+.atom/
+.history
+.svn/
+*.swp
+*.class
+*.log
+*.pyc
+
+# ==========================================
+# 4. Flutter / Dart Toolchain
+# ==========================================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+migrate_working_dir/
+.widget_preview/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# Obfuscation & Symbolication
+app.*.symbols
+app.*.map.json
+
+# Build Outputs
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Fastlane (CI/CD)
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
