@@ -6,6 +6,7 @@ import '../../../../core/constants/user_role.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../services/admin_user_service.dart';
+import '../widgets/admin_users_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -15,17 +16,15 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  int _currentTabIndex = 0;
   final _adminUserService = AdminUserService();
-  final _currentUid = FirebaseAuth.instance.currentUser?.uid;
-
-  String _searchQuery = '';
-  UserRole? _selectedRoleFilter;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Console'),
+        title: Text(_currentTabIndex == 0 ? 'Admin Overview' : 'Quản Lý Tài Khoản'),
+        backgroundColor: Colors.indigo.shade50,
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -44,448 +43,239 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddUserDialog(context),
-        icon: const Icon(Icons.person_add_rounded),
-        label: const Text('Thêm Tài Khoản'),
-        backgroundColor: Colors.indigo.shade700,
-        foregroundColor: Colors.white,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentTabIndex,
+        onDestinationSelected: (index) => setState(() => _currentTabIndex = index),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard_rounded),
+            label: 'Tổng Quan',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.manage_accounts_outlined),
+            selectedIcon: Icon(Icons.manage_accounts_rounded),
+            label: 'Tài Khoản',
+          ),
+        ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      floatingActionButton: _currentTabIndex == 1
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddUserDialog(context),
+              icon: const Icon(Icons.person_add_rounded),
+              label: const Text('Thêm Tài Khoản'),
+              backgroundColor: Colors.indigo.shade700,
+              foregroundColor: Colors.white,
+            )
+          : null,
+      body: IndexedStack(
+        index: _currentTabIndex,
+        children: [
+          // TAB 0: TỔNG QUAN HỆ THỐNG (ADMIN HUB)
+          _buildOverviewTab(context),
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('Chưa có tài khoản nào trên hệ thống.'));
-          }
-
-          final allUsers = snapshot.data!.docs;
-          final totalCount = allUsers.length;
-          final activeCount = allUsers.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return (data['isActive'] as bool? ?? true) == true;
-          }).length;
-          final lockedCount = totalCount - activeCount;
-
-          // Lọc theo tìm kiếm và vai trò
-          final filteredUsers = allUsers.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final email = (data['email'] as String? ?? '').toLowerCase();
-            final name = (data['fullName'] as String? ?? '').toLowerCase();
-            final role = UserRole.fromString(data['role'] as String?);
-
-            final matchesSearch = _searchQuery.isEmpty ||
-                email.contains(_searchQuery.toLowerCase()) ||
-                name.contains(_searchQuery.toLowerCase());
-
-            final matchesRole =
-                _selectedRoleFilter == null || role == _selectedRoleFilter;
-
-            return matchesSearch && matchesRole;
-          }).toList();
-
-          return CustomScrollView(
-            slivers: [
-              // Thẻ Thống kê tổng quan
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildStatCard(
-                          title: 'Tổng số',
-                          count: '$totalCount',
-                          color: Colors.indigo,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildStatCard(
-                          title: 'Hoạt động',
-                          count: '$activeCount',
-                          color: Colors.green.shade700,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildStatCard(
-                          title: 'Đã khóa',
-                          count: '$lockedCount',
-                          color: Colors.red.shade700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Thanh tìm kiếm
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Tìm kiếm tài khoản (email, họ tên)...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () => setState(() => _searchQuery = ''),
-                            )
-                          : null,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                  ),
-                ),
-              ),
-
-              // Bộ lọc Role
-              SliverToBoxAdapter(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: const Text('Tất cả'),
-                        selected: _selectedRoleFilter == null,
-                        onSelected: (_) =>
-                            setState(() => _selectedRoleFilter = null),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: const Text('Admin'),
-                        selected: _selectedRoleFilter == UserRole.admin,
-                        onSelected: (_) =>
-                            setState(() => _selectedRoleFilter = UserRole.admin),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: const Text('Lead Teacher'),
-                        selected: _selectedRoleFilter == UserRole.leadTeacher,
-                        onSelected: (_) => setState(
-                            () => _selectedRoleFilter = UserRole.leadTeacher),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: const Text('Teacher'),
-                        selected: _selectedRoleFilter == UserRole.teacher,
-                        onSelected: (_) => setState(
-                            () => _selectedRoleFilter = UserRole.teacher),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Danh sách tài khoản
-              if (filteredUsers.isEmpty)
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: Center(
-                      child: Text(
-                        'Không tìm thấy tài khoản phù hợp.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final doc = filteredUsers[index];
-                        final data = doc.data() as Map<String, dynamic>;
-                        final uid = doc.id;
-                        final email = data['email'] ?? '';
-                        final fullName = data['fullName'] ?? 'Chưa đặt tên';
-                        final role = UserRole.fromString(data['role']);
-                        final assignedClass = data['assignedClass'] as String?;
-                        final isActive = data['isActive'] as bool? ?? true;
-                        final isSelf = uid == _currentUid;
-
-                        return Card(
-                          elevation: 1,
-                          margin: const EdgeInsets.only(bottom: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            side: BorderSide(
-                              color: isActive
-                                  ? Colors.transparent
-                                  : Colors.red.shade200,
-                            ),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 6),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    fullName,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: isActive ? null : Colors.grey,
-                                      decoration: isActive
-                                          ? null
-                                          : TextDecoration.lineThrough,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelf)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.indigo.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Text(
-                                      'Bạn',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.indigo,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  email,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    Chip(
-                                      label: Text(
-                                        role.label,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      backgroundColor: _getRoleColor(role),
-                                      side: BorderSide.none,
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    if (assignedClass != null &&
-                                        assignedClass.isNotEmpty) ...[
-                                      const SizedBox(width: 6),
-                                      Chip(
-                                        label: Text(
-                                          'Lớp $assignedClass',
-                                          style: const TextStyle(fontSize: 11),
-                                        ),
-                                        backgroundColor: Colors.grey.shade200,
-                                        side: BorderSide.none,
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                    ],
-                                    const Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: isActive
-                                            ? Colors.green.shade50
-                                            : Colors.red.shade50,
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: isActive
-                                              ? Colors.green.shade300
-                                              : Colors.red.shade300,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        isActive ? 'Hoạt động' : 'Đã khóa',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: isActive
-                                              ? Colors.green.shade800
-                                              : Colors.red.shade800,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              tooltip: 'Tùy chọn thao tác',
-                              onSelected: (action) {
-                                switch (action) {
-                                  case 'edit':
-                                    _showEditUserDialog(
-                                      context: context,
-                                      uid: uid,
-                                      currentName: fullName,
-                                      currentRole: role,
-                                      currentClass: assignedClass ?? '',
-                                    );
-                                    break;
-                                  case 'lock':
-                                    if (isSelf) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Không thể tự khóa tài khoản của chính mình!'),
-                                          backgroundColor: Colors.orange,
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    _confirmToggleLock(
-                                      context: context,
-                                      uid: uid,
-                                      email: email,
-                                      currentStatus: isActive,
-                                    );
-                                    break;
-                                  case 'delete':
-                                    if (isSelf) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Không thể xóa tài khoản của chính mình!'),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    _confirmDeleteUser(
-                                      context: context,
-                                      uid: uid,
-                                      email: email,
-                                    );
-                                    break;
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.edit_outlined, size: 20),
-                                      SizedBox(width: 10),
-                                      Text('Chỉnh sửa'),
-                                    ],
-                                  ),
-                                ),
-                                PopupMenuItem(
-                                  value: 'lock',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        isActive
-                                            ? Icons.lock_outline
-                                            : Icons.lock_open_outlined,
-                                        size: 20,
-                                        color: isActive
-                                            ? Colors.orange.shade800
-                                            : Colors.green,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(isActive
-                                          ? 'Khóa tài khoản'
-                                          : 'Mở khóa tài khoản'),
-                                    ],
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.delete_outline,
-                                          size: 20, color: Colors.red),
-                                      SizedBox(width: 10),
-                                      Text('Xóa tài khoản',
-                                          style: TextStyle(color: Colors.red)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                      childCount: filteredUsers.length,
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
+          // TAB 1: QUẢN LÝ TÀI KHOẢN CHUYÊN BIỆT
+          const AdminUsersTab(),
+        ],
       ),
     );
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String count,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
+  Widget _buildOverviewTab(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(18),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
+          // Banner Chào mừng
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.indigo.shade800, Colors.blue.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.indigo.shade900.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'BẢNG ĐIỀU HÀNH TRUNG TÂM',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    letterSpacing: 1.2,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  user?.email ?? 'Quản Trị Viên',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Hệ thống quản lý hành động xanh & tích điểm trường học',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
+          const SizedBox(height: 24),
+
+          // Danh sách các phân hệ quản lý
+          const Text(
+            'Phân Hệ Quản Trị',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+
+          // Module 1: Quản lý tài khoản (Đang có)
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').snapshots(),
+            builder: (context, snapshot) {
+              final count = snapshot.data?.docs.length ?? 0;
+
+              return _buildModuleCard(
+                icon: Icons.manage_accounts_rounded,
+                title: 'Quản Lý Tài Khoản',
+                description: 'Cấp phát, chỉnh sửa, khóa và phân quyền người dùng',
+                badgeText: '$count tài khoản',
+                badgeColor: Colors.indigo,
+                onTap: () {
+                  setState(() => _currentTabIndex = 1); // Chuyển sang Tab 1
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Module 2: Lớp học & Thi đua
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('classes').snapshots(),
+            builder: (context, snapshot) {
+              final classCount = snapshot.data?.docs.length ?? 0;
+
+              return _buildModuleCard(
+                icon: Icons.class_outlined,
+                title: 'Quản Lý Lớp Học',
+                description: 'Danh sách 36 lớp học, giáo viên phụ trách',
+                badgeText: '$classCount lớp học',
+                badgeColor: Colors.teal,
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Phân hệ Quản lý Lớp học đang sẵn sàng mở rộng!')),
+                  );
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Module 3: Cấu hình quy định điểm
+          _buildModuleCard(
+            icon: Icons.stars_rounded,
+            title: 'Cấu Hình Điểm Thưởng',
+            description: 'Thiết lập danh mục hành động xanh và mức điểm thưởng',
+            badgeText: 'Sắp tới',
+            badgeColor: Colors.orange.shade800,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Phân hệ Cấu hình Điểm thưởng sẽ triển khai tiếp theo!')),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Color _getRoleColor(UserRole role) {
-    switch (role) {
-      case UserRole.admin:
-        return Colors.indigo;
-      case UserRole.leadTeacher:
-        return Colors.orange.shade800;
-      case UserRole.teacher:
-        return Colors.green.shade700;
-    }
+  Widget _buildModuleCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required String badgeText,
+    required Color badgeColor,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: badgeColor.withOpacity(0.12),
+                child: Icon(icon, color: badgeColor, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Chip(
+                          label: Text(
+                            badgeText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          backgroundColor: badgeColor,
+                          side: BorderSide.none,
+                          padding: EdgeInsets.zero,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  // --- DIALOG THÊM TÀI KHOẢN MỚI ---
   void _showAddUserDialog(BuildContext context) {
     final emailCtrl = TextEditingController();
     final passCtrl = TextEditingController();
@@ -625,196 +415,5 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       ),
     );
-  }
-
-  // --- DIALOG CHỈNH SỬA TÀI KHOẢN ---
-  void _showEditUserDialog({
-    required BuildContext context,
-    required String uid,
-    required String currentName,
-    required UserRole currentRole,
-    required String currentClass,
-  }) {
-    final nameCtrl = TextEditingController(text: currentName);
-    final classCtrl = TextEditingController(text: currentClass);
-    UserRole selectedRole = currentRole;
-    bool isLoading = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Chỉnh Sửa Tài Khoản'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Họ và tên'),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<UserRole>(
-                  value: selectedRole,
-                  decoration: const InputDecoration(labelText: 'Vai trò (Role)'),
-                  items: UserRole.values.map((r) {
-                    return DropdownMenuItem<UserRole>(
-                      value: r,
-                      child: Text(r.label),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedRole = val);
-                    }
-                  },
-                ),
-                if (selectedRole == UserRole.teacher) ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: classCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Lớp phụ trách',
-                      hintText: 'Ví dụ: 6A1',
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      setDialogState(() => isLoading = true);
-                      try {
-                        await _adminUserService.updateUser(
-                          uid: uid,
-                          fullName: nameCtrl.text.trim(),
-                          role: selectedRole,
-                          assignedClass: classCtrl.text.trim(),
-                        );
-                        if (context.mounted) {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đã cập nhật tài khoản thành công!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Lỗi: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      } finally {
-                        setDialogState(() => isLoading = false);
-                      }
-                    },
-              child: const Text('Lưu Thay Đổi'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // --- XÁC NHẬN KHÓA / MỞ KHÓA TÀI KHOẢN ---
-  void _confirmToggleLock({
-    required BuildContext context,
-    required String uid,
-    required String email,
-    required bool currentStatus,
-  }) async {
-    final actionName = currentStatus ? 'khóa' : 'mở khóa';
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Xác nhận $actionName tài khoản'),
-        content: Text(
-          currentStatus
-              ? 'Khi bị khóa, tài khoản ($email) sẽ bị ngắt kết nối và không thể thao tác trên hệ thống cho đến khi được mở khóa.'
-              : 'Bạn có chắc chắn muốn mở khóa cho tài khoản ($email)?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: currentStatus ? Colors.orange.shade800 : Colors.green,
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Đồng ý $actionName'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await _adminUserService.toggleUserLock(
-        uid: uid,
-        currentIsActive: currentStatus,
-      );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đã $actionName tài khoản $email thành công!'),
-            backgroundColor: currentStatus ? Colors.orange.shade800 : Colors.green,
-          ),
-        );
-      }
-    }
-  }
-
-  // --- XÁC NHẬN XÓA TÀI KHOẢN ---
-  void _confirmDeleteUser({
-    required BuildContext context,
-    required String uid,
-    required String email,
-  }) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận xóa tài khoản'),
-        content: Text(
-          'Hành động này sẽ xóa vĩnh viễn hồ sơ của tài khoản ($email). Dữ liệu sau khi xóa sẽ không thể khôi phục!',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xóa vĩnh viễn'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      await _adminUserService.deleteUser(uid);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đã xóa tài khoản $email thành công!'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 }
