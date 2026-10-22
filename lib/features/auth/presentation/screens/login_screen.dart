@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/network/network_service.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../services/auth_service.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -119,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tích điểm sống xanh - Chung tay bảo vệ môi trường',
+                    'Hệ thống quản lý & tích điểm hành động bảo vệ môi trường',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: Colors.grey.shade600,
@@ -132,8 +131,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      labelText: 'Địa chỉ Email',
-                      hintText: 'vidu@gmail.com',
+                      labelText: 'Tài khoản Email',
+                      hintText: 'vidu: 6a1@nth.com',
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -141,12 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
-                        return 'Vui lòng nhập email';
-                      }
-                      final emailRegex =
-                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                      if (!emailRegex.hasMatch(val.trim())) {
-                        return 'Email không đúng định dạng';
+                        return 'Vui lòng nhập tài khoản email';
                       }
                       return null;
                     },
@@ -177,9 +171,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: (val) {
                       if (val == null || val.isEmpty) {
                         return 'Vui lòng nhập mật khẩu';
-                      }
-                      if (val.length < 6) {
-                        return 'Mật khẩu phải từ 6 ký tự';
                       }
                       return null;
                     },
@@ -214,28 +205,33 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
 
-                  // Register Navigation
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Chưa là thành viên?'),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterScreen(),
+                  // Thông báo tài khoản nội bộ (Không cho phép đăng ký tự do)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.info_outline, size: 18, color: Colors.grey.shade700),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tài khoản do Quản trị viên cấp. Nếu chưa có tài khoản, vui lòng liên hệ Ban Quản Trị.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade700,
+                              height: 1.4,
                             ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.green.shade800,
+                          ),
                         ),
-                        child: const Text('Đăng ký tài khoản Xanh'),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
