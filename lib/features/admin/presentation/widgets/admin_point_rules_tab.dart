@@ -268,25 +268,32 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                                           ? null
                                           : TextDecoration.lineThrough,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: rule.isActive
-                                        ? AppColors.primaryContainer
-                                        : Colors.grey.shade200,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    '+${rule.pointsPerUnit} điểm / ${rule.unit}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: rule.isActive
-                                          ? AppColors.primaryDark
-                                          : Colors.grey.shade700,
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: rule.isActive
+                                            ? AppColors.primaryContainer
+                                            : Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '+${rule.pointsPerUnit} điểm / ${rule.unit}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: rule.isActive
+                                              ? AppColors.primaryDark
+                                              : Colors.grey.shade700,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -398,21 +405,27 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
       ),
       child: Column(
         children: [
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              count,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
         ],
@@ -437,7 +450,12 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
             children: [
               Icon(Icons.edit_note_rounded, color: AppColors.primary),
               SizedBox(width: 8),
-              Text('Chỉnh Sửa Thể Loại'),
+              Expanded(
+                child: Text(
+                  'Chỉnh Sửa Thể Loại',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           content: SingleChildScrollView(
@@ -760,44 +778,50 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryMint,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.history_rounded,
-                            color: AppColors.primary,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              rule != null
-                                  ? 'Lịch Sử: ${rule.name}'
-                                  : 'Nhật Ký Cấu Hình Điểm Thưởng',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryMint,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            const Text(
-                              'Chi tiết các lần sửa đổi điểm thưởng & đơn vị',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
+                            child: const Icon(
+                              Icons.history_rounded,
+                              color: AppColors.primary,
+                              size: 22,
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rule != null
+                                      ? 'Lịch Sử: ${rule.name}'
+                                      : 'Nhật Ký Cấu Hình Điểm Thưởng',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const Text(
+                                  'Chi tiết các lần sửa đổi điểm thưởng & đơn vị',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
@@ -887,42 +911,49 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: log.actionColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(log.actionIcon,
-                              size: 14, color: log.actionColor),
-                          const SizedBox(width: 4),
-                          Text(
-                            log.actionLabel,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: log.actionColor,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: log.actionColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(log.actionIcon,
+                                size: 14, color: log.actionColor),
+                            const SizedBox(width: 4),
+                            Text(
+                              log.actionLabel,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: log.actionColor,
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          log.ruleName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
                           ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      log.ruleName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Text(
                   _formatDateTime(log.createdAt),
                   style: const TextStyle(

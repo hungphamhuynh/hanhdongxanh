@@ -324,13 +324,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Chip(
                           label: Text(
                             badgeText,
@@ -758,7 +762,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
               SizedBox(width: 8),
-              Text('Thêm Thể Loại Tích Điểm'),
+              Expanded(
+                child: Text(
+                  'Thêm Thể Loại Tích Điểm',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           content: SingleChildScrollView(
