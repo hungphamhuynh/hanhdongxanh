@@ -109,17 +109,19 @@ class PointRuleHistoryModel {
 
     if (action == 'create') {
       final name = newValues['name'] ?? ruleName;
-      final unit = newValues['unit'] ?? '';
-      final pts = newValues['pointsPerUnit'] ?? '';
-      details.add('Khởi tạo: "$name" ($pts đ/$unit)');
+      final unit = newValues['unit'] ?? 'Số lượng';
+      final unitQty = newValues['unitQuantity'] ?? 1;
+      final pts = newValues['points'] ?? newValues['pointsPerUnit'] ?? 1;
+      details.add('Khởi tạo: "$name" ($unitQty $unit = $pts điểm)');
       return details;
     }
 
     if (action == 'delete') {
       final name = oldValues['name'] ?? ruleName;
-      final unit = oldValues['unit'] ?? '';
-      final pts = oldValues['pointsPerUnit'] ?? '';
-      details.add('Đã xóa thể loại: "$name" ($pts đ/$unit)');
+      final unit = oldValues['unit'] ?? 'Số lượng';
+      final unitQty = oldValues['unitQuantity'] ?? 1;
+      final pts = oldValues['points'] ?? oldValues['pointsPerUnit'] ?? 1;
+      details.add('Đã xóa: "$name" ($unitQty $unit = $pts điểm)');
       return details;
     }
 
@@ -142,11 +144,15 @@ class PointRuleHistoryModel {
       details.add('Đơn vị: ${oldValues['unit']} → ${newValues['unit']}');
     }
 
-    if (oldValues.containsKey('pointsPerUnit') &&
-        newValues.containsKey('pointsPerUnit') &&
-        oldValues['pointsPerUnit'] != newValues['pointsPerUnit']) {
-      details.add(
-          'Điểm thưởng: ${oldValues['pointsPerUnit']}đ → ${newValues['pointsPerUnit']}đ');
+    final oldQty = oldValues['unitQuantity'] ?? 1;
+    final newQty = newValues['unitQuantity'] ?? 1;
+    final oldPts = oldValues['points'] ?? oldValues['pointsPerUnit'] ?? 1;
+    final newPts = newValues['points'] ?? newValues['pointsPerUnit'] ?? 1;
+    final oldUnit = oldValues['unit'] ?? 'đơn vị';
+    final newUnit = newValues['unit'] ?? 'đơn vị';
+
+    if (oldQty != newQty || oldPts != newPts) {
+      details.add('Tỷ lệ quy đổi: $oldQty $oldUnit = $oldPts đ → $newQty $newUnit = $newPts đ');
     }
 
     if (oldValues.containsKey('description') &&

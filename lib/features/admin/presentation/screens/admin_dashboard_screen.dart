@@ -794,6 +794,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _showAddPointRuleDialog(BuildContext context) {
     final nameCtrl = TextEditingController();
     String selectedUnit = 'Số lượng';
+    final unitQtyCtrl = TextEditingController(text: '5');
     final pointsCtrl = TextEditingController(text: '1');
     final descCtrl = TextEditingController();
     String selectedIcon = 'bottle';
@@ -881,8 +882,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
-                        onSelected: (_) =>
-                            setDialogState(() => selectedUnit = 'Số lượng'),
+                        onSelected: (_) => setDialogState(() {
+                          selectedUnit = 'Số lượng';
+                          if (unitQtyCtrl.text == '1') {
+                            unitQtyCtrl.text = '5';
+                          }
+                        }),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -899,8 +904,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
-                        onSelected: (_) =>
-                            setDialogState(() => selectedUnit = 'Kg'),
+                        onSelected: (_) => setDialogState(() {
+                          selectedUnit = 'Kg';
+                          if (unitQtyCtrl.text == '5') {
+                            unitQtyCtrl.text = '1';
+                          }
+                        }),
                       ),
                     ),
                   ],
@@ -964,15 +973,103 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 4. Điểm thưởng trên 1 đơn vị
-                TextField(
-                  controller: pointsCtrl,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: 'Điểm thưởng trên 1 $selectedUnit *',
-                    hintText: 'Ví dụ: 1, 2, 5...',
-                    prefixIcon: const Icon(Icons.add_circle_outline),
+                // 4. Cấu hình tỷ lệ tích điểm (Nhập 2 đầu)
+                const Text(
+                  'Tỷ lệ quy đổi điểm (Nhập 2 đầu) *:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Đầu 1: Số lượng đơn vị thu gom
+                    Expanded(
+                      flex: 5,
+                      child: TextField(
+                        controller: unitQtyCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        decoration: InputDecoration(
+                          labelText: 'Cứ mỗi',
+                          hintText: '5',
+                          suffixText: selectedUnit,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    // Đầu 2: Số điểm nhận được tương ứng
+                    Expanded(
+                      flex: 5,
+                      child: TextField(
+                        controller: pointsCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'Đổi được',
+                          hintText: '1',
+                          suffixText: 'điểm',
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Khung xem trước quy ước
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Quy ước: Cứ ${(int.tryParse(unitQtyCtrl.text.trim()) ?? 0) > 0 ? unitQtyCtrl.text.trim() : '1'} $selectedUnit = ${(int.tryParse(pointsCtrl.text.trim()) ?? 0) > 0 ? pointsCtrl.text.trim() : '1'} điểm',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1000,12 +1097,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ? null
                   : () async {
                       final name = nameCtrl.text.trim();
-                      final points = int.tryParse(pointsCtrl.text.trim()) ?? 0;
+                      final unitQty =
+                          int.tryParse(unitQtyCtrl.text.trim()) ?? 0;
+                      final points =
+                          int.tryParse(pointsCtrl.text.trim()) ?? 0;
 
                       if (name.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Vui lòng nhập tên thể loại!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (unitQty <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Vui lòng nhập số lượng đơn vị quy ước > 0!',
+                            ),
                             backgroundColor: AppColors.error,
                           ),
                         );
@@ -1028,7 +1140,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         await _pointRuleService.createPointRule(
                           name: name,
                           unit: selectedUnit,
-                          pointsPerUnit: points,
+                          unitQuantity: unitQty,
+                          points: points,
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
                           changedByEmail: user?.email ?? 'admin@nth.com',
@@ -1040,7 +1153,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Đã thêm thể loại "$name" (+ $points điểm/$selectedUnit) thành công!',
+                                'Đã thêm thể loại "$name" ($unitQty $selectedUnit = $points điểm) thành công!',
                               ),
                               backgroundColor: AppColors.success,
                             ),
@@ -1068,7 +1181,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Tạo Thể Loại'),
+                  : const Text('Thêm Thể Loại'),
             ),
           ],
         ),

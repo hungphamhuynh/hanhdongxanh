@@ -1363,9 +1363,8 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                   final rule = _selectedRule;
                   final double currentQty =
                       double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
-                  final int estimatedPoints = rule != null
-                      ? (currentQty * rule.pointsPerUnit).round()
-                      : 0;
+                  final int estimatedPoints =
+                      rule != null ? rule.calculatePoints(currentQty) : 0;
 
                   return SingleChildScrollView(
                     child: Column(
@@ -1463,8 +1462,7 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                   size: 18,
                                   color: isSelected ? Colors.white : chipColor,
                                 ),
-                                label: Text(
-                                    '${r.name} (${r.unit}) • +${r.pointsPerUnit}đ'),
+                                label: Text('${r.name} (${r.ruleRateText})'),
                                 selectedColor: chipColor,
                                 labelStyle: TextStyle(
                                   color: isSelected
@@ -1527,13 +1525,29 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                child: Text(
-                                  'Cộng vào: Lớp ${_selectedClass ?? ''}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primaryDark,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Cộng vào: Lớp ${_selectedClass ?? ''}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryDark,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (rule != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Tỷ lệ: ${rule.ruleRateText} ($currentQty ${rule.unit})',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -1587,6 +1601,8 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                       categoryName: rule.name,
                                       unit: rule.unit,
                                       quantity: qty,
+                                      unitQuantity: rule.unitQuantity,
+                                      points: rule.points,
                                       pointsPerUnit: rule.pointsPerUnit,
                                       note: _noteCtrl.text.trim(),
                                       createdByEmail: widget.userEmail,

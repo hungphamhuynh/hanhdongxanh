@@ -32,13 +32,18 @@ class PointRecordService {
     required String categoryName,
     required String unit,
     required double quantity,
-    required int pointsPerUnit,
+    int unitQuantity = 1,
+    int? points,
+    int? pointsPerUnit,
     String note = '',
     required String createdByEmail,
     required String createdByUid,
   }) async {
     final cleanClass = className.trim().toUpperCase();
-    final calculatedPoints = (quantity * pointsPerUnit).round();
+    final effectiveUnitQty = unitQuantity > 0 ? unitQuantity : 1;
+    final effectivePoints = points ?? pointsPerUnit ?? 0;
+    final calculatedPoints =
+        ((quantity * effectivePoints) / effectiveUnitQty).round();
 
     final recordRef = _firestore.collection('point_records').doc();
     final classRef = _firestore.collection('classes').doc(cleanClass);
@@ -60,7 +65,9 @@ class PointRecordService {
       'categoryName': categoryName,
       'unit': unit,
       'quantity': quantity,
-      'pointsPerUnit': pointsPerUnit,
+      'unitQuantity': effectiveUnitQty,
+      'points': effectivePoints,
+      'pointsPerUnit': effectivePoints,
       'totalPoints': calculatedPoints,
       'note': note.trim(),
       'createdByEmail': createdByEmail.trim(),

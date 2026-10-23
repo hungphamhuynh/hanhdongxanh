@@ -10,7 +10,9 @@ class PointRecordModel {
   final String categoryName; // "Chai nhựa", "Lon nhôm", "Giấy vụn", "Pin cũ"...
   final String unit; // "Số lượng" hoặc "Kg"
   final double quantity; // Số lượng hoặc số kg đã đổi
-  final int pointsPerUnit; // Điểm quy đổi trên 1 đơn vị
+  final int unitQuantity; // Số lượng đơn vị theo tỷ lệ (Đầu 1: ví dụ 5)
+  final int points; // Số điểm nhận theo tỷ lệ (Đầu 2: ví dụ 1)
+  final int pointsPerUnit; // Giữ để tương thích ngược
   final int totalPoints; // Tổng điểm nhận được
   final String note;
   final String createdByEmail;
@@ -24,6 +26,8 @@ class PointRecordModel {
     required this.categoryName,
     required this.unit,
     required this.quantity,
+    this.unitQuantity = 1,
+    required this.points,
     required this.pointsPerUnit,
     required this.totalPoints,
     this.note = '',
@@ -32,8 +36,16 @@ class PointRecordModel {
     this.createdAt,
   });
 
+  /// Chuỗi hiển thị tỷ lệ quy đổi (Ví dụ: "5 Số lượng = 1 điểm")
+  String get ruleRateText => '$unitQuantity $unit = $points điểm';
+
   factory PointRecordModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
+    final unitQty = (data['unitQuantity'] as num?)?.toInt() ?? 1;
+    final pts = (data['points'] as num?)?.toInt() ??
+        (data['pointsPerUnit'] as num?)?.toInt() ??
+        0;
+
     return PointRecordModel(
       id: doc.id,
       className: data['className'] ?? '',
@@ -41,7 +53,9 @@ class PointRecordModel {
       categoryName: data['categoryName'] ?? '',
       unit: data['unit'] ?? 'Số lượng',
       quantity: (data['quantity'] as num?)?.toDouble() ?? 0.0,
-      pointsPerUnit: (data['pointsPerUnit'] as num?)?.toInt() ?? 0,
+      unitQuantity: unitQty > 0 ? unitQty : 1,
+      points: pts,
+      pointsPerUnit: (data['pointsPerUnit'] as num?)?.toInt() ?? pts,
       totalPoints: (data['totalPoints'] as num?)?.toInt() ?? 0,
       note: data['note'] ?? '',
       createdByEmail: data['createdByEmail'] ?? '',
@@ -57,6 +71,8 @@ class PointRecordModel {
       'categoryName': categoryName.trim(),
       'unit': unit.trim(),
       'quantity': quantity,
+      'unitQuantity': unitQuantity,
+      'points': points,
       'pointsPerUnit': pointsPerUnit,
       'totalPoints': totalPoints,
       'note': note.trim(),

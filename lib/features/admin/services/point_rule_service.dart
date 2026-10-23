@@ -49,7 +49,8 @@ class PointRuleService {
   Future<void> createPointRule({
     required String name,
     required String unit,
-    required int pointsPerUnit,
+    int unitQuantity = 1,
+    required int points,
     String description = '',
     String iconName = 'bottle',
     String changedByEmail = 'admin@nth.com',
@@ -59,7 +60,10 @@ class PointRuleService {
     if (cleanName.isEmpty) {
       throw Exception('Tên thể loại phế liệu không được để trống!');
     }
-    if (pointsPerUnit <= 0) {
+    if (unitQuantity <= 0) {
+      throw Exception('Số lượng đơn vị quy đổi phải lớn hơn 0!');
+    }
+    if (points <= 0) {
       throw Exception('Số điểm thưởng phải lớn hơn 0!');
     }
 
@@ -69,7 +73,9 @@ class PointRuleService {
     final newValues = {
       'name': cleanName,
       'unit': cleanUnit,
-      'pointsPerUnit': pointsPerUnit,
+      'unitQuantity': unitQuantity,
+      'points': points,
+      'pointsPerUnit': points,
       'description': description.trim(),
       'iconName': cleanIcon,
       'isActive': true,
@@ -95,7 +101,8 @@ class PointRuleService {
     required String id,
     required String name,
     required String unit,
-    required int pointsPerUnit,
+    int unitQuantity = 1,
+    required int points,
     String description = '',
     String iconName = 'bottle',
     PointRuleModel? oldRule,
@@ -106,7 +113,10 @@ class PointRuleService {
     if (cleanName.isEmpty) {
       throw Exception('Tên thể loại phế liệu không được để trống!');
     }
-    if (pointsPerUnit <= 0) {
+    if (unitQuantity <= 0) {
+      throw Exception('Số lượng đơn vị quy đổi phải lớn hơn 0!');
+    }
+    if (points <= 0) {
       throw Exception('Số điểm thưởng phải lớn hơn 0!');
     }
 
@@ -119,7 +129,9 @@ class PointRuleService {
       oldValues = {
         'name': oldRule.name,
         'unit': oldRule.unit,
-        'pointsPerUnit': oldRule.pointsPerUnit,
+        'unitQuantity': oldRule.unitQuantity,
+        'points': oldRule.points,
+        'pointsPerUnit': oldRule.points,
         'description': oldRule.description,
         'iconName': oldRule.iconName,
       };
@@ -130,6 +142,8 @@ class PointRuleService {
         oldValues = {
           'name': data['name'] ?? '',
           'unit': data['unit'] ?? '',
+          'unitQuantity': data['unitQuantity'] ?? 1,
+          'points': data['points'] ?? data['pointsPerUnit'] ?? 0,
           'pointsPerUnit': data['pointsPerUnit'] ?? 0,
           'description': data['description'] ?? '',
           'iconName': data['iconName'] ?? 'bottle',
@@ -140,7 +154,9 @@ class PointRuleService {
     final newValues = {
       'name': cleanName,
       'unit': cleanUnit,
-      'pointsPerUnit': pointsPerUnit,
+      'unitQuantity': unitQuantity,
+      'points': points,
+      'pointsPerUnit': points,
       'description': description.trim(),
       'iconName': cleanIcon,
     };
@@ -236,32 +252,40 @@ class PointRuleService {
       {
         'name': 'Chai nhựa',
         'unit': 'Số lượng',
-        'pointsPerUnit': 2,
-        'description': 'Thu gom vỏ chai nhựa nước uống các loại',
+        'unitQuantity': 5,
+        'points': 1,
+        'pointsPerUnit': 1,
+        'description': 'Thu gom vỏ chai nhựa các loại (5 chai = 1 điểm)',
         'iconName': 'bottle',
         'isActive': true,
       },
       {
         'name': 'Lon nhôm',
         'unit': 'Số lượng',
-        'pointsPerUnit': 3,
-        'description': 'Vỏ lon nước giải khát, nước ngọt bằng nhôm',
+        'unitQuantity': 5,
+        'points': 1,
+        'pointsPerUnit': 1,
+        'description': 'Vỏ lon nước giải khát bằng nhôm (5 lon = 1 điểm)',
         'iconName': 'can',
         'isActive': true,
       },
       {
         'name': 'Giấy vụn & Sách báo',
         'unit': 'Kg',
-        'pointsPerUnit': 10,
-        'description': 'Giấy báo cũ, sách vở đã qua sử dụng, thùng carton',
+        'unitQuantity': 1,
+        'points': 2,
+        'pointsPerUnit': 2,
+        'description': 'Giấy báo cũ, sách vở, bìa carton (1 kg = 2 điểm)',
         'iconName': 'paper',
         'isActive': true,
       },
       {
         'name': 'Pin cũ',
         'unit': 'Số lượng',
+        'unitQuantity': 1,
+        'points': 5,
         'pointsPerUnit': 5,
-        'description': 'Thu gom pin đã qua sử dụng ngăn ô nhiễm môi trường',
+        'description': 'Pin đã qua sử dụng ngăn ô nhiễm môi trường (1 viên = 5 điểm)',
         'iconName': 'battery',
         'isActive': true,
       },

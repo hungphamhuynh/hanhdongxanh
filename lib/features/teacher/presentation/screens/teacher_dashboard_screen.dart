@@ -939,7 +939,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${record.pointsPerUnit}đ/${record.unit}',
+                  record.ruleRateText,
                   style: const TextStyle(
                     fontSize: 10,
                     color: AppColors.textSecondary,
@@ -1306,8 +1306,7 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
 
               final double currentQty =
                   double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
-              final int estimatedPoints =
-                  (currentQty * rule.pointsPerUnit).round();
+              final int estimatedPoints = rule.calculatePoints(currentQty);
 
               return SingleChildScrollView(
                 child: Column(
@@ -1388,7 +1387,7 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                             size: 18,
                             color: isSelected ? Colors.white : chipColor,
                           ),
-                          label: Text('${r.name} (${r.unit}) • +${r.pointsPerUnit}đ'),
+                          label: Text('${r.name} (${r.ruleRateText})'),
                           selectedColor: chipColor,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : AppColors.textPrimary,
@@ -1460,21 +1459,22 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Quy đổi: $currentQty ${rule.unit} × ${rule.pointsPerUnit}đ',
+                                  'Tỷ lệ: ${rule.ruleRateText}',
                                   style: const TextStyle(
                                     fontSize: 13,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                const Text(
-                                  'Điểm cộng vào lớp:',
-                                  style: TextStyle(
-                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.primaryDark,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Quy đổi: $currentQty ${rule.unit} → $estimatedPoints điểm',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -1542,6 +1542,8 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                                   categoryName: rule.name,
                                   unit: rule.unit,
                                   quantity: qty,
+                                  unitQuantity: rule.unitQuantity,
+                                  points: rule.points,
                                   pointsPerUnit: rule.pointsPerUnit,
                                   note: _noteCtrl.text.trim(),
                                   createdByEmail: widget.teacherEmail,

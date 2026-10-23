@@ -318,7 +318,7 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 subtitle: Text(
-                  _formatDateTime(rec.createdAt),
+                  '${_formatDateTime(rec.createdAt)} • Tỷ lệ: ${rec.ruleRateText}',
                   style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                 ),
                 trailing: Text(
