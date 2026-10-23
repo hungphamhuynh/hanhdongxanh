@@ -281,21 +281,28 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
           // Dòng 1: Chọn Năm và Chọn Tháng
           Row(
             children: [
-              // Chọn Năm
+              // Chọn Năm (mở rộng ngang bằng tháng, chống tràn pixel)
               Expanded(
-                flex: 4,
                 child: DropdownButtonFormField<int>(
                   initialValue: _selectedYear,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Năm',
-                    prefixIcon: Icon(Icons.calendar_today_rounded, size: 18),
+                    isDense: true,
+                    prefixIcon: Icon(Icons.calendar_today_rounded, size: 16),
+                    prefixIconConstraints:
+                        BoxConstraints(minWidth: 32, minHeight: 32),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   ),
                   items: availableYears.map((y) {
                     return DropdownMenuItem<int>(
                       value: y,
-                      child: Text('Năm $y', style: const TextStyle(fontSize: 13)),
+                      child: Text(
+                        'Năm $y',
+                        style: const TextStyle(fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -303,31 +310,42 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
                   },
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
 
               // Chọn Tháng
               Expanded(
-                flex: 6,
                 child: DropdownButtonFormField<int>(
                   initialValue: _selectedMonth,
+                  isExpanded: true,
                   decoration: const InputDecoration(
-                    labelText: 'Tháng thống kê',
-                    prefixIcon: Icon(Icons.date_range_rounded, size: 18),
+                    labelText: 'Tháng',
+                    isDense: true,
+                    prefixIcon: Icon(Icons.date_range_rounded, size: 16),
+                    prefixIconConstraints:
+                        BoxConstraints(minWidth: 32, minHeight: 32),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   ),
                   items: [
                     const DropdownMenuItem<int>(
                       value: 0,
-                      child: Text('Cả năm (Tất cả)',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Cả năm',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     ...List.generate(12, (i) => i + 1).map((m) {
                       return DropdownMenuItem<int>(
                         value: m,
-                        child: Text('Tháng $m',
-                            style: const TextStyle(fontSize: 13)),
+                        child: Text(
+                          'Tháng $m',
+                          style: const TextStyle(fontSize: 13),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }),
                   ],
