@@ -3,13 +3,12 @@ import 'package:flutter/material.dart';
 
 class PointRuleModel {
   final String id;
-  final String name; // Ví dụ: "Pin cũ", "Chai nhựa", "Vỏ lon nhôm"...
-  final String unit; // Đơn vị tính: "viên", "chai", "kg", "lon", "lần"...
+  final String name; // "Vỏ chai" hoặc "Pin"
+  final String unit; // "Số lượng" hoặc "Kg"
   final int pointsPerUnit; // Số điểm thưởng trên mỗi đơn vị
   final String description; // Mô tả quy đổi
-  final String iconName; // Tên mã icon
+  final String iconName; // "bottle" hoặc "battery"
   final bool isActive; // Trạng thái đang áp dụng hay tạm ngừng
-  final DateTime? createdAt;
 
   const PointRuleModel({
     required this.id,
@@ -17,9 +16,8 @@ class PointRuleModel {
     required this.unit,
     required this.pointsPerUnit,
     this.description = '',
-    this.iconName = 'eco',
+    this.iconName = 'bottle',
     this.isActive = true,
-    this.createdAt,
   });
 
   factory PointRuleModel.fromFirestore(DocumentSnapshot doc) {
@@ -27,12 +25,11 @@ class PointRuleModel {
     return PointRuleModel(
       id: doc.id,
       name: data['name'] ?? '',
-      unit: data['unit'] ?? 'lần',
+      unit: data['unit'] ?? 'Số lượng',
       pointsPerUnit: (data['pointsPerUnit'] as num?)?.toInt() ?? 1,
       description: data['description'] ?? '',
-      iconName: data['iconName'] ?? 'eco',
+      iconName: data['iconName'] ?? 'bottle',
       isActive: data['isActive'] as bool? ?? true,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -44,33 +41,14 @@ class PointRuleModel {
       'description': description.trim(),
       'iconName': iconName,
       'isActive': isActive,
-      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 
+  /// Chỉ 2 biểu tượng chuẩn sinh thái: Vỏ chai và Pin
   IconData get iconData {
-    switch (iconName) {
-      case 'battery':
-      case 'battery_charging_full':
-        return Icons.battery_charging_full_rounded;
-      case 'bottle':
-      case 'local_drink':
-        return Icons.local_drink_rounded;
-      case 'paper':
-      case 'newspaper':
-        return Icons.newspaper_rounded;
-      case 'can':
-      case 'recycling':
-        return Icons.recycling_rounded;
-      case 'tree':
-      case 'park':
-        return Icons.park_rounded;
-      case 'volunteer':
-      case 'volunteer_activism':
-        return Icons.volunteer_activism_rounded;
-      case 'eco':
-      default:
-        return Icons.eco_rounded;
+    if (name.toLowerCase().contains('pin') || iconName == 'battery') {
+      return Icons.battery_charging_full_rounded;
     }
+    return Icons.local_drink_rounded;
   }
 }

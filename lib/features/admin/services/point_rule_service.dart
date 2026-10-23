@@ -7,7 +7,7 @@ class PointRuleService {
   CollectionReference get _rulesCollection =>
       _firestore.collection('point_rules');
 
-  /// Lắng nghe danh sách thể loại điểm thưởng theo thời gian thực
+  /// Lắng nghe danh sách thể loại điểm thưởng theo thời gian thực (chỉ Vỏ chai và Pin)
   Stream<List<PointRuleModel>> getPointRulesStream({bool onlyActive = false}) {
     return _rulesCollection.snapshots().map((snapshot) {
       var list = snapshot.docs
@@ -16,22 +16,19 @@ class PointRuleService {
       if (onlyActive) {
         list = list.where((r) => r.isActive).toList();
       }
-      list.sort((a, b) {
-        if (a.createdAt == null) return -1;
-        if (b.createdAt == null) return 1;
-        return a.createdAt!.compareTo(b.createdAt!);
-      });
+      // Sắp xếp ổn định theo tên (Pin, Vỏ chai)
+      list.sort((a, b) => a.name.compareTo(b.name));
       return list;
     });
   }
 
-  /// Thêm thể loại tích điểm mới
+  /// Thêm thể loại tích điểm mới (Vỏ chai / Pin, đơn vị: Số lượng / Kg)
   Future<void> createPointRule({
     required String name,
     required String unit,
     required int pointsPerUnit,
     String description = '',
-    String iconName = 'eco',
+    String iconName = 'bottle',
   }) async {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
@@ -41,15 +38,16 @@ class PointRuleService {
       throw Exception('Số điểm thưởng phải lớn hơn 0!');
     }
 
+    final cleanUnit = unit.toLowerCase().contains('kg') ? 'Kg' : 'Số lượng';
+    final cleanIcon = cleanName.toLowerCase().contains('pin') ? 'battery' : 'bottle';
+
     await _rulesCollection.add({
       'name': cleanName,
-      'unit': unit.trim().isEmpty ? 'lần' : unit.trim(),
+      'unit': cleanUnit,
       'pointsPerUnit': pointsPerUnit,
       'description': description.trim(),
-      'iconName': iconName,
+      'iconName': cleanIcon,
       'isActive': true,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -60,7 +58,7 @@ class PointRuleService {
     required String unit,
     required int pointsPerUnit,
     String description = '',
-    String iconName = 'eco',
+    String iconName = 'bottle',
   }) async {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
@@ -70,13 +68,15 @@ class PointRuleService {
       throw Exception('Số điểm thưởng phải lớn hơn 0!');
     }
 
+    final cleanUnit = unit.toLowerCase().contains('kg') ? 'Kg' : 'Số lượng';
+    final cleanIcon = cleanName.toLowerCase().contains('pin') ? 'battery' : 'bottle';
+
     await _rulesCollection.doc(id).update({
       'name': cleanName,
-      'unit': unit.trim().isEmpty ? 'lần' : unit.trim(),
+      'unit': cleanUnit,
       'pointsPerUnit': pointsPerUnit,
       'description': description.trim(),
-      'iconName': iconName,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'iconName': cleanIcon,
     });
   }
 
@@ -87,7 +87,6 @@ class PointRuleService {
   }) async {
     await _rulesCollection.doc(id).update({
       'isActive': !currentActive,
-      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -96,39 +95,35 @@ class PointRuleService {
     await _rulesCollection.doc(id).delete();
   }
 
-  /// Khởi tạo các thể loại mẫu chuẩn phong trào "Hành Động Xanh"
+  /// Khởi tạo 2 thể loại chuẩn sinh thái: Vỏ chai và Pin (đơn vị Số lượng)
   Future<void> seedDefaultEcoRules() async {
     final snapshot = await _rulesCollection.limit(1).get();
     if (snapshot.docs.isNotEmpty) return; // Đã có dữ liệu, không ghi đè
 
     final defaultCategories = [
       {
-        'name': 'Pin',
-        'unit': 'Số lượng',
-        'pointsPerUnit': 5,
-        'description': 'Thu gom pin đã qua sử dụng (viên)',
-        'iconName': 'battery',
-      },
-      {
         'name': 'Vỏ chai',
         'unit': 'Số lượng',
         'pointsPerUnit': 2,
-        'description': 'Thu gom vỏ chai nhựa tái chế (chai)',
+        'description': 'Thu gom vỏ chai nhựa tái chế',
         'iconName': 'bottle',
+        'isActive': true,
+      },
+      {
+        'name': 'Pin',
+        'unit': 'Số lượng',
+        'pointsPerUnit': 5,
+        'description': 'Thu gom pin cũ đã qua sử dụng',
+        'iconName': 'battery',
+        'isActive': true,
       },
     ];
 
     final batch = _firestore.batch();
     for (final item in defaultCategories) {
       final docRef = _rulesCollection.doc();
-      batch.set(docRef, {
-        ...item,
-        'isActive': true,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      batch.set(docRef, item);
     }
-
     await batch.commit();
   }
 }
