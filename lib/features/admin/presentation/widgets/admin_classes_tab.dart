@@ -209,6 +209,7 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                         final data = doc.data() as Map<String, dynamic>;
                         final className = data['className'] ?? doc.id;
                         final teacherEmail = data['teacherEmail'] ?? 'Chưa có email';
+                        final totalPoints = (data['totalPoints'] as num?)?.toInt() ?? 0;
 
                         return Card(
                           elevation: 0,
@@ -280,32 +281,57 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                                 ],
                               ),
                             ),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              tooltip: 'Tùy chọn',
-                              onSelected: (action) {
-                                if (action == 'delete') {
-                                  _confirmDeleteClass(
-                                    context: context,
-                                    className: className,
-                                    teacherEmail: teacherEmail,
-                                  );
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.delete_outline,
-                                          size: 20, color: AppColors.error),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        'Xóa lớp học',
-                                        style: TextStyle(color: AppColors.error),
-                                      ),
-                                    ],
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: totalPoints > 0
+                                        ? AppColors.primaryMint
+                                        : AppColors.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
+                                  child: Text(
+                                    '$totalPoints đ',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: totalPoints > 0
+                                          ? AppColors.primaryDark
+                                          : AppColors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(Icons.more_vert),
+                                  tooltip: 'Tùy chọn',
+                                  onSelected: (action) {
+                                    if (action == 'delete') {
+                                      _confirmDeleteClass(
+                                        context: context,
+                                        className: className,
+                                        teacherEmail: teacherEmail,
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.delete_outline,
+                                              size: 20, color: AppColors.error),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            'Xóa lớp học',
+                                            style: TextStyle(color: AppColors.error),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

@@ -1,17 +1,91 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../admin/models/point_rule_model.dart';
+import '../../../admin/services/point_rule_service.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../teacher/models/point_record_model.dart';
+import '../../../teacher/services/point_record_service.dart';
 
-class LeadTeacherDashboardScreen extends StatelessWidget {
+class LeadTeacherDashboardScreen extends StatefulWidget {
   const LeadTeacherDashboardScreen({super.key});
 
   @override
+  State<LeadTeacherDashboardScreen> createState() =>
+      _LeadTeacherDashboardScreenState();
+}
+
+class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final AuthService _authService = AuthService();
+  final PointRuleService _pointRuleService = PointRuleService();
+  final PointRecordService _pointRecordService = PointRecordService();
+
+  int _selectedGradeFilter = 0; // 0: Tất cả, 6: Khối 6, 7: Khối 7...
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return 'Vừa xong';
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute';
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
+      backgroundColor: AppColors.surfaceVariant,
       appBar: AppBar(
-        title: const Text('Tổng Phụ Trách'),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded,
+                color: AppColors.roleLeadTeacher, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Tổng Phụ Trách Đội',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ],
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
+          indicatorColor: AppColors.primary,
+          indicatorWeight: 3,
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.leaderboard_rounded, size: 20),
+              text: 'Bảng Xếp Hạng Lớp',
+            ),
+            Tab(
+              icon: Icon(Icons.receipt_long_rounded, size: 20),
+              text: 'Nhật Ký Thu Gom',
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -25,14 +99,897 @@ class LeadTeacherDashboardScreen extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () => AuthService().signOut(),
+            tooltip: 'Đăng xuất',
+            onPressed: () => _authService.signOut(),
           ),
         ],
       ),
-      body: const ResponsiveContainer(
-        maxWidth: 850,
-        child: SizedBox.expand(),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_task_rounded),
+        label: const Text(
+          'Tích Điểm Cho Lớp',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        onPressed: () => _showLeadRecordDialog(
+          context: context,
+          userUid: user?.uid ?? '',
+          userEmail: user?.email ?? '',
+        ),
+      ),
+      body: ResponsiveContainer(
+        maxWidth: 900,
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            // Tab 1: Bảng Xếp Hạng Lớp Toàn Trường
+            _buildLeaderboardTab(),
+
+            // Tab 2: Nhật Ký Thu Gom Toàn Trường
+            _buildSchoolHistoryTab(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeaderboardTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('classes').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        // Tính tổng quan toàn trường
+        int totalSchoolPoints = 0;
+        int totalSchoolBottles = 0;
+        int totalSchoolBatteries = 0;
+
+        List<Map<String, dynamic>> classesList = [];
+
+        for (var doc in docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final className = (data['className'] as String? ?? doc.id).toUpperCase();
+          final pts = (data['totalPoints'] as num?)?.toInt() ?? 0;
+          final bottles = (data['bottleCount'] as num?)?.toInt() ?? 0;
+          final batteries = (data['batteryCount'] as num?)?.toInt() ?? 0;
+          final bottleKg = (data['bottleKg'] as num?)?.toDouble() ?? 0.0;
+          final batteryKg = (data['batteryKg'] as num?)?.toDouble() ?? 0.0;
+
+          totalSchoolPoints += pts;
+          totalSchoolBottles += bottles;
+          totalSchoolBatteries += batteries;
+
+          // Lấy khối từ ký tự đầu
+          int grade = int.tryParse(className.isNotEmpty ? className[0] : '0') ?? 0;
+
+          classesList.add({
+            'className': className,
+            'totalPoints': pts,
+            'bottleCount': bottles,
+            'batteryCount': batteries,
+            'bottleKg': bottleKg,
+            'batteryKg': batteryKg,
+            'grade': grade,
+          });
+        }
+
+        // Sắp xếp theo điểm số giảm dần
+        classesList.sort((a, b) =>
+            (b['totalPoints'] as int).compareTo(a['totalPoints'] as int));
+
+        // Lọc theo khối nếu được chọn
+        final filteredClasses = _selectedGradeFilter == 0
+            ? classesList
+            : classesList
+                .where((c) => c['grade'] == _selectedGradeFilter)
+                .toList();
+
+        return CustomScrollView(
+          slivers: [
+            // Banner thống kê toàn trường
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryDark, AppColors.primaryLight],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Phong Trào Xanh Toàn Trường',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Tổng hợp kết quả thu gom tái chế',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${classesList.length} Chi Đội',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildSchoolStat(
+                              icon: Icons.stars_rounded,
+                              label: 'Tổng Điểm',
+                              value: '$totalSchoolPoints đ',
+                              iconColor: Colors.amberAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildSchoolStat(
+                              icon: Icons.local_drink_rounded,
+                              label: 'Vỏ chai gom',
+                              value: '$totalSchoolBottles chai',
+                              iconColor: Colors.lightGreenAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildSchoolStat(
+                              icon: Icons.battery_charging_full_rounded,
+                              label: 'Pin thu gom',
+                              value: '$totalSchoolBatteries viên',
+                              iconColor: Colors.orangeAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Bộ lọc Khối 6, 7, 8, 9
+            SliverToBoxAdapter(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildGradeFilterChip(0, 'Tất Cả Khối'),
+                      const SizedBox(width: 8),
+                      _buildGradeFilterChip(6, 'Khối 6'),
+                      const SizedBox(width: 8),
+                      _buildGradeFilterChip(7, 'Khối 7'),
+                      const SizedBox(width: 8),
+                      _buildGradeFilterChip(8, 'Khối 8'),
+                      const SizedBox(width: 8),
+                      _buildGradeFilterChip(9, 'Khối 9'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Danh sách thứ hạng các lớp
+            if (filteredClasses.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: Text(
+                    'Chưa có dữ liệu lớp học trong khối này.',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = filteredClasses[index];
+                      return _buildLeaderboardItem(context, index + 1, item);
+                    },
+                    childCount: filteredClasses.length,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSchoolStat({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color iconColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGradeFilterChip(int grade, String label) {
+    final isSelected = _selectedGradeFilter == grade;
+    return ChoiceChip(
+      selected: isSelected,
+      label: Text(label),
+      selectedColor: AppColors.primary,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : AppColors.textPrimary,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 12,
+      ),
+      onSelected: (_) => setState(() => _selectedGradeFilter = grade),
+    );
+  }
+
+  Widget _buildLeaderboardItem(
+      BuildContext context, int rank, Map<String, dynamic> item) {
+    Widget rankBadge;
+    if (rank == 1) {
+      rankBadge = Container(
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFD700),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Text('🥇', style: TextStyle(fontSize: 16)),
+        ),
+      );
+    } else if (rank == 2) {
+      rankBadge = Container(
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(
+          color: Color(0xFFC0C0C0),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Text('🥈', style: TextStyle(fontSize: 16)),
+        ),
+      );
+    } else if (rank == 3) {
+      rankBadge = Container(
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(
+          color: Color(0xFFCD7F32),
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
+          child: Text('🥉', style: TextStyle(fontSize: 16)),
+        ),
+      );
+    } else {
+      rankBadge = Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            '$rank',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: rank <= 3
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : AppColors.border,
+        ),
+      ),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        leading: rankBadge,
+        title: Text(
+          'Lớp ${item['className']}',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        subtitle: Text(
+          'Gom: ${item['bottleCount']} chai • ${item['batteryCount']} pin',
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            '${item['totalPoints']} đ',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppColors.primaryDark,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSchoolHistoryTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('point_records')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final records =
+            docs.map((d) => PointRecordModel.fromFirestore(d)).toList();
+
+        // Sắp xếp mới nhất lên đầu
+        records.sort((a, b) {
+          if (a.createdAt == null) return -1;
+          if (b.createdAt == null) return 1;
+          return b.createdAt!.compareTo(a.createdAt!);
+        });
+
+        if (records.isEmpty) {
+          return const Center(
+            child: Text(
+              'Chưa có lượt thu gom nào được ghi nhận trên hệ thống.',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+          itemCount: records.length,
+          itemBuilder: (context, index) {
+            final rec = records[index];
+            final isBattery = rec.isBattery;
+            final color = isBattery ? AppColors.warning : AppColors.primary;
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              elevation: 0.5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: AppColors.border),
+              ),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(rec.iconData, color: color, size: 22),
+                ),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryDark,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        rec.className,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${rec.categoryName}: ${rec.quantity} ${rec.unit}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 2),
+                    Text(
+                      '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                    if (rec.note.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        rec.note,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                trailing: Text(
+                  '+${rec.totalPoints}đ',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.success,
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showLeadRecordDialog({
+    required BuildContext context,
+    required String userUid,
+    required String userEmail,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _LeadRecordPointsSheet(
+        userUid: userUid,
+        userEmail: userEmail,
+        pointRuleService: _pointRuleService,
+        pointRecordService: _pointRecordService,
+      ),
+    );
+  }
+}
+
+class _LeadRecordPointsSheet extends StatefulWidget {
+  final String userUid;
+  final String userEmail;
+  final PointRuleService pointRuleService;
+  final PointRecordService pointRecordService;
+
+  const _LeadRecordPointsSheet({
+    required this.userUid,
+    required this.userEmail,
+    required this.pointRuleService,
+    required this.pointRecordService,
+  });
+
+  @override
+  State<_LeadRecordPointsSheet> createState() => _LeadRecordPointsSheetState();
+}
+
+class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
+  final TextEditingController _qtyCtrl = TextEditingController(text: '1');
+  final TextEditingController _noteCtrl = TextEditingController();
+  String? _selectedClass;
+  PointRuleModel? _selectedRule;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _qtyCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: StreamBuilder<QuerySnapshot>(
+            stream:
+                FirebaseFirestore.instance.collection('classes').snapshots(),
+            builder: (context, classesSnap) {
+              final classDocs = classesSnap.data?.docs ?? [];
+              final classNames = classDocs
+                  .map((d) =>
+                      (d.data() as Map<String, dynamic>)['className'] as String? ??
+                      d.id)
+                  .toList();
+              classNames.sort();
+
+              if (classNames.isNotEmpty && _selectedClass == null) {
+                _selectedClass = classNames.first;
+              }
+
+              return StreamBuilder<List<PointRuleModel>>(
+                stream: widget.pointRuleService
+                    .getPointRulesStream(onlyActive: true),
+                builder: (context, rulesSnap) {
+                  final rules = rulesSnap.data ?? [];
+
+                  if (rules.isNotEmpty && _selectedRule == null) {
+                    _selectedRule = rules.first;
+                  }
+
+                  final rule = _selectedRule;
+                  final double currentQty =
+                      double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
+                  final int estimatedPoints = rule != null
+                      ? (currentQty * rule.pointsPerUnit).round()
+                      : 0;
+
+                  return SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.stars_rounded,
+                                    color: AppColors.primary, size: 24),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Tích Điểm Toàn Trường',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Chọn lớp học được cộng điểm
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedClass,
+                          decoration: const InputDecoration(
+                            labelText: 'Chọn Lớp Được Tích Điểm *',
+                            prefixIcon: Icon(Icons.school_rounded),
+                          ),
+                          items: classNames.map((c) {
+                            return DropdownMenuItem<String>(
+                              value: c,
+                              child: Text('Lớp $c'),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _selectedClass = val);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Chọn thể loại thu gom
+                        if (rules.isEmpty)
+                          const Text(
+                            'Chưa có thể loại thu gom nào được cấu hình.',
+                            style: TextStyle(color: AppColors.error),
+                          )
+                        else ...[
+                          const Text(
+                            'Chọn thể loại thu gom:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: rules.map((r) {
+                              final isSelected = r.id == rule?.id;
+                              final isBattery =
+                                  r.name.toLowerCase().contains('pin');
+                              final chipColor = isBattery
+                                  ? AppColors.warning
+                                  : AppColors.primary;
+
+                              return ChoiceChip(
+                                selected: isSelected,
+                                avatar: Icon(
+                                  r.iconData,
+                                  size: 18,
+                                  color: isSelected ? Colors.white : chipColor,
+                                ),
+                                label: Text(
+                                    '${r.name} (${r.unit}) • +${r.pointsPerUnit}đ'),
+                                selectedColor: chipColor,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                                onSelected: (_) {
+                                  setState(() => _selectedRule = r);
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+
+                        // Nhập số lượng / kg
+                        TextField(
+                          controller: _qtyCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d*')),
+                          ],
+                          decoration: InputDecoration(
+                            labelText:
+                                'Nhập ${rule?.unit ?? 'số lượng'} thu gom *',
+                            suffixText: rule?.unit ?? '',
+                            prefixIcon: const Icon(Icons.scale_rounded),
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Ghi chú
+                        TextField(
+                          controller: _noteCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Ghi chú (Tùy chọn)',
+                            prefixIcon: Icon(Icons.notes_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Tóm tắt quy đổi
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Cộng vào: Lớp ${_selectedClass ?? ''}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                              Text(
+                                '+$estimatedPoints điểm',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: _isLoading ||
+                                  rule == null ||
+                                  _selectedClass == null
+                              ? null
+                              : () async {
+                                  final qty =
+                                      double.tryParse(_qtyCtrl.text.trim()) ??
+                                          0.0;
+                                  if (qty <= 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Vui lòng nhập số lượng hoặc khối lượng > 0!'),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  setState(() => _isLoading = true);
+                                  try {
+                                    await widget.pointRecordService.recordPoints(
+                                      className: _selectedClass!,
+                                      ruleId: rule.id,
+                                      categoryName: rule.name,
+                                      unit: rule.unit,
+                                      quantity: qty,
+                                      pointsPerUnit: rule.pointsPerUnit,
+                                      note: _noteCtrl.text.trim(),
+                                      createdByEmail: widget.userEmail,
+                                      createdByUid: widget.userUid,
+                                    );
+
+                                    if (context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Đã tích +$estimatedPoints điểm cho lớp ${_selectedClass!} thành công!',
+                                          ),
+                                          backgroundColor: AppColors.success,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text('Lỗi: $e'),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                    }
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => _isLoading = false);
+                                    }
+                                  }
+                                },
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.check_circle_outline_rounded),
+                          label: Text(
+                            _isLoading
+                                ? 'Đang Lưu...'
+                                : 'Xác Nhận Tích Điểm',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
       ),
     );
   }

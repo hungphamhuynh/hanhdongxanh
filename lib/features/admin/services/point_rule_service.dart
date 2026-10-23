@@ -9,14 +9,19 @@ class PointRuleService {
 
   /// Lắng nghe danh sách thể loại điểm thưởng theo thời gian thực
   Stream<List<PointRuleModel>> getPointRulesStream({bool onlyActive = false}) {
-    Query query = _rulesCollection.orderBy('createdAt', descending: false);
-    if (onlyActive) {
-      query = query.where('isActive', isEqualTo: true);
-    }
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs
+    return _rulesCollection.snapshots().map((snapshot) {
+      var list = snapshot.docs
           .map((doc) => PointRuleModel.fromFirestore(doc))
           .toList();
+      if (onlyActive) {
+        list = list.where((r) => r.isActive).toList();
+      }
+      list.sort((a, b) {
+        if (a.createdAt == null) return -1;
+        if (b.createdAt == null) return 1;
+        return a.createdAt!.compareTo(b.createdAt!);
+      });
+      return list;
     });
   }
 
