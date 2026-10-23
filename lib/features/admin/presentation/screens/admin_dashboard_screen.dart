@@ -969,6 +969,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       }
 
                       setDialogState(() => isLoading = true);
+                      final user = FirebaseAuth.instance.currentUser;
                       try {
                         await _pointRuleService.createPointRule(
                           name: name,
@@ -976,6 +977,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           pointsPerUnit: points,
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
+                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByUid: user?.uid ?? '',
                         );
 
                         if (context.mounted) {

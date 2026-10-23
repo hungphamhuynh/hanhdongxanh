@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import '../../models/point_rule_history_model.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
@@ -14,6 +16,15 @@ class AdminPointRulesTab extends StatefulWidget {
 }
 
 class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return 'Vừa xong';
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year $hour:$minute';
+  }
   final _pointRuleService = PointRuleService();
   String _searchQuery = '';
 
@@ -153,24 +164,47 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                 ),
               ),
 
-              // Tìm kiếm
+              // Tìm kiếm & Nút Lịch sử thay đổi
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Tìm theo tên thể loại, đơn vị...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () => setState(() => _searchQuery = ''),
-                            )
-                          : null,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Tìm theo tên thể loại, đơn vị...',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () =>
+                                        setState(() => _searchQuery = ''),
+                                  )
+                                : null,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
+                          onChanged: (val) =>
+                              setState(() => _searchQuery = val.trim()),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        icon: const Icon(Icons.history_rounded),
+                        tooltip: 'Lịch sử thay đổi cấu hình điểm',
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primaryMint,
+                          foregroundColor: AppColors.primary,
+                          padding: const EdgeInsets.all(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => _showHistoryModal(context),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -589,6 +623,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
 
                       setDialogState(() => isLoading = true);
                       try {
+                        final user = FirebaseAuth.instance.currentUser;
                         await _pointRuleService.updatePointRule(
                           id: rule.id,
                           name: name,
@@ -596,6 +631,9 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                           pointsPerUnit: points,
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
+                          oldRule: rule,
+                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByUid: user?.uid ?? '',
                         );
 
                         if (context.mounted) {
@@ -662,7 +700,14 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
 
     if (confirm == true) {
       try {
-        await _pointRuleService.deletePointRule(rule.id);
+        final user = FirebaseAuth.instance.currentUser;
+        await _pointRuleService.deletePointRule(
+          rule.id,
+          ruleName: rule.name,
+          oldRule: rule,
+          changedByEmail: user?.email ?? 'admin@nth.com',
+          changedByUid: user?.uid ?? '',
+        );
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -682,5 +727,265 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
         }
       }
     }
+  }
+
+  void _showHistoryModal(BuildContext context, {PointRuleModel? rule}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryMint,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.history_rounded,
+                            color: AppColors.primary,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              rule != null
+                                  ? 'Lịch Sử: ${rule.name}'
+                                  : 'Nhật Ký Cấu Hình Điểm Thưởng',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const Text(
+                              'Chi tiết các lần sửa đổi điểm thưởng & đơn vị',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: StreamBuilder<List<PointRuleHistoryModel>>(
+                  stream: _pointRuleService.getRuleHistoryStream(
+                    ruleId: rule?.id,
+                  ),
+                  builder: (context, historySnap) {
+                    if (historySnap.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final logs = historySnap.data ?? [];
+
+                    if (logs.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.history_toggle_off_rounded,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Chưa có lịch sử thay đổi nào',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Khi có thao tác thêm, sửa hoặc điều chỉnh điểm,\nchi tiết thay đổi sẽ xuất hiện tại đây.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                      itemCount: logs.length,
+                      itemBuilder: (context, index) {
+                        final log = logs[index];
+                        return _buildHistoryCard(log);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard(PointRuleHistoryModel log) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: AppColors.border.withValues(alpha: 0.7)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: log.actionColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(log.actionIcon,
+                              size: 14, color: log.actionColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            log.actionLabel,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: log.actionColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      log.ruleName,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  _formatDateTime(log.createdAt),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: log.diffDetails.map((detail) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary)),
+                        Expanded(
+                          child: Text(
+                            detail,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.person_outline_rounded,
+                    size: 13, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+                Text(
+                  'Thực hiện bởi: ${log.changedByEmail.isNotEmpty ? log.changedByEmail : 'Quản trị viên'}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
