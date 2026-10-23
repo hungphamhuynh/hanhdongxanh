@@ -14,6 +14,7 @@ import '../../../teacher/models/point_record_model.dart';
 import '../../../teacher/models/reward_record_model.dart';
 import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 import '../../../teacher/services/point_record_service.dart';
+import '../widgets/lead_teacher_statistics_tab.dart';
 
 class LeadTeacherDashboardScreen extends StatefulWidget {
   const LeadTeacherDashboardScreen({super.key});
@@ -37,7 +38,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -84,6 +85,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
             const Tab(
               icon: Icon(Icons.leaderboard_rounded, size: 20),
               text: 'Xếp Hạng',
+            ),
+            const Tab(
+              icon: Icon(Icons.insights_rounded, size: 20),
+              text: 'Thống Kê',
             ),
             Tab(
               icon: StreamBuilder<List<RewardRecordModel>>(
@@ -146,10 +151,13 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
             // Tab 1: Bảng Xếp Hạng Lớp Toàn Trường
             _buildLeaderboardTab(),
 
-            // Tab 2: Quản Lý Đơn Đổi Quà Chờ Duyệt
+            // Tab 2: Thống Kê & Báo Cáo (Tháng, Năm, Khối, Tổng Số)
+            const LeadTeacherStatisticsTab(),
+
+            // Tab 3: Quản Lý Đơn Đổi Quà Chờ Duyệt
             _buildPendingOrdersTab(context, user),
 
-            // Tab 3: Nhật Ký Toàn Trường (Tích điểm & Đổi quà)
+            // Tab 4: Nhật Ký Toàn Trường (Tích điểm & Đổi quà)
             _buildSchoolHistoryTab(),
           ],
         ),
