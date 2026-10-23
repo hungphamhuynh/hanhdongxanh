@@ -112,7 +112,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     int totalSchoolSubmissions = 0;
     int totalSchoolPoints = 0;
     double totalSelectedCategoryQty = 0.0;
-    int totalSelectedCategoryPoints = 0;
     int activeClassesForCategory = 0;
 
     for (var doc in recordDocs) {
@@ -152,7 +151,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
           classItem.categoryQuantity += quantity;
           classItem.categoryPoints += totalPts;
           totalSelectedCategoryQty += quantity;
-          totalSelectedCategoryPoints += totalPts;
         }
       }
     }
@@ -259,7 +257,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               totalSchoolPoints: totalSchoolPoints,
               totalSchoolSubmissions: totalSchoolSubmissions,
               totalSelectedCategoryQty: totalSelectedCategoryQty,
-              totalSelectedCategoryPoints: totalSelectedCategoryPoints,
               activeClassesCount: selectedRule == null
                   ? classDataMap.length
                   : activeClassesForCategory,
@@ -401,7 +398,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     required int totalSchoolPoints,
     required int totalSchoolSubmissions,
     required double totalSelectedCategoryQty,
-    required int totalSelectedCategoryPoints,
     required int activeClassesCount,
   }) {
     final isAll = selectedRule == null;
@@ -448,7 +444,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     Text(
                       isAll
                           ? 'Tổng hợp điểm thi đua các lớp'
-                          : 'Tỷ lệ quy đổi: ${selectedRule.ruleRateText}',
+                          : 'Tổng hợp số lượng thu gom các lớp',
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -511,27 +507,18 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                 Expanded(
                   child: _buildStatTile(
                     icon: selectedRule.iconData,
-                    label: 'Đã Thu Gom',
+                    label: 'Tổng Thu Gom',
                     value: totalSelectedCategoryQty % 1 == 0
                         ? '${totalSelectedCategoryQty.toInt()} ${selectedRule.unit}'
                         : '${totalSelectedCategoryQty.toStringAsFixed(1)} ${selectedRule.unit}',
                     iconColor: Colors.amberAccent,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildStatTile(
-                    icon: Icons.stars_rounded,
-                    label: 'Điểm Đã Tích',
-                    value: '+$totalSelectedCategoryPoints đ',
-                    iconColor: Colors.lightGreenAccent,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatTile(
-                    icon: Icons.group_rounded,
-                    label: 'Lớp Đã Nộp',
+                    icon: Icons.school_rounded,
+                    label: 'Số Lớp Đã Nộp',
                     value: '$activeClassesCount lớp',
                     iconColor: Colors.cyanAccent,
                   ),
@@ -667,9 +654,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
           ),
         ),
         subtitle: Text(
-          isAll
-              ? 'Khối ${item.grade} • ${item.submissionCount} đợt nộp'
-              : 'Đã gom: ${item.categoryQuantity % 1 == 0 ? item.categoryQuantity.toInt() : item.categoryQuantity.toStringAsFixed(1)} ${selectedRule.unit} • +${item.categoryPoints} đ',
+          'Khối ${item.grade} • ${item.submissionCount} đợt nộp',
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         trailing: Container(
