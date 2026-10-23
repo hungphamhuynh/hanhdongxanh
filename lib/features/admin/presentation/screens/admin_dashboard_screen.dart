@@ -954,4 +954,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
     );
   }
+
+  // ignore: unused_element
+  Widget _buildIconChip(
+    String iconKey,
+    String label,
+    IconData iconData,
+    String currentSelected,
+    void Function(String) onSelect,
+  ) {
+    return const SizedBox.shrink();
+  }
 }
