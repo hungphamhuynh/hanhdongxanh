@@ -858,29 +858,53 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 14),
 
                 // 2. Đơn vị tính (QUÁN TRIỆT - CHỈ CHỌN SỐ LƯỢNG HOẶC KG)
-                // 2. Đơn vị tính dạng Select (Dropdown)
-                DropdownButtonFormField<String>(
-                  initialValue: selectedUnit,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Đơn vị tính *',
-                    prefixIcon: Icon(Icons.straighten_rounded),
+                const Text(
+                  'Đơn vị tính (bắt buộc):',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
                   ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Số lượng',
-                      child: Text('Số lượng (cái, lon, chai, viên, cây...)'),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(child: Text('Số lượng')),
+                        selected: selectedUnit == 'Số lượng',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedUnit == 'Số lượng'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedUnit == 'Số lượng'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedUnit = 'Số lượng'),
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: 'Kg',
-                      child: Text('Kilogram (Kg)'),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Center(child: Text('Kg')),
+                        selected: selectedUnit == 'Kg',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedUnit == 'Kg'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedUnit == 'Kg'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedUnit = 'Kg'),
+                      ),
                     ),
                   ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedUnit = val);
-                    }
-                  },
                 ),
                 const SizedBox(height: 14),
 
