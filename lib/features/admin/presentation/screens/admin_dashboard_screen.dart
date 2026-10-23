@@ -711,7 +711,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _showAddPointRuleDialog(BuildContext context) {
     final nameCtrl = TextEditingController();
     String selectedUnit = 'Số lượng';
-    final pointsCtrl = TextEditingController(text: '2');
+    final pointsCtrl = TextEditingController(text: '1');
     final descCtrl = TextEditingController();
     String selectedIcon = 'bottle';
     bool isLoading = false;
@@ -745,14 +745,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     if (lower.contains('pin') && selectedIcon != 'battery') {
                       setDialogState(() {
                         selectedIcon = 'battery';
-                        if (pointsCtrl.text == '2') pointsCtrl.text = '5';
                       });
                     } else if ((lower.contains('chai') ||
                             lower.contains('lo')) &&
                         selectedIcon != 'bottle') {
                       setDialogState(() {
                         selectedIcon = 'bottle';
-                        if (pointsCtrl.text == '5') pointsCtrl.text = '2';
                       });
                     }
                   },
@@ -882,7 +880,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     labelText: 'Điểm thưởng trên 1 $selectedUnit *',
-                    hintText: 'Ví dụ: 2, 5, 10...',
+                    hintText: 'Ví dụ: 1, 2, 5...',
                     prefixIcon: const Icon(Icons.add_circle_outline),
                   ),
                 ),

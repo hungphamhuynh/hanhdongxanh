@@ -545,7 +545,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     labelText: 'Điểm thưởng trên 1 $selectedUnit *',
-                    hintText: 'Ví dụ: 2, 5...',
+                    hintText: 'Ví dụ: 1, 2, 5...',
                     prefixIcon: const Icon(Icons.add_circle_outline),
                   ),
                 ),
