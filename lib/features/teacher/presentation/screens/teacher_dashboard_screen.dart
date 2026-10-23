@@ -116,38 +116,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         return Scaffold(
           backgroundColor: AppColors.surfaceVariant,
           appBar: AppBar(
-            title: Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primaryLight),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.school_rounded,
-                          size: 16, color: AppColors.primary),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Lớp $assignedClass',
-                        style: const TextStyle(
-                          color: AppColors.primaryDark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Đổi Phế Liệu',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
+            centerTitle: true,
+            title: Text(
+              _historyTabIndex == 0
+                  ? 'Lớp $assignedClass • Thu Gom Phế Liệu'
+                  : 'Lớp $assignedClass • Đơn Đổi Quà',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             actions: [
               IconButton(
@@ -352,6 +326,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         stream: _pointRecordService
                             .getRecordsByClassStream(assignedClass),
                         builder: (context, recordsSnap) {
+                          if (recordsSnap.hasError) {
+                            return SliverFillRemaining(
+                              child: Center(
+                                child: Text(
+                                  'Lỗi tải nhật ký: ${recordsSnap.error}',
+                                  style: const TextStyle(color: AppColors.error),
+                                ),
+                              ),
+                            );
+                          }
+
                           if (recordsSnap.connectionState ==
                               ConnectionState.waiting) {
                             return const SliverFillRemaining(
@@ -442,6 +427,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         stream: _rewardService
                             .getRewardRecordsByClassStream(assignedClass),
                         builder: (context, ordersSnap) {
+                          if (ordersSnap.hasError) {
+                            return SliverFillRemaining(
+                              child: Center(
+                                child: Text(
+                                  'Lỗi tải đơn đổi quà: ${ordersSnap.error}',
+                                  style: const TextStyle(color: AppColors.error),
+                                ),
+                              ),
+                            );
+                          }
+
                           if (ordersSnap.connectionState ==
                               ConnectionState.waiting) {
                             return const SliverFillRemaining(

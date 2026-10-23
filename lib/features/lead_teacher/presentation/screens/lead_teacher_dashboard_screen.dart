@@ -14,6 +14,7 @@ import '../../../teacher/models/point_record_model.dart';
 import '../../../teacher/models/reward_record_model.dart';
 import '../../../teacher/services/point_record_service.dart';
 import '../widgets/lead_teacher_leaderboard_tab.dart';
+import '../widgets/lead_teacher_pending_orders_tab.dart';
 import '../widgets/lead_teacher_statistics_tab.dart';
 
 class LeadTeacherDashboardScreen extends StatefulWidget {
@@ -38,6 +39,21 @@ class _LeadTeacherDashboardScreenState
   late final Stream<List<RewardRecordModel>> _pendingOrdersStream;
   late final Stream<QuerySnapshot> _pointRecordsStream;
   late final Stream<List<RewardRecordModel>> _allRewardRecordsStream;
+
+  String get _appBarTitle {
+    switch (_currentTabIndex) {
+      case 0:
+        return 'Thống Kê Thu Gom';
+      case 1:
+        return 'Bảng Xếp Hạng';
+      case 2:
+        return 'Duyệt Đơn Đổi Quà';
+      case 3:
+        return 'Nhật Ký Toàn Trường';
+      default:
+        return 'Tổng Phụ Trách';
+    }
+  }
 
   @override
   void initState() {
@@ -66,19 +82,10 @@ class _LeadTeacherDashboardScreenState
     return Scaffold(
       backgroundColor: AppColors.surfaceVariant,
       appBar: AppBar(
-        title: const Row(
-          children: [
-            Icon(
-              Icons.workspace_premium_rounded,
-              color: AppColors.roleLeadTeacher,
-              size: 24,
-            ),
-            SizedBox(width: 8),
-            Text(
-              'Trang Tổng Phụ Trách',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ],
+        centerTitle: true,
+        title: Text(
+          _appBarTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
           IconButton(
@@ -176,400 +183,11 @@ class _LeadTeacherDashboardScreenState
       case 1:
         return const LeadTeacherLeaderboardTab();
       case 2:
-        return _buildPendingOrdersTab(context, user);
+        return LeadTeacherPendingOrdersTab(user: user);
       case 3:
         return _buildSchoolHistoryTab();
       default:
         return const LeadTeacherStatisticsTab();
-    }
-  }
-
-  Widget _buildPendingOrdersTab(BuildContext context, User? user) {
-    return StreamBuilder<List<RewardRecordModel>>(
-      stream: _pendingOrdersStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final orders = snapshot.data ?? [];
-        if (orders.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      color: AppColors.successLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.task_alt_rounded,
-                      size: 48,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Không có đơn đổi quà nào đang chờ duyệt',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Khi các giáo viên gửi yêu cầu đổi quà cho lớp,\nphiếu đổi sẽ xuất hiện tại đây để bạn duyệt & trao thưởng.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            final order = orders[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              elevation: 0.8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryMint,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'Lớp ${order.className}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.warningLight,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.hourglass_top_rounded,
-                                    size: 13,
-                                    color: AppColors.warning,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    order.statusLabel,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.warning,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          _formatDateTime(order.createdAt),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFC2410C)
-                                .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            order.iconData,
-                            color: const Color(0xFFC2410C),
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                order.rewardName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                'Số lượng: ${order.quantity} ${order.unit} (${order.pointsCost}đ/${order.unit})',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '-${order.totalPoints}đ',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFC2410C),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (order.note.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Ghi chú: ${order.note}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 6),
-                    Text(
-                      'Người gửi: ${order.createdByEmail}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.error,
-                              side: const BorderSide(color: AppColors.error),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: () =>
-                                _confirmRejectOrder(context, order, user),
-                            child: const Text('Từ Chối'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 2,
-                          child: FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            onPressed: () =>
-                                _confirmApproveOrder(context, order, user),
-                            icon: const Icon(
-                              Icons.check_circle_outline_rounded,
-                              size: 18,
-                            ),
-                            label: const Text('Duyệt & Trao Quà'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _confirmApproveOrder(
-    BuildContext context,
-    RewardRecordModel order,
-    User? user,
-  ) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận duyệt & trao quà'),
-        content: Text(
-          'Duyệt phát "${order.quantity} ${order.unit} ${order.rewardName}" cho lớp ${order.className}?\n\n'
-          'Hệ thống sẽ chính thức trừ ${order.totalPoints} điểm thi đua của lớp.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xác Nhận & Trừ Điểm'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      try {
-        await _rewardService.approveRewardOrder(
-          orderId: order.id,
-          approvedByEmail: user?.email ?? 'tongphutrach@nth.com',
-          approvedByUid: user?.uid ?? '',
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Đã duyệt và trừ ${order.totalPoints} điểm của lớp ${order.className} thành công!',
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi: $e'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _confirmRejectOrder(
-    BuildContext context,
-    RewardRecordModel order,
-    User? user,
-  ) async {
-    final reasonCtrl = TextEditingController(text: 'Kho tạm hết quà');
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Từ chối đơn đổi quà'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Từ chối đơn đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?',
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Lý do từ chối *',
-                hintText: 'Ví dụ: Tạm hết hàng trong kho, cần gom thêm...',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xác Nhận Từ Chối'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      try {
-        await _rewardService.rejectRewardOrder(
-          orderId: order.id,
-          rejectionReason: reasonCtrl.text.trim(),
-          rejectedByEmail: user?.email ?? 'tongphutrach@nth.com',
-          rejectedByUid: user?.uid ?? '',
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Đã từ chối đơn đổi quà thành công!'),
-              backgroundColor: AppColors.textSecondary,
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi: $e'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
     }
   }
 
@@ -676,6 +294,15 @@ class _LeadTeacherDashboardScreenState
               ? StreamBuilder<QuerySnapshot>(
                   stream: _pointRecordsStream,
                   builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Lỗi nạp nhật ký thu gom: ${snapshot.error}',
+                          style: const TextStyle(color: AppColors.error),
+                        ),
+                      );
+                    }
+
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
@@ -686,9 +313,12 @@ class _LeadTeacherDashboardScreenState
                         .toList();
 
                     records.sort((a, b) {
-                      if (a.createdAt == null) return -1;
-                      if (b.createdAt == null) return 1;
-                      return b.createdAt!.compareTo(a.createdAt!);
+                      final aTime = a.createdAt;
+                      final bTime = b.createdAt;
+                      if (aTime == null && bTime == null) return 0;
+                      if (aTime == null) return 1;
+                      if (bTime == null) return -1;
+                      return bTime.compareTo(aTime);
                     });
 
                     if (records.isEmpty) {
@@ -799,6 +429,15 @@ class _LeadTeacherDashboardScreenState
               : StreamBuilder<List<RewardRecordModel>>(
                   stream: _allRewardRecordsStream,
                   builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Lỗi nạp nhật ký đổi quà: ${snapshot.error}',
+                          style: const TextStyle(color: AppColors.error),
+                        ),
+                      );
+                    }
+
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }

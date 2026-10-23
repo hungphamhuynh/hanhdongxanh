@@ -35,16 +35,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String get _appBarTitle {
     switch (_currentTabIndex) {
       case 1:
-        return 'Quản Lý Tài Khoản';
+        return 'Quản Lý Người Dùng';
       case 2:
         return 'Quản Lý Lớp Học';
       case 3:
-        return 'Cấu Hình Điểm Thưởng';
+        return 'Quy Tắc Tích Điểm';
       case 4:
-        return 'Cấu Hình Đổi Điểm';
+        return 'Danh Mục Quà Tặng';
       case 0:
       default:
-        return 'Trang Chủ';
+        return 'Tổng Quan Hệ Thống';
     }
   }
 
@@ -89,7 +89,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitle),
+        centerTitle: true,
+        title: Text(
+          _appBarTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.account_circle_outlined),
@@ -103,7 +107,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
+            tooltip: 'Đăng xuất',
             onPressed: () => AuthService().signOut(),
           ),
         ],

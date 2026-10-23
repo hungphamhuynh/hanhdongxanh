@@ -37,9 +37,12 @@ class PointRuleService {
           .toList();
       // Sắp xếp lịch sử mới nhất lên đầu
       list.sort((a, b) {
-        if (a.createdAt == null) return -1;
-        if (b.createdAt == null) return 1;
-        return b.createdAt!.compareTo(a.createdAt!);
+        final aTime = a.createdAt;
+        final bTime = b.createdAt;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
       });
       return list;
     });
