@@ -293,71 +293,80 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Chọn Năm (Mỗi mục 1 dòng độc lập full width)
-          DropdownButtonFormField<int>(
-            initialValue: _selectedYear,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Năm',
-              isDense: true,
-              prefixIcon: Icon(Icons.calendar_today_rounded, size: 18),
-              prefixIconConstraints:
-                  BoxConstraints(minWidth: 36, minHeight: 36),
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-            items: availableYears.map((y) {
-              return DropdownMenuItem<int>(
-                value: y,
-                child: Text(
-                  'Năm $y',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedYear = val);
-            },
-          ),
-          const SizedBox(height: 10),
-
-          // 2. Chọn Tháng (Full width)
-          DropdownButtonFormField<int>(
-            initialValue: _selectedMonth,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Tháng',
-              isDense: true,
-              prefixIcon: Icon(Icons.date_range_rounded, size: 18),
-              prefixIconConstraints:
-                  BoxConstraints(minWidth: 36, minHeight: 36),
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-            items: [
-              const DropdownMenuItem<int>(
-                value: 0,
-                child: Text(
-                  'Cả năm (Tất cả các tháng)',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+          // 1. Năm & Tháng chung 1 dòng
+          Row(
+            children: [
+              // Chọn Năm
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: _selectedYear,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Năm',
+                    isDense: true,
+                    prefixIcon: Icon(Icons.calendar_today_rounded, size: 18),
+                    prefixIconConstraints:
+                        BoxConstraints(minWidth: 36, minHeight: 36),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   ),
+                  items: availableYears.map((y) {
+                    return DropdownMenuItem<int>(
+                      value: y,
+                      child: Text(
+                        'Năm $y',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedYear = val);
+                  },
                 ),
               ),
-              ...List.generate(12, (i) => i + 1).map((m) {
-                return DropdownMenuItem<int>(
-                  value: m,
-                  child: Text(
-                    'Tháng $m',
-                    style: const TextStyle(fontSize: 14),
+              const SizedBox(width: 10),
+
+              // Chọn Tháng
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  initialValue: _selectedMonth,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Tháng',
+                    isDense: true,
+                    prefixIcon: Icon(Icons.date_range_rounded, size: 18),
+                    prefixIconConstraints:
+                        BoxConstraints(minWidth: 36, minHeight: 36),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   ),
-                );
-              }),
+                  items: [
+                    const DropdownMenuItem<int>(
+                      value: 0,
+                      child: Text(
+                        'Cả năm',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ...List.generate(12, (i) => i + 1).map((m) {
+                      return DropdownMenuItem<int>(
+                        value: m,
+                        child: Text(
+                          'Tháng $m',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedMonth = val);
+                  },
+                ),
+              ),
             ],
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedMonth = val);
-            },
           ),
           const SizedBox(height: 10),
 
