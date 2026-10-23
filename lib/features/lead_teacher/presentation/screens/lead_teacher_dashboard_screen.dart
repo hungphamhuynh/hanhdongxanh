@@ -32,7 +32,7 @@ class _LeadTeacherDashboardScreenState
   final RewardService _rewardService = RewardService();
 
   int _currentTabIndex =
-      0; // 0: Xếp hạng, 1: Thống kê, 2: Đơn đổi quà, 3: Nhật ký
+      0; // 0: Thống kê, 1: Xếp hạng, 2: Đơn đổi quà, 3: Nhật ký
   int _selectedGradeFilter = 0; // 0: Tất cả, 6: Khối 6, 7: Khối 7...
   int _schoolHistoryTabIndex = 0; // 0: Thu gom (+), 1: Đổi quà (-)
 
@@ -109,14 +109,14 @@ class _LeadTeacherDashboardScreenState
             setState(() => _currentTabIndex = index),
         destinations: [
           const NavigationDestination(
-            icon: Icon(Icons.leaderboard_outlined),
-            selectedIcon: Icon(Icons.leaderboard_rounded),
-            label: 'Xếp Hạng',
-          ),
-          const NavigationDestination(
             icon: Icon(Icons.insights_outlined),
             selectedIcon: Icon(Icons.insights_rounded),
             label: 'Thống Kê',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.leaderboard_outlined),
+            selectedIcon: Icon(Icons.leaderboard_rounded),
+            label: 'Xếp Hạng',
           ),
           NavigationDestination(
             icon: StreamBuilder<List<RewardRecordModel>>(
@@ -177,15 +177,15 @@ class _LeadTeacherDashboardScreenState
   Widget _buildCurrentTabBody(BuildContext context, User? user) {
     switch (_currentTabIndex) {
       case 0:
-        return _buildLeaderboardTab();
-      case 1:
         return const LeadTeacherStatisticsTab();
+      case 1:
+        return _buildLeaderboardTab();
       case 2:
         return _buildPendingOrdersTab(context, user);
       case 3:
         return _buildSchoolHistoryTab();
       default:
-        return _buildLeaderboardTab();
+        return const LeadTeacherStatisticsTab();
     }
   }
 
