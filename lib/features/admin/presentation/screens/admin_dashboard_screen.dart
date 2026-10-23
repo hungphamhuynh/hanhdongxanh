@@ -709,11 +709,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _showAddPointRuleDialog(BuildContext context) {
-    String selectedCategory = 'Vỏ chai';
+    final nameCtrl = TextEditingController();
     String selectedUnit = 'Số lượng';
     final pointsCtrl = TextEditingController(text: '2');
-    final descCtrl =
-        TextEditingController(text: 'Thu gom vỏ chai nhựa tái chế');
+    final descCtrl = TextEditingController();
+    String selectedIcon = 'bottle';
     bool isLoading = false;
 
     showDialog(
@@ -732,89 +732,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Thể loại thu gom:',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary,
+                // 1. Tên thể loại (TỰ VIẾT)
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên thể loại *',
+                    hintText: 'Ví dụ: Vỏ chai nhựa, Pin con thỏ...',
+                    prefixIcon: Icon(Icons.edit_note_rounded),
                   ),
+                  onChanged: (val) {
+                    final lower = val.toLowerCase();
+                    if (lower.contains('pin') && selectedIcon != 'battery') {
+                      setDialogState(() {
+                        selectedIcon = 'battery';
+                        if (pointsCtrl.text == '2') pointsCtrl.text = '5';
+                      });
+                    } else if ((lower.contains('chai') ||
+                            lower.contains('lo')) &&
+                        selectedIcon != 'bottle') {
+                      setDialogState(() {
+                        selectedIcon = 'bottle';
+                        if (pointsCtrl.text == '5') pointsCtrl.text = '2';
+                      });
+                    }
+                  },
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          Icons.local_drink_rounded,
-                          size: 18,
-                          color: selectedCategory == 'Vỏ chai'
-                              ? Colors.white
-                              : AppColors.primary,
-                        ),
-                        label: const Center(child: Text('Vỏ chai')),
-                        selected: selectedCategory == 'Vỏ chai',
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: selectedCategory == 'Vỏ chai'
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: selectedCategory == 'Vỏ chai'
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        onSelected: (_) => setDialogState(() {
-                          selectedCategory = 'Vỏ chai';
-                          if (descCtrl.text.isEmpty ||
-                              descCtrl.text.contains('pin') ||
-                              descCtrl.text.contains('Pin')) {
-                            descCtrl.text = 'Thu gom vỏ chai nhựa tái chế';
-                          }
-                          if (pointsCtrl.text == '5') {
-                            pointsCtrl.text = '2';
-                          }
-                        }),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          Icons.battery_charging_full_rounded,
-                          size: 18,
-                          color: selectedCategory == 'Pin'
-                              ? Colors.white
-                              : AppColors.primary,
-                        ),
-                        label: const Center(child: Text('Pin')),
-                        selected: selectedCategory == 'Pin',
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: selectedCategory == 'Pin'
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: selectedCategory == 'Pin'
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        onSelected: (_) => setDialogState(() {
-                          selectedCategory = 'Pin';
-                          if (descCtrl.text.isEmpty ||
-                              descCtrl.text.contains('chai') ||
-                              descCtrl.text.contains('Chai')) {
-                            descCtrl.text = 'Thu gom pin đã qua sử dụng';
-                          }
-                          if (pointsCtrl.text == '2') {
-                            pointsCtrl.text = '5';
-                          }
-                        }),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // 2. Đơn vị tính (QUÁN TRIỆT - CHỈ CHỌN SỐ LƯỢNG HOẶC KG)
                 const Text(
-                  'Đơn vị tính:',
+                  'Đơn vị tính (bắt buộc):',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -861,7 +808,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // 3. Biểu tượng (CHỈ 2 BIỂU TƯỢNG CHUẨN)
+                const Text(
+                  'Biểu tượng:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          Icons.local_drink_rounded,
+                          size: 18,
+                          color: selectedIcon == 'bottle'
+                              ? Colors.white
+                              : AppColors.primary,
+                        ),
+                        label: const Center(child: Text('Vỏ chai')),
+                        selected: selectedIcon == 'bottle',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedIcon == 'bottle'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedIcon == 'bottle'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedIcon = 'bottle'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          Icons.battery_charging_full_rounded,
+                          size: 18,
+                          color: selectedIcon == 'battery'
+                              ? Colors.white
+                              : AppColors.warning,
+                        ),
+                        label: const Center(child: Text('Pin')),
+                        selected: selectedIcon == 'battery',
+                        selectedColor: AppColors.warning,
+                        labelStyle: TextStyle(
+                          color: selectedIcon == 'battery'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedIcon == 'battery'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedIcon = 'battery'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // 4. Điểm thưởng trên 1 đơn vị
                 TextField(
                   controller: pointsCtrl,
                   keyboardType: TextInputType.number,
@@ -873,11 +887,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // 5. Mô tả quy đổi
                 TextField(
                   controller: descCtrl,
                   maxLines: 2,
                   decoration: const InputDecoration(
-                    labelText: 'Mô tả quy đổi',
+                    labelText: 'Mô tả quy đổi (Tùy chọn)',
                     hintText: 'Ghi chú quy cách thu gom, tính điểm...',
                   ),
                 ),
@@ -894,7 +910,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               onPressed: isLoading
                   ? null
                   : () async {
+                      final name = nameCtrl.text.trim();
                       final points = int.tryParse(pointsCtrl.text.trim()) ?? 0;
+
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng nhập tên thể loại!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
 
                       if (points <= 0) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -908,14 +935,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
                       setDialogState(() => isLoading = true);
                       try {
-                        final icon =
-                            selectedCategory == 'Pin' ? 'battery' : 'bottle';
                         await _pointRuleService.createPointRule(
-                          name: selectedCategory,
+                          name: name,
                           unit: selectedUnit,
                           pointsPerUnit: points,
                           description: descCtrl.text.trim(),
-                          iconName: icon,
+                          iconName: selectedIcon,
                         );
 
                         if (context.mounted) {
@@ -923,7 +948,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  'Đã thêm thể loại "$selectedCategory" (+ $points điểm/$selectedUnit) thành công!'),
+                                  'Đã thêm thể loại "$name" (+ $points điểm/$selectedUnit) thành công!'),
                               backgroundColor: AppColors.success,
                             ),
                           );
@@ -955,7 +980,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // ignore: unused_element
+    // ignore: unused_element
   Widget _buildIconChip(
     String iconKey,
     String label,

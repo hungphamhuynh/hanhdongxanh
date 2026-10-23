@@ -387,12 +387,12 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
   }
 
   void _showEditRuleDialog(BuildContext context, PointRuleModel rule) {
-    String selectedCategory =
-        rule.name.toLowerCase().contains('pin') ? 'Pin' : 'Vỏ chai';
+    final nameCtrl = TextEditingController(text: rule.name);
     String selectedUnit =
         rule.unit.toLowerCase().contains('kg') ? 'Kg' : 'Số lượng';
     final pointsCtrl = TextEditingController(text: '${rule.pointsPerUnit}');
     final descCtrl = TextEditingController(text: rule.description);
+    String selectedIcon = rule.iconName;
     bool isLoading = false;
 
     showDialog(
@@ -411,71 +411,20 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Thể loại thu gom:',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary,
+                // 1. Tên thể loại (TỰ VIẾT)
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên thể loại *',
+                    hintText: 'Ví dụ: Vỏ chai nhựa, Pin con thỏ...',
+                    prefixIcon: Icon(Icons.edit_note_rounded),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          Icons.local_drink_rounded,
-                          size: 18,
-                          color: selectedCategory == 'Vỏ chai'
-                              ? Colors.white
-                              : AppColors.primary,
-                        ),
-                        label: const Center(child: Text('Vỏ chai')),
-                        selected: selectedCategory == 'Vỏ chai',
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: selectedCategory == 'Vỏ chai'
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: selectedCategory == 'Vỏ chai'
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        onSelected: (_) =>
-                            setDialogState(() => selectedCategory = 'Vỏ chai'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          Icons.battery_charging_full_rounded,
-                          size: 18,
-                          color: selectedCategory == 'Pin'
-                              ? Colors.white
-                              : AppColors.primary,
-                        ),
-                        label: const Center(child: Text('Pin')),
-                        selected: selectedCategory == 'Pin',
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: selectedCategory == 'Pin'
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: selectedCategory == 'Pin'
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        onSelected: (_) =>
-                            setDialogState(() => selectedCategory = 'Pin'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // 2. Đơn vị tính (QUÁN TRIỆT - CHỈ CHỌN SỐ LƯỢNG HOẶC KG)
                 const Text(
-                  'Đơn vị tính:',
+                  'Đơn vị tính (bắt buộc):',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -522,7 +471,74 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // 3. Biểu tượng (CHỈ 2 BIỂU TƯỢNG CHUẨN)
+                const Text(
+                  'Biểu tượng:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          Icons.local_drink_rounded,
+                          size: 18,
+                          color: selectedIcon == 'bottle'
+                              ? Colors.white
+                              : AppColors.primary,
+                        ),
+                        label: const Center(child: Text('Vỏ chai')),
+                        selected: selectedIcon == 'bottle',
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selectedIcon == 'bottle'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedIcon == 'bottle'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedIcon = 'bottle'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        avatar: Icon(
+                          Icons.battery_charging_full_rounded,
+                          size: 18,
+                          color: selectedIcon == 'battery'
+                              ? Colors.white
+                              : AppColors.warning,
+                        ),
+                        label: const Center(child: Text('Pin')),
+                        selected: selectedIcon == 'battery',
+                        selectedColor: AppColors.warning,
+                        labelStyle: TextStyle(
+                          color: selectedIcon == 'battery'
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontWeight: selectedIcon == 'battery'
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedIcon = 'battery'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // 4. Điểm thưởng trên 1 đơn vị
                 TextField(
                   controller: pointsCtrl,
                   keyboardType: TextInputType.number,
@@ -534,11 +550,13 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // 5. Mô tả quy đổi
                 TextField(
                   controller: descCtrl,
                   maxLines: 2,
                   decoration: const InputDecoration(
-                    labelText: 'Mô tả quy đổi',
+                    labelText: 'Mô tả quy đổi (Tùy chọn)',
                     hintText: 'Ghi chú thêm...',
                   ),
                 ),
@@ -555,7 +573,19 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
               onPressed: isLoading
                   ? null
                   : () async {
+                      final name = nameCtrl.text.trim();
                       final points = int.tryParse(pointsCtrl.text.trim()) ?? 0;
+
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng nhập tên thể loại!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+
                       if (points <= 0) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -568,15 +598,13 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
 
                       setDialogState(() => isLoading = true);
                       try {
-                        final icon =
-                            selectedCategory == 'Pin' ? 'battery' : 'bottle';
                         await _pointRuleService.updatePointRule(
                           id: rule.id,
-                          name: selectedCategory,
+                          name: name,
                           unit: selectedUnit,
                           pointsPerUnit: points,
                           description: descCtrl.text.trim(),
-                          iconName: icon,
+                          iconName: selectedIcon,
                         );
 
                         if (context.mounted) {
@@ -584,7 +612,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  'Đã cập nhật $selectedCategory (+ $points điểm/$selectedUnit) thành công!'),
+                                  'Đã cập nhật $name (+ $points điểm/$selectedUnit) thành công!'),
                               backgroundColor: AppColors.success,
                             ),
                           );
@@ -618,7 +646,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
     );
   }
 
-  Future<void> _confirmDeleteRule(
+    Future<void> _confirmDeleteRule(
       BuildContext context, PointRuleModel rule) async {
     final confirm = await showDialog<bool>(
       context: context,

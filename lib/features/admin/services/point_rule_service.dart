@@ -39,7 +39,10 @@ class PointRuleService {
     }
 
     final cleanUnit = unit.toLowerCase().contains('kg') ? 'Kg' : 'Số lượng';
-    final cleanIcon = cleanName.toLowerCase().contains('pin') ? 'battery' : 'bottle';
+    final cleanIcon =
+        iconName == 'battery' || cleanName.toLowerCase().contains('pin')
+            ? 'battery'
+            : 'bottle';
 
     await _rulesCollection.add({
       'name': cleanName,
@@ -69,7 +72,10 @@ class PointRuleService {
     }
 
     final cleanUnit = unit.toLowerCase().contains('kg') ? 'Kg' : 'Số lượng';
-    final cleanIcon = cleanName.toLowerCase().contains('pin') ? 'battery' : 'bottle';
+    final cleanIcon =
+        iconName == 'battery' || cleanName.toLowerCase().contains('pin')
+            ? 'battery'
+            : 'bottle';
 
     await _rulesCollection.doc(id).update({
       'name': cleanName,
