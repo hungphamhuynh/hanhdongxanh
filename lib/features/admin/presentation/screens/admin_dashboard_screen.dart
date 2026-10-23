@@ -808,9 +808,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. Biểu tượng (CHỈ 2 BIỂU TƯỢNG CHUẨN)
+                // 3. Biểu tượng (Icon picker nhỏ gọn không cần tên)
                 const Text(
-                  'Biểu tượng:',
+                  'Biểu tượng nhận diện:',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -818,58 +818,54 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Expanded(
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          Icons.local_drink_rounded,
-                          size: 18,
-                          color: selectedIcon == 'bottle'
-                              ? Colors.white
-                              : AppColors.primary,
+                    ('bottle', Icons.local_drink_rounded),
+                    ('battery', Icons.battery_charging_full_rounded),
+                    ('can', Icons.recycling_rounded),
+                    ('paper', Icons.newspaper_rounded),
+                    ('box', Icons.inventory_2_rounded),
+                    ('tree', Icons.park_rounded),
+                    ('clean', Icons.cleaning_services_rounded),
+                    ('volunteer', Icons.volunteer_activism_rounded),
+                    ('star', Icons.stars_rounded),
+                    ('eco', Icons.eco_rounded),
+                  ].map((item) {
+                    final key = item.$1;
+                    final icon = item.$2;
+                    final isSelected = selectedIcon == key;
+
+                    return InkWell(
+                      onTap: () => setDialogState(() => selectedIcon = key),
+                      borderRadius: BorderRadius.circular(10),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.border,
+                            width: isSelected ? 2 : 1,
+                          ),
                         ),
-                        label: const Center(child: Text('Vỏ chai')),
-                        selected: selectedIcon == 'bottle',
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: selectedIcon == 'bottle'
+                        child: Icon(
+                          icon,
+                          size: 20,
+                          color: isSelected
                               ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: selectedIcon == 'bottle'
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                              : AppColors.textSecondary,
                         ),
-                        onSelected: (_) =>
-                            setDialogState(() => selectedIcon = 'bottle'),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ChoiceChip(
-                        avatar: Icon(
-                          Icons.battery_charging_full_rounded,
-                          size: 18,
-                          color: selectedIcon == 'battery'
-                              ? Colors.white
-                              : AppColors.warning,
-                        ),
-                        label: const Center(child: Text('Pin')),
-                        selected: selectedIcon == 'battery',
-                        selectedColor: AppColors.warning,
-                        labelStyle: TextStyle(
-                          color: selectedIcon == 'battery'
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontWeight: selectedIcon == 'battery'
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        onSelected: (_) =>
-                            setDialogState(() => selectedIcon = 'battery'),
-                      ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 14),
 

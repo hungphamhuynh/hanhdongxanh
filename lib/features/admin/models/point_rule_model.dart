@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 
 class PointRuleModel {
   final String id;
-  final String name; // "Vỏ chai" hoặc "Pin"
+  final String name; // Tên thể loại (tự do)
   final String unit; // "Số lượng" hoặc "Kg"
   final int pointsPerUnit; // Số điểm thưởng trên mỗi đơn vị
   final String description; // Mô tả quy đổi
-  final String iconName; // "bottle" hoặc "battery"
+  final String iconName; // Mã icon
   final bool isActive; // Trạng thái đang áp dụng hay tạm ngừng
 
   const PointRuleModel({
@@ -44,11 +44,33 @@ class PointRuleModel {
     };
   }
 
-  /// Chỉ 2 biểu tượng chuẩn sinh thái: Vỏ chai và Pin
+  /// Trả về IconData tương ứng với mã icon đã chọn
   IconData get iconData {
-    if (name.toLowerCase().contains('pin') || iconName == 'battery') {
-      return Icons.battery_charging_full_rounded;
+    switch (iconName) {
+      case 'battery':
+        return Icons.battery_charging_full_rounded;
+      case 'bottle':
+        return Icons.local_drink_rounded;
+      case 'can':
+        return Icons.recycling_rounded;
+      case 'paper':
+        return Icons.newspaper_rounded;
+      case 'box':
+        return Icons.inventory_2_rounded;
+      case 'tree':
+        return Icons.park_rounded;
+      case 'clean':
+        return Icons.cleaning_services_rounded;
+      case 'volunteer':
+        return Icons.volunteer_activism_rounded;
+      case 'star':
+        return Icons.stars_rounded;
+      case 'eco':
+      default:
+        if (name.toLowerCase().contains('pin')) {
+          return Icons.battery_charging_full_rounded;
+        }
+        return Icons.local_drink_rounded;
     }
-    return Icons.local_drink_rounded;
   }
 }
