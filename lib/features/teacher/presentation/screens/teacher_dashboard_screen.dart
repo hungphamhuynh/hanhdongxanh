@@ -246,19 +246,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           canCount: canCount,
                           paperKg: paperKg,
                           batteryCount: batteryCount,
-                          onTapRecord: () => _showRecordPointsModal(
-                            context: context,
-                            className: assignedClass,
-                            teacherUid: user.uid,
-                            teacherEmail: user.email ?? '',
-                          ),
-                          onTapRedeem: () => _showRewardOrderModal(
-                            context: context,
-                            className: assignedClass,
-                            currentClassPoints: totalPoints,
-                            teacherUid: user.uid,
-                            teacherEmail: user.email ?? '',
-                          ),
                         ),
                       ),
                     ),
@@ -558,8 +545,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required int canCount,
     required double paperKg,
     required int batteryCount,
-    required VoidCallback onTapRecord,
-    required VoidCallback onTapRedeem,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -725,49 +710,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   iconColor: AppColors.warning,
                   label: 'Pin cũ',
                   value: '$batteryCount viên',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primaryDark,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: onTapRecord,
-                  icon: const Icon(Icons.add_task_rounded, size: 18),
-                  label: const Text(
-                    'Tích Điểm',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    side: const BorderSide(color: Colors.white60),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: onTapRedeem,
-                  icon: const Icon(Icons.card_giftcard_rounded, size: 18),
-                  label: const Text(
-                    'Đổi Quà',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
               ),
             ],
