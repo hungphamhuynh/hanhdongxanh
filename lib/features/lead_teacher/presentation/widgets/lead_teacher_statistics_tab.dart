@@ -303,7 +303,7 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
                   },
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 16),
 
               // Chọn Tháng
               Expanded(

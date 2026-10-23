@@ -24,27 +24,34 @@ class LeadTeacherDashboardScreen extends StatefulWidget {
       _LeadTeacherDashboardScreenState();
 }
 
-class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _LeadTeacherDashboardScreenState
+    extends State<LeadTeacherDashboardScreen> {
   final AuthService _authService = AuthService();
   final PointRuleService _pointRuleService = PointRuleService();
   final PointRecordService _pointRecordService = PointRecordService();
   final RewardService _rewardService = RewardService();
 
+  int _currentTabIndex =
+      0; // 0: Xếp hạng, 1: Thống kê, 2: Đơn đổi quà, 3: Nhật ký
   int _selectedGradeFilter = 0; // 0: Tất cả, 6: Khối 6, 7: Khối 7...
   int _schoolHistoryTabIndex = 0; // 0: Thu gom (+), 1: Đổi quà (-)
+
+  late final Stream<QuerySnapshot> _classesStream;
+  late final Stream<List<RewardRecordModel>> _pendingOrdersStream;
+  late final Stream<QuerySnapshot> _pointRecordsStream;
+  late final Stream<List<RewardRecordModel>> _allRewardRecordsStream;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+    _classesStream = FirebaseFirestore.instance
+        .collection('classes')
+        .snapshots();
+    _pendingOrdersStream = _rewardService.getPendingOrdersStream();
+    _pointRecordsStream = FirebaseFirestore.instance
+        .collection('point_records')
+        .snapshots();
+    _allRewardRecordsStream = _rewardService.getAllRewardRecordsStream();
   }
 
   String _formatDateTime(DateTime? dt) {
@@ -66,48 +73,15 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
       appBar: AppBar(
         title: const Row(
           children: [
-            Icon(Icons.workspace_premium_rounded,
-                color: AppColors.roleLeadTeacher, size: 24),
+            Icon(
+              Icons.workspace_premium_rounded,
+              color: AppColors.roleLeadTeacher,
+              size: 24,
+            ),
             SizedBox(width: 8),
             Text(
-              'Đổi Phế Liệu Lấy Điểm - Tổng Phụ Trách',
+              'Trang Tổng Phụ Trách',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ],
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          indicatorWeight: 3,
-          tabs: [
-            const Tab(
-              icon: Icon(Icons.leaderboard_rounded, size: 20),
-              text: 'Xếp Hạng',
-            ),
-            const Tab(
-              icon: Icon(Icons.insights_rounded, size: 20),
-              text: 'Thống Kê',
-            ),
-            Tab(
-              icon: StreamBuilder<List<RewardRecordModel>>(
-                stream: _rewardService.getPendingOrdersStream(),
-                builder: (context, snapshot) {
-                  final count = snapshot.data?.length ?? 0;
-                  return Badge(
-                    isLabelVisible: count > 0,
-                    label: Text('$count'),
-                    backgroundColor: const Color(0xFFC2410C),
-                    child: const Icon(Icons.pending_actions_rounded, size: 20),
-                  );
-                },
-              ),
-              text: 'Đơn Đổi Quà',
-            ),
-            const Tab(
-              icon: Icon(Icons.receipt_long_rounded, size: 20),
-              text: 'Nhật Ký',
             ),
           ],
         ),
@@ -129,6 +103,55 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           ),
         ],
       ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentTabIndex,
+        onDestinationSelected: (index) =>
+            setState(() => _currentTabIndex = index),
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.leaderboard_outlined),
+            selectedIcon: Icon(Icons.leaderboard_rounded),
+            label: 'Xếp Hạng',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            selectedIcon: Icon(Icons.insights_rounded),
+            label: 'Thống Kê',
+          ),
+          NavigationDestination(
+            icon: StreamBuilder<List<RewardRecordModel>>(
+              stream: _pendingOrdersStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data?.length ?? 0;
+                return Badge(
+                  isLabelVisible: count > 0,
+                  label: Text('$count'),
+                  backgroundColor: const Color(0xFFC2410C),
+                  child: const Icon(Icons.pending_actions_outlined),
+                );
+              },
+            ),
+            selectedIcon: StreamBuilder<List<RewardRecordModel>>(
+              stream: _pendingOrdersStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data?.length ?? 0;
+                return Badge(
+                  isLabelVisible: count > 0,
+                  label: Text('$count'),
+                  backgroundColor: const Color(0xFFC2410C),
+                  child: const Icon(Icons.pending_actions_rounded),
+                );
+              },
+            ),
+            label: 'Đơn Đổi Quà',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long_rounded),
+            label: 'Nhật Ký',
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -145,29 +168,30 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
       ),
       body: ResponsiveContainer(
         maxWidth: 900,
-        child: TabBarView(
-          controller: _tabController,
-          children: [
-            // Tab 1: Bảng Xếp Hạng Lớp Toàn Trường
-            _buildLeaderboardTab(),
-
-            // Tab 2: Thống Kê & Báo Cáo (Tháng, Năm, Khối, Tổng Số)
-            const LeadTeacherStatisticsTab(),
-
-            // Tab 3: Quản Lý Đơn Đổi Quà Chờ Duyệt
-            _buildPendingOrdersTab(context, user),
-
-            // Tab 4: Nhật Ký Toàn Trường (Tích điểm & Đổi quà)
-            _buildSchoolHistoryTab(),
-          ],
-        ),
+        child: _buildCurrentTabBody(context, user),
       ),
     );
   }
 
+  /// Dựng nội dung tab đang chọn - Mở tab nào mới nạp tab đó, giải phóng tab cũ
+  Widget _buildCurrentTabBody(BuildContext context, User? user) {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildLeaderboardTab();
+      case 1:
+        return const LeadTeacherStatisticsTab();
+      case 2:
+        return _buildPendingOrdersTab(context, user);
+      case 3:
+        return _buildSchoolHistoryTab();
+      default:
+        return _buildLeaderboardTab();
+    }
+  }
+
   Widget _buildLeaderboardTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('classes').snapshots(),
+      stream: _classesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -186,7 +210,8 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
 
         for (var doc in docs) {
           final data = doc.data() as Map<String, dynamic>;
-          final className = (data['className'] as String? ?? doc.id).toUpperCase();
+          final className = (data['className'] as String? ?? doc.id)
+              .toUpperCase();
           final pts = (data['totalPoints'] as num?)?.toInt() ?? 0;
           final bottles = (data['bottleCount'] as num?)?.toInt() ?? 0;
           final cans = (data['canCount'] as num?)?.toInt() ?? 0;
@@ -200,7 +225,8 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           totalSchoolBatteries += batteries;
 
           // Lấy khối từ ký tự đầu
-          int grade = int.tryParse(className.isNotEmpty ? className[0] : '0') ?? 0;
+          int grade =
+              int.tryParse(className.isNotEmpty ? className[0] : '0') ?? 0;
 
           classesList.add({
             'className': className,
@@ -214,15 +240,17 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
         }
 
         // Sắp xếp theo điểm số giảm dần
-        classesList.sort((a, b) =>
-            (b['totalPoints'] as int).compareTo(a['totalPoints'] as int));
+        classesList.sort(
+          (a, b) =>
+              (b['totalPoints'] as int).compareTo(a['totalPoints'] as int),
+        );
 
         // Lọc theo khối nếu được chọn
         final filteredClasses = _selectedGradeFilter == 0
             ? classesList
             : classesList
-                .where((c) => c['grade'] == _selectedGradeFilter)
-                .toList();
+                  .where((c) => c['grade'] == _selectedGradeFilter)
+                  .toList();
 
         return CustomScrollView(
           slivers: [
@@ -275,13 +303,15 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              '${classesList.length} Chi Đội',
+                              '${classesList.length} Lớp',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -316,7 +346,8 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                             child: _buildSchoolStat(
                               icon: Icons.newspaper_rounded,
                               label: 'Giấy vụn',
-                              value: '${totalSchoolPaperKg.toStringAsFixed(1)} kg',
+                              value:
+                                  '${totalSchoolPaperKg.toStringAsFixed(1)} kg',
                               iconColor: Colors.cyanAccent,
                             ),
                           ),
@@ -340,8 +371,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
             // Bộ lọc Khối 6, 7, 8, 9
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -375,13 +408,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                 sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final item = filteredClasses[index];
-                      return _buildLeaderboardItem(context, index + 1, item);
-                    },
-                    childCount: filteredClasses.length,
-                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final item = filteredClasses[index];
+                    return _buildLeaderboardItem(context, index + 1, item);
+                  }, childCount: filteredClasses.length),
                 ),
               ),
           ],
@@ -417,10 +447,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 10,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 10),
           ),
         ],
       ),
@@ -443,7 +470,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
   }
 
   Widget _buildLeaderboardItem(
-      BuildContext context, int rank, Map<String, dynamic> item) {
+    BuildContext context,
+    int rank,
+    Map<String, dynamic> item,
+  ) {
     Widget rankBadge;
     if (rank == 1) {
       rankBadge = Container(
@@ -453,9 +483,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           color: Color(0xFFFFD700),
           shape: BoxShape.circle,
         ),
-        child: const Center(
-          child: Text('🥇', style: TextStyle(fontSize: 16)),
-        ),
+        child: const Center(child: Text('🥇', style: TextStyle(fontSize: 16))),
       );
     } else if (rank == 2) {
       rankBadge = Container(
@@ -465,9 +493,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           color: Color(0xFFC0C0C0),
           shape: BoxShape.circle,
         ),
-        child: const Center(
-          child: Text('🥈', style: TextStyle(fontSize: 16)),
-        ),
+        child: const Center(child: Text('🥈', style: TextStyle(fontSize: 16))),
       );
     } else if (rank == 3) {
       rankBadge = Container(
@@ -477,9 +503,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           color: Color(0xFFCD7F32),
           shape: BoxShape.circle,
         ),
-        child: const Center(
-          child: Text('🥉', style: TextStyle(fontSize: 16)),
-        ),
+        child: const Center(child: Text('🥉', style: TextStyle(fontSize: 16))),
       );
     } else {
       rankBadge = Container(
@@ -514,9 +538,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
         ),
       ),
       child: ListTile(
-        onTap: () => ClassDetailsSheet.show(context, item['className'] as String),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        onTap: () =>
+            ClassDetailsSheet.show(context, item['className'] as String),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: rankBadge,
         title: Text(
           'Lớp ${item['className']}',
@@ -551,7 +575,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
 
   Widget _buildPendingOrdersTab(BuildContext context, User? user) {
     return StreamBuilder<List<RewardRecordModel>>(
-      stream: _rewardService.getPendingOrdersStream(),
+      stream: _pendingOrdersStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -590,7 +614,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                   const Text(
                     'Khi các giáo viên gửi yêu cầu đổi quà cho lớp,\nphiếu đổi sẽ xuất hiện tại đây để bạn duyệt & trao thưởng.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -622,7 +649,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.primaryMint,
                                 borderRadius: BorderRadius.circular(8),
@@ -639,7 +668,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.warningLight,
                                 borderRadius: BorderRadius.circular(8),
@@ -647,8 +678,11 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.hourglass_top_rounded,
-                                      size: 13, color: AppColors.warning),
+                                  const Icon(
+                                    Icons.hourglass_top_rounded,
+                                    size: 13,
+                                    color: AppColors.warning,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     order.statusLabel,
@@ -682,8 +716,11 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                                 .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Icon(order.iconData,
-                              color: const Color(0xFFC2410C), size: 26),
+                          child: Icon(
+                            order.iconData,
+                            color: const Color(0xFFC2410C),
+                            size: 26,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -723,7 +760,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(8),
@@ -777,8 +816,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                             ),
                             onPressed: () =>
                                 _confirmApproveOrder(context, order, user),
-                            icon: const Icon(Icons.check_circle_outline_rounded,
-                                size: 18),
+                            icon: const Icon(
+                              Icons.check_circle_outline_rounded,
+                              size: 18,
+                            ),
                             label: const Text('Duyệt & Trao Quà'),
                           ),
                         ),
@@ -795,7 +836,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
   }
 
   Future<void> _confirmApproveOrder(
-      BuildContext context, RewardRecordModel order, User? user) async {
+    BuildContext context,
+    RewardRecordModel order,
+    User? user,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -849,7 +893,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
   }
 
   Future<void> _confirmRejectOrder(
-      BuildContext context, RewardRecordModel order, User? user) async {
+    BuildContext context,
+    RewardRecordModel order,
+    User? user,
+  ) async {
     final reasonCtrl = TextEditingController(text: 'Kho tạm hết quà');
     final confirm = await showDialog<bool>(
       context: context,
@@ -1016,9 +1063,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
         Expanded(
           child: _schoolHistoryTabIndex == 0
               ? StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('point_records')
-                      .snapshots(),
+                  stream: _pointRecordsStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -1050,8 +1095,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                       itemBuilder: (context, index) {
                         final rec = records[index];
                         final isBattery = rec.isBattery;
-                        final color =
-                            isBattery ? AppColors.warning : AppColors.primary;
+                        final color = isBattery
+                            ? AppColors.warning
+                            : AppColors.primary;
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -1073,7 +1119,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryDark,
                                     borderRadius: BorderRadius.circular(6),
@@ -1107,7 +1155,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                                 Text(
                                   '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
                                   style: const TextStyle(
-                                      fontSize: 11, color: AppColors.textSecondary),
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                                 if (rec.note.isNotEmpty) ...[
                                   const SizedBox(height: 2),
@@ -1136,7 +1186,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                   },
                 )
               : StreamBuilder<List<RewardRecordModel>>(
-                  stream: _rewardService.getAllRewardRecordsStream(),
+                  stream: _allRewardRecordsStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
@@ -1172,14 +1222,19 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                                     .withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(order.iconData,
-                                  color: const Color(0xFFC2410C), size: 24),
+                              child: Icon(
+                                order.iconData,
+                                color: const Color(0xFFC2410C),
+                                size: 24,
+                              ),
                             ),
                             title: Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColors.surfaceVariant,
                                     borderRadius: BorderRadius.circular(6),
@@ -1206,10 +1261,13 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: order.statusColor
-                                        .withValues(alpha: 0.12),
+                                    color: order.statusColor.withValues(
+                                      alpha: 0.12,
+                                    ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -1326,10 +1384,12 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
   @override
   void initState() {
     super.initState();
-    _classesStream =
-        FirebaseFirestore.instance.collection('classes').snapshots();
-    _rulesStream =
-        widget.pointRuleService.getPointRulesStream(onlyActive: true);
+    _classesStream = FirebaseFirestore.instance
+        .collection('classes')
+        .snapshots();
+    _rulesStream = widget.pointRuleService.getPointRulesStream(
+      onlyActive: true,
+    );
   }
 
   @override
@@ -1358,9 +1418,12 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
             builder: (context, classesSnap) {
               final classDocs = classesSnap.data?.docs ?? [];
               final classNames = classDocs
-                  .map((d) =>
-                      (d.data() as Map<String, dynamic>)['className'] as String? ??
-                      d.id)
+                  .map(
+                    (d) =>
+                        (d.data() as Map<String, dynamic>)['className']
+                            as String? ??
+                        d.id,
+                  )
                   .toList();
               classNames.sort();
 
@@ -1380,8 +1443,9 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                   final rule = _selectedRule;
                   final double currentQty =
                       double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
-                  final int estimatedPoints =
-                      rule != null ? rule.calculatePoints(currentQty) : 0;
+                  final int estimatedPoints = rule != null
+                      ? rule.calculatePoints(currentQty)
+                      : 0;
 
                   return SingleChildScrollView(
                     child: Column(
@@ -1404,8 +1468,11 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                           children: [
                             const Row(
                               children: [
-                                Icon(Icons.stars_rounded,
-                                    color: AppColors.primary, size: 24),
+                                Icon(
+                                  Icons.stars_rounded,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
                                 SizedBox(width: 8),
                                 Text(
                                   'Tích Điểm Toàn Trường',
@@ -1466,8 +1533,9 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             runSpacing: 8,
                             children: rules.map((r) {
                               final isSelected = r.id == rule?.id;
-                              final isBattery =
-                                  r.name.toLowerCase().contains('pin');
+                              final isBattery = r.name.toLowerCase().contains(
+                                'pin',
+                              );
                               final chipColor = isBattery
                                   ? AppColors.warning
                                   : AppColors.primary;
@@ -1506,7 +1574,8 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                           ),
                           inputFormatters: [
                             FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d*')),
+                              RegExp(r'^\d*\.?\d*'),
+                            ),
                           ],
                           decoration: InputDecoration(
                             labelText:
@@ -1535,8 +1604,8 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             color: AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color:
-                                    AppColors.primary.withValues(alpha: 0.3)),
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1591,19 +1660,21 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             backgroundColor: AppColors.primary,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: _isLoading ||
+                          onPressed:
+                              _isLoading ||
                                   rule == null ||
                                   _selectedClass == null
                               ? null
                               : () async {
                                   final qty =
                                       double.tryParse(_qtyCtrl.text.trim()) ??
-                                          0.0;
+                                      0.0;
                                   if (qty <= 0) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                            'Vui lòng nhập số lượng hoặc khối lượng > 0!'),
+                                          'Vui lòng nhập số lượng hoặc khối lượng > 0!',
+                                        ),
                                         backgroundColor: AppColors.error,
                                       ),
                                     );
@@ -1612,24 +1683,26 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
 
                                   setState(() => _isLoading = true);
                                   try {
-                                    await widget.pointRecordService.recordPoints(
-                                      className: _selectedClass!,
-                                      ruleId: rule.id,
-                                      categoryName: rule.name,
-                                      unit: rule.unit,
-                                      quantity: qty,
-                                      unitQuantity: rule.unitQuantity,
-                                      points: rule.points,
-                                      pointsPerUnit: rule.pointsPerUnit,
-                                      note: _noteCtrl.text.trim(),
-                                      createdByEmail: widget.userEmail,
-                                      createdByUid: widget.userUid,
-                                    );
+                                    await widget.pointRecordService
+                                        .recordPoints(
+                                          className: _selectedClass!,
+                                          ruleId: rule.id,
+                                          categoryName: rule.name,
+                                          unit: rule.unit,
+                                          quantity: qty,
+                                          unitQuantity: rule.unitQuantity,
+                                          points: rule.points,
+                                          pointsPerUnit: rule.pointsPerUnit,
+                                          note: _noteCtrl.text.trim(),
+                                          createdByEmail: widget.userEmail,
+                                          createdByUid: widget.userUid,
+                                        );
 
                                     if (context.mounted) {
                                       Navigator.pop(context);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text(
                                             'Đã tích +$estimatedPoints điểm cho lớp ${_selectedClass!} thành công!',
@@ -1642,11 +1715,11 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
-                                        SnackBar(
-                                          content: Text('Lỗi: $e'),
-                                          backgroundColor: AppColors.error,
-                                        ),
-                                      );
+                                            SnackBar(
+                                              content: Text('Lỗi: $e'),
+                                              backgroundColor: AppColors.error,
+                                            ),
+                                          );
                                     }
                                   } finally {
                                     if (mounted) {
@@ -1665,9 +1738,7 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                 )
                               : const Icon(Icons.check_circle_outline_rounded),
                           label: Text(
-                            _isLoading
-                                ? 'Đang Lưu...'
-                                : 'Xác Nhận Tích Điểm',
+                            _isLoading ? 'Đang Lưu...' : 'Xác Nhận Tích Điểm',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
