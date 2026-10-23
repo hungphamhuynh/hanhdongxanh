@@ -39,7 +39,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return 'Cấu Hình Điểm Thưởng';
       case 0:
       default:
-        return 'Admin Overview';
+        return 'Trang Chủ';
     }
   }
 
@@ -97,7 +97,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentTabIndex,
-        onDestinationSelected: (index) => setState(() => _currentTabIndex = index),
+        onDestinationSelected: (index) =>
+            setState(() => _currentTabIndex = index),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
@@ -151,129 +152,144 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          // Banner Chào mừng
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primaryDark, AppColors.primary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryDark.withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+            // Banner Chào mừng
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.eco_rounded, color: AppColors.primaryContainer, size: 16),
-                    SizedBox(width: 6),
-                    Text(
-                      'BẢNG ĐIỀU HÀNH TRUNG TÂM',
-                      style: TextStyle(
-                        color: AppColors.primaryContainer,
-                        letterSpacing: 1.2,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  user?.email ?? 'Quản Trị Viên',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryDark.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Hệ thống quản lý hành động xanh & tích điểm trường học',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-              ],
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.eco_rounded,
+                        color: AppColors.primaryContainer,
+                        size: 16,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'BẢNG ĐIỀU HÀNH TRUNG TÂM',
+                        style: TextStyle(
+                          color: AppColors.primaryContainer,
+                          letterSpacing: 1.2,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    user?.email ?? 'Quản Trị Viên',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Hệ thống quản lý hành động xanh & tích điểm trường học',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Danh sách các phân hệ quản lý
-          const Text(
-            'Phân Hệ Quản Trị',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
+            // Danh sách các phân hệ quản lý
+            const Text(
+              'Phân Hệ Quản Trị',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
 
-          // Module 1: Quản lý tài khoản (Đang có)
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').snapshots(),
-            builder: (context, snapshot) {
-              final count = snapshot.data?.docs.length ?? 0;
+            // Module 1: Quản lý tài khoản (Đang có)
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final count = snapshot.data?.docs.length ?? 0;
 
-              return _buildModuleCard(
-                icon: Icons.manage_accounts_rounded,
-                title: 'Quản Lý Tài Khoản',
-                description: 'Cấp phát, chỉnh sửa, khóa và phân quyền người dùng',
-                badgeText: '$count tài khoản',
-                badgeColor: AppColors.primary,
-                onTap: () {
-                  setState(() => _currentTabIndex = 1); // Chuyển sang Tab 1
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
+                return _buildModuleCard(
+                  icon: Icons.manage_accounts_rounded,
+                  title: 'Quản Lý Tài Khoản',
+                  description:
+                      'Cấp phát, chỉnh sửa, khóa và phân quyền người dùng',
+                  badgeText: '$count tài khoản',
+                  badgeColor: AppColors.primary,
+                  onTap: () {
+                    setState(() => _currentTabIndex = 1); // Chuyển sang Tab 1
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 12),
 
-          // Module 2: Lớp học & Thi đua
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('classes').snapshots(),
-            builder: (context, snapshot) {
-              final classCount = snapshot.data?.docs.length ?? 0;
+            // Module 2: Lớp học & Thi đua
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('classes')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final classCount = snapshot.data?.docs.length ?? 0;
 
-              return _buildModuleCard(
-                icon: Icons.class_outlined,
-                title: 'Quản Lý Lớp Học',
-                description: 'Danh sách 36 lớp học, giáo viên phụ trách',
-                badgeText: '$classCount lớp học',
-                badgeColor: AppColors.secondary,
-                onTap: () {
-                  setState(() => _currentTabIndex = 2); // Chuyển sang Tab 2: Lớp Học
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 12),
+                return _buildModuleCard(
+                  icon: Icons.class_outlined,
+                  title: 'Quản Lý Lớp Học',
+                  description: 'Danh sách lớp học',
+                  badgeText: '$classCount lớp học',
+                  badgeColor: AppColors.secondary,
+                  onTap: () {
+                    setState(
+                      () => _currentTabIndex = 2,
+                    ); // Chuyển sang Tab 2: Lớp Học
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 12),
 
-          // Module 3: Cấu hình quy định điểm
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('point_rules').snapshots(),
-            builder: (context, snapshot) {
-              final ruleCount = snapshot.data?.docs.length ?? 0;
+            // Module 3: Cấu hình quy định điểm
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('point_rules')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final ruleCount = snapshot.data?.docs.length ?? 0;
 
-              return _buildModuleCard(
-                icon: Icons.stars_rounded,
-                title: 'Cấu Hình Điểm Thưởng',
-                description: 'Thiết lập danh mục hành động xanh (pin, chai...) và mức điểm thưởng',
-                badgeText: ruleCount > 0 ? '$ruleCount thể loại' : 'Cấu hình',
-                badgeColor: AppColors.roleLeadTeacher,
-                onTap: () {
-                  setState(() => _currentTabIndex = 3); // Chuyển sang Tab 3: Điểm Thưởng
-                },
-              );
-            },
-          ),
-        ],
+                return _buildModuleCard(
+                  icon: Icons.stars_rounded,
+                  title: 'Cấu Hình Điểm Thưởng',
+                  description: 'Thiết lập danh mục hành động xanh (pin, chai...) và mức điểm thưởng',
+                  badgeText: ruleCount > 0 ? '$ruleCount thể loại' : 'Cấu hình',
+                  badgeColor: AppColors.roleLeadTeacher,
+                  onTap: () {
+                    setState(
+                      () => _currentTabIndex = 3,
+                    ); // Chuyển sang Tab 3: Điểm Thưởng
+                  },
+                );
+              },
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -391,7 +407,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<UserRole>(
                   initialValue: selectedRole,
-                  decoration: const InputDecoration(labelText: 'Vai trò (Role)'),
+                  decoration: const InputDecoration(
+                    labelText: 'Vai trò (Role)',
+                  ),
                   items: UserRole.values.map((r) {
                     return DropdownMenuItem<UserRole>(
                       value: r,
@@ -423,8 +441,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: const Text('Hủy'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
               onPressed: isLoading
                   ? null
                   : () async {
@@ -436,7 +453,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                                'Vui lòng điền đủ thông tin và mật khẩu >= 6 ký tự!'),
+                              'Vui lòng điền đủ thông tin và mật khẩu >= 6 ký tự!',
+                            ),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -456,7 +474,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Đã tạo tài khoản $email thành công!'),
+                              content: Text(
+                                'Đã tạo tài khoản $email thành công!',
+                              ),
                               backgroundColor: Colors.green,
                             ),
                           );
@@ -479,7 +499,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Text('Tạo Tài Khoản'),
             ),
@@ -534,7 +556,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Khối',
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
                           ),
                           items: [6, 7, 8, 9].map((g) {
                             return DropdownMenuItem<int>(
@@ -554,13 +578,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       // Ký tự cố định 'A'
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 14),
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryMint,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.4),
-                              width: 1.5),
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
                         ),
                         child: const Text(
                           'A',
@@ -581,7 +608,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Số lớp',
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
+                              horizontal: 12,
+                              vertical: 14,
+                            ),
                           ),
                           items: List.generate(20, (i) => i + 1).map((n) {
                             return DropdownMenuItem<int>(
@@ -613,8 +642,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.verified_rounded,
-                                size: 16, color: AppColors.primary),
+                            const Icon(
+                              Icons.verified_rounded,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               'Lớp sẽ tạo: $className',
@@ -656,7 +688,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                ),
                 onPressed: isLoading
                     ? null
                     : () async {
@@ -743,15 +777,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onChanged: (val) {
                     final lower = val.toLowerCase();
                     if (lower.contains('pin') && selectedIcon != 'battery') {
-                      setDialogState(() {
-                        selectedIcon = 'battery';
-                      });
+                      setDialogState(() => selectedIcon = 'battery');
+                    } else if (lower.contains('lon') && selectedIcon != 'can') {
+                      setDialogState(() => selectedIcon = 'can');
+                    } else if ((lower.contains('giay') ||
+                            lower.contains('giấy') ||
+                            lower.contains('sách') ||
+                            lower.contains('báo')) &&
+                        selectedIcon != 'paper') {
+                      setDialogState(() => selectedIcon = 'paper');
+                    } else if ((lower.contains('carton') ||
+                            lower.contains('thung') ||
+                            lower.contains('thùng') ||
+                            lower.contains('hộp')) &&
+                        selectedIcon != 'box') {
+                      setDialogState(() => selectedIcon = 'box');
                     } else if ((lower.contains('chai') ||
-                            lower.contains('lo')) &&
+                            lower.contains('lo') ||
+                            lower.contains('lọ')) &&
                         selectedIcon != 'bottle') {
-                      setDialogState(() {
-                        selectedIcon = 'bottle';
-                      });
+                      setDialogState(() => selectedIcon = 'bottle');
                     }
                   },
                 ),
@@ -808,9 +853,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. Biểu tượng (Icon picker nhỏ gọn không cần tên)
+                // 3. Biểu tượng phế liệu (Chai, Lon, Giấy, Carton, Pin)
                 const Text(
-                  'Biểu tượng nhận diện:',
+                  'Biểu tượng phế liệu:',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -819,53 +864,49 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 8),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ('bottle', Icons.local_drink_rounded),
-                    ('battery', Icons.battery_charging_full_rounded),
-                    ('can', Icons.recycling_rounded),
-                    ('paper', Icons.newspaper_rounded),
-                    ('box', Icons.inventory_2_rounded),
-                    ('tree', Icons.park_rounded),
-                    ('clean', Icons.cleaning_services_rounded),
-                    ('volunteer', Icons.volunteer_activism_rounded),
-                    ('star', Icons.stars_rounded),
-                    ('eco', Icons.eco_rounded),
-                  ].map((item) {
-                    final key = item.$1;
-                    final icon = item.$2;
-                    final isSelected = selectedIcon == key;
+                  spacing: 10,
+                  runSpacing: 10,
+                  children:
+                      [
+                        ('bottle', Icons.local_drink_rounded),
+                        ('can', Icons.recycling_rounded),
+                        ('paper', Icons.newspaper_rounded),
+                        ('box', Icons.inventory_2_rounded),
+                        ('battery', Icons.battery_charging_full_rounded),
+                      ].map((item) {
+                        final key = item.$1;
+                        final icon = item.$2;
+                        final isSelected = selectedIcon == key;
 
-                    return InkWell(
-                      onTap: () => setDialogState(() => selectedIcon = key),
-                      borderRadius: BorderRadius.circular(10),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.surfaceVariant,
+                        return InkWell(
+                          onTap: () => setDialogState(() => selectedIcon = key),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.border,
-                            width: isSelected ? 2 : 1,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.border,
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: Icon(
+                              icon,
+                              size: 22,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                        child: Icon(
-                          icon,
-                          size: 20,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        );
+                      }).toList(),
                 ),
                 const SizedBox(height: 14),
 
@@ -942,7 +983,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  'Đã thêm thể loại "$name" (+ $points điểm/$selectedUnit) thành công!'),
+                                'Đã thêm thể loại "$name" (+ $points điểm/$selectedUnit) thành công!',
+                              ),
                               backgroundColor: AppColors.success,
                             ),
                           );
@@ -951,8 +993,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content: Text('Lỗi: $e'),
-                                backgroundColor: AppColors.error),
+                              content: Text('Lỗi: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
                           );
                         }
                       } finally {
@@ -964,7 +1007,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Text('Tạo Thể Loại'),
             ),
@@ -974,7 +1019,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-    // ignore: unused_element
+  // ignore: unused_element
   Widget _buildIconChip(
     String iconKey,
     String label,

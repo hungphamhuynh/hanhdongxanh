@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 
 class PointRuleModel {
   final String id;
-  final String name; // Tên thể loại (tự do)
+  final String name; // Tên phế liệu (tự do: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ...)
   final String unit; // "Số lượng" hoặc "Kg"
   final int pointsPerUnit; // Số điểm thưởng trên mỗi đơn vị
   final String description; // Mô tả quy đổi
-  final String iconName; // Mã icon
+  final String iconName; // "bottle", "battery", "can", "paper", "box"
   final bool isActive; // Trạng thái đang áp dụng hay tạm ngừng
 
   const PointRuleModel({
@@ -44,31 +44,28 @@ class PointRuleModel {
     };
   }
 
-  /// Trả về IconData tương ứng với mã icon đã chọn
+  /// Biểu tượng nhận diện các loại phế liệu: Chai, Pin, Lon, Giấy, Carton
   IconData get iconData {
     switch (iconName) {
       case 'battery':
         return Icons.battery_charging_full_rounded;
-      case 'bottle':
-        return Icons.local_drink_rounded;
       case 'can':
         return Icons.recycling_rounded;
       case 'paper':
         return Icons.newspaper_rounded;
       case 'box':
         return Icons.inventory_2_rounded;
-      case 'tree':
-        return Icons.park_rounded;
-      case 'clean':
-        return Icons.cleaning_services_rounded;
-      case 'volunteer':
-        return Icons.volunteer_activism_rounded;
-      case 'star':
-        return Icons.stars_rounded;
-      case 'eco':
+      case 'bottle':
+        return Icons.local_drink_rounded;
       default:
-        if (name.toLowerCase().contains('pin')) {
-          return Icons.battery_charging_full_rounded;
+        final lower = name.toLowerCase();
+        if (lower.contains('pin')) return Icons.battery_charging_full_rounded;
+        if (lower.contains('lon')) return Icons.recycling_rounded;
+        if (lower.contains('giay') || lower.contains('giấy') || lower.contains('sách') || lower.contains('báo')) {
+          return Icons.newspaper_rounded;
+        }
+        if (lower.contains('carton') || lower.contains('thung') || lower.contains('thùng')) {
+          return Icons.inventory_2_rounded;
         }
         return Icons.local_drink_rounded;
     }

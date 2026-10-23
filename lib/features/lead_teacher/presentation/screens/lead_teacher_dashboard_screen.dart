@@ -64,7 +64,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                 color: AppColors.roleLeadTeacher, size: 24),
             SizedBox(width: 8),
             Text(
-              'Tổng Phụ Trách Đội',
+              'Đổi Phế Liệu Lấy Điểm - Tổng Phụ Trách',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
@@ -147,6 +147,8 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
         // Tính tổng quan toàn trường
         int totalSchoolPoints = 0;
         int totalSchoolBottles = 0;
+        int totalSchoolCans = 0;
+        double totalSchoolPaperKg = 0.0;
         int totalSchoolBatteries = 0;
 
         List<Map<String, dynamic>> classesList = [];
@@ -156,12 +158,14 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           final className = (data['className'] as String? ?? doc.id).toUpperCase();
           final pts = (data['totalPoints'] as num?)?.toInt() ?? 0;
           final bottles = (data['bottleCount'] as num?)?.toInt() ?? 0;
+          final cans = (data['canCount'] as num?)?.toInt() ?? 0;
+          final paperKg = (data['paperKg'] as num?)?.toDouble() ?? 0.0;
           final batteries = (data['batteryCount'] as num?)?.toInt() ?? 0;
-          final bottleKg = (data['bottleKg'] as num?)?.toDouble() ?? 0.0;
-          final batteryKg = (data['batteryKg'] as num?)?.toDouble() ?? 0.0;
 
           totalSchoolPoints += pts;
           totalSchoolBottles += bottles;
+          totalSchoolCans += cans;
+          totalSchoolPaperKg += paperKg;
           totalSchoolBatteries += batteries;
 
           // Lấy khối từ ký tự đầu
@@ -171,9 +175,9 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
             'className': className,
             'totalPoints': pts,
             'bottleCount': bottles,
+            'canCount': cans,
+            'paperKg': paperKg,
             'batteryCount': batteries,
-            'bottleKg': bottleKg,
-            'batteryKg': batteryKg,
             'grade': grade,
           });
         }
@@ -267,20 +271,29 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
                               iconColor: Colors.amberAccent,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: _buildSchoolStat(
                               icon: Icons.local_drink_rounded,
-                              label: 'Vỏ chai gom',
-                              value: '$totalSchoolBottles chai',
+                              label: 'Chai & Lon',
+                              value: '${totalSchoolBottles + totalSchoolCans}',
                               iconColor: Colors.lightGreenAccent,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildSchoolStat(
+                              icon: Icons.newspaper_rounded,
+                              label: 'Giấy vụn',
+                              value: '${totalSchoolPaperKg.toStringAsFixed(1)} kg',
+                              iconColor: Colors.cyanAccent,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: _buildSchoolStat(
                               icon: Icons.battery_charging_full_rounded,
-                              label: 'Pin thu gom',
+                              label: 'Pin cũ',
                               value: '$totalSchoolBatteries viên',
                               iconColor: Colors.orangeAccent,
                             ),
@@ -482,7 +495,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           ),
         ),
         subtitle: Text(
-          'Gom: ${item['bottleCount']} chai • ${item['batteryCount']} pin',
+          'Gom: ${item['bottleCount']} chai • ${item['canCount'] ?? 0} lon • ${item['batteryCount']} pin',
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         trailing: Container(

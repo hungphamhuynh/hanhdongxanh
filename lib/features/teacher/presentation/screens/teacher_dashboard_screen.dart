@@ -139,7 +139,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
                 const SizedBox(width: 10),
                 const Text(
-                  'Hành Động Xanh',
+                  'Đổi Phế Liệu',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -169,7 +169,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add_task_rounded),
             label: const Text(
-              'Tích Điểm Thu Gom',
+              'Đổi Phế Liệu Nhận Điểm',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             onPressed: () => _showRecordPointsModal(
@@ -193,12 +193,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     (classData['totalPoints'] as num?)?.toInt() ?? 0;
                 final bottleCount =
                     (classData['bottleCount'] as num?)?.toInt() ?? 0;
+                final canCount =
+                    (classData['canCount'] as num?)?.toInt() ?? 0;
+                final paperKg =
+                    (classData['paperKg'] as num?)?.toDouble() ?? 0.0;
                 final batteryCount =
                     (classData['batteryCount'] as num?)?.toInt() ?? 0;
-                final bottleKg =
-                    (classData['bottleKg'] as num?)?.toDouble() ?? 0.0;
-                final batteryKg =
-                    (classData['batteryKg'] as num?)?.toDouble() ?? 0.0;
 
                 return CustomScrollView(
                   slivers: [
@@ -211,9 +211,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           fullName: fullName,
                           totalPoints: totalPoints,
                           bottleCount: bottleCount,
+                          canCount: canCount,
+                          paperKg: paperKg,
                           batteryCount: batteryCount,
-                          bottleKg: bottleKg,
-                          batteryKg: batteryKg,
                           onTapRecord: () => _showRecordPointsModal(
                             context: context,
                             className: assignedClass,
@@ -363,9 +363,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required String fullName,
     required int totalPoints,
     required int bottleCount,
+    required int canCount,
+    required double paperKg,
     required int batteryCount,
-    required double bottleKg,
-    required double batteryKg,
     required VoidCallback onTapRecord,
   }) {
     return Container(
@@ -405,7 +405,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                   const SizedBox(height: 2),
                   const Text(
-                    'Phong trào thu gom tái chế vì môi trường',
+                    'Thu gom phế liệu - Tích điểm thi đua',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 12,
@@ -492,113 +492,99 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Hai ô thống kê chi tiết Vỏ chai và Pin
+          // 4 ô thống kê phế liệu: Chai, Lon, Giấy, Pin
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.local_drink_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Vỏ chai',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              bottleKg > 0
-                                  ? '$bottleCount chai • ${bottleKg.toStringAsFixed(1)}kg'
-                                  : '$bottleCount chai',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildScrapMiniTile(
+                  icon: Icons.local_drink_rounded,
+                  iconColor: AppColors.primary,
+                  label: 'Chai nhựa',
+                  value: '$bottleCount chai',
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.battery_charging_full_rounded,
-                          color: AppColors.warning,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Pin cũ',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              batteryKg > 0
-                                  ? '$batteryCount viên • ${batteryKg.toStringAsFixed(1)}kg'
-                                  : '$batteryCount viên',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                child: _buildScrapMiniTile(
+                  icon: Icons.recycling_rounded,
+                  iconColor: AppColors.secondary,
+                  label: 'Lon nhôm',
+                  value: '$canCount lon',
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildScrapMiniTile(
+                  icon: Icons.newspaper_rounded,
+                  iconColor: const Color(0xFF8D6E63),
+                  label: 'Giấy vụn',
+                  value: paperKg > 0 ? '${paperKg.toStringAsFixed(1)} kg' : '0 kg',
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildScrapMiniTile(
+                  icon: Icons.battery_charging_full_rounded,
+                  iconColor: AppColors.warning,
+                  label: 'Pin cũ',
+                  value: '$batteryCount viên',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScrapMiniTile({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -610,7 +596,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final color = isBattery ? AppColors.warning : AppColors.primary;
     final unitDisplay = record.unit.toLowerCase().contains('kg')
         ? '${record.quantity.toStringAsFixed(1)} kg'
-        : '${record.quantity.toInt()} ${isBattery ? 'viên' : 'chai'}';
+        : '${record.quantity.toInt()} ${record.categoryName.toLowerCase().contains('pin') ? 'viên' : record.categoryName.toLowerCase().contains('lon') ? 'lon' : 'cái'}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),

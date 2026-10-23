@@ -59,7 +59,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Bạn có thể khởi tạo nhanh 2 thể loại thu gom chuẩn: Vỏ chai và Pin (theo Số lượng hoặc Kg) để bắt đầu.',
+                    'Bạn có thể khởi tạo nhanh 4 thể loại đổi phế liệu chuẩn: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ để bắt đầu.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -473,9 +473,9 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. Biểu tượng (Icon picker nhỏ gọn không cần tên)
+                // 3. Biểu tượng phế liệu (Chai, Lon, Giấy, Carton, Pin)
                 const Text(
-                  'Biểu tượng nhận diện:',
+                  'Biểu tượng phế liệu:',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -484,19 +484,14 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                 ),
                 const SizedBox(height: 8),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
                     ('bottle', Icons.local_drink_rounded),
-                    ('battery', Icons.battery_charging_full_rounded),
                     ('can', Icons.recycling_rounded),
                     ('paper', Icons.newspaper_rounded),
                     ('box', Icons.inventory_2_rounded),
-                    ('tree', Icons.park_rounded),
-                    ('clean', Icons.cleaning_services_rounded),
-                    ('volunteer', Icons.volunteer_activism_rounded),
-                    ('star', Icons.stars_rounded),
-                    ('eco', Icons.eco_rounded),
+                    ('battery', Icons.battery_charging_full_rounded),
                   ].map((item) {
                     final key = item.$1;
                     final icon = item.$2;
@@ -507,8 +502,8 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                       borderRadius: BorderRadius.circular(10),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.primary
@@ -523,7 +518,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                         ),
                         child: Icon(
                           icon,
-                          size: 20,
+                          size: 22,
                           color: isSelected
                               ? Colors.white
                               : AppColors.textSecondary,

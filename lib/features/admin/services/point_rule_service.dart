@@ -7,7 +7,7 @@ class PointRuleService {
   CollectionReference get _rulesCollection =>
       _firestore.collection('point_rules');
 
-  /// Lắng nghe danh sách thể loại điểm thưởng theo thời gian thực (chỉ Vỏ chai và Pin)
+  /// Lắng nghe danh sách thể loại đổi phế liệu theo thời gian thực
   Stream<List<PointRuleModel>> getPointRulesStream({bool onlyActive = false}) {
     return _rulesCollection.snapshots().map((snapshot) {
       var list = snapshot.docs
@@ -16,13 +16,12 @@ class PointRuleService {
       if (onlyActive) {
         list = list.where((r) => r.isActive).toList();
       }
-      // Sắp xếp ổn định theo tên (Pin, Vỏ chai)
       list.sort((a, b) => a.name.compareTo(b.name));
       return list;
     });
   }
 
-  /// Thêm thể loại tích điểm mới (Vỏ chai / Pin, đơn vị: Số lượng / Kg)
+  /// Thêm thể loại phế liệu mới (Chai, Pin, Lon, Giấy..., đơn vị: Số lượng / Kg)
   Future<void> createPointRule({
     required String name,
     required String unit,
@@ -32,7 +31,7 @@ class PointRuleService {
   }) async {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
-      throw Exception('Tên thể loại tích điểm không được để trống!');
+      throw Exception('Tên thể loại phế liệu không được để trống!');
     }
     if (pointsPerUnit <= 0) {
       throw Exception('Số điểm thưởng phải lớn hơn 0!');
@@ -51,7 +50,7 @@ class PointRuleService {
     });
   }
 
-  /// Cập nhật thể loại tích điểm
+  /// Cập nhật thể loại phế liệu
   Future<void> updatePointRule({
     required String id,
     required String name,
@@ -62,7 +61,7 @@ class PointRuleService {
   }) async {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
-      throw Exception('Tên thể loại tích điểm không được để trống!');
+      throw Exception('Tên thể loại phế liệu không được để trống!');
     }
     if (pointsPerUnit <= 0) {
       throw Exception('Số điểm thưởng phải lớn hơn 0!');
@@ -90,30 +89,46 @@ class PointRuleService {
     });
   }
 
-  /// Xóa thể loại tích điểm
+  /// Xóa thể loại phế liệu
   Future<void> deletePointRule(String id) async {
     await _rulesCollection.doc(id).delete();
   }
 
-  /// Khởi tạo 2 thể loại chuẩn sinh thái: Vỏ chai và Pin (đơn vị Số lượng)
+  /// Khởi tạo 4 thể loại phế liệu mẫu chuẩn phong trào: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ
   Future<void> seedDefaultEcoRules() async {
     final snapshot = await _rulesCollection.limit(1).get();
     if (snapshot.docs.isNotEmpty) return; // Đã có dữ liệu, không ghi đè
 
     final defaultCategories = [
       {
-        'name': 'Vỏ chai',
+        'name': 'Chai nhựa',
         'unit': 'Số lượng',
         'pointsPerUnit': 2,
-        'description': 'Thu gom vỏ chai nhựa tái chế',
+        'description': 'Thu gom vỏ chai nhựa nước uống các loại',
         'iconName': 'bottle',
         'isActive': true,
       },
       {
-        'name': 'Pin',
+        'name': 'Lon nhôm',
+        'unit': 'Số lượng',
+        'pointsPerUnit': 3,
+        'description': 'Vỏ lon nước giải khát, nước ngọt bằng nhôm',
+        'iconName': 'can',
+        'isActive': true,
+      },
+      {
+        'name': 'Giấy vụn & Sách báo',
+        'unit': 'Kg',
+        'pointsPerUnit': 10,
+        'description': 'Giấy báo cũ, sách vở đã qua sử dụng, thùng carton',
+        'iconName': 'paper',
+        'isActive': true,
+      },
+      {
+        'name': 'Pin cũ',
         'unit': 'Số lượng',
         'pointsPerUnit': 5,
-        'description': 'Thu gom pin cũ đã qua sử dụng',
+        'description': 'Thu gom pin đã qua sử dụng ngăn ô nhiễm môi trường',
         'iconName': 'battery',
         'isActive': true,
       },
