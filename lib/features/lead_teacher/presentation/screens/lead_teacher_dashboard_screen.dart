@@ -1129,52 +1129,42 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             'Chưa có thể loại thu gom nào được cấu hình.',
                             style: TextStyle(color: AppColors.error),
                           )
-                        else ...[
-                          const Text(
-                            'Chọn thể loại thu gom:',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textSecondary,
+                        else
+                          DropdownButtonFormField<PointRuleModel>(
+                            initialValue: rule,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Thể loại thu gom *',
+                              prefixIcon: Icon(Icons.recycling_rounded),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: rules.map((r) {
-                              final isSelected = r.id == rule?.id;
-                              final isBattery = r.name.toLowerCase().contains(
-                                'pin',
-                              );
-                              final chipColor = isBattery
-                                  ? AppColors.warning
-                                  : AppColors.primary;
-
-                              return ChoiceChip(
-                                selected: isSelected,
-                                avatar: Icon(
-                                  r.iconData,
-                                  size: 18,
-                                  color: isSelected ? Colors.white : chipColor,
+                            items: rules.map((r) {
+                              return DropdownMenuItem<PointRuleModel>(
+                                value: r,
+                                child: Row(
+                                  children: [
+                                    Icon(r.iconData,
+                                        size: 20, color: AppColors.primary),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        '${r.name} (${r.ruleRateText})',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                label: Text('${r.name} (${r.ruleRateText})'),
-                                selectedColor: chipColor,
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppColors.textPrimary,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                                onSelected: (_) {
-                                  setState(() => _selectedRule = r);
-                                },
                               );
                             }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedRule = val);
+                              }
+                            },
                           ),
-                        ],
                         const SizedBox(height: 14),
 
                         // Nhập số lượng / kg

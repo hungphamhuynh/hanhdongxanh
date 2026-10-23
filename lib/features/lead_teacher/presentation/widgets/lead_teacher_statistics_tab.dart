@@ -47,7 +47,6 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
         double totalPaperKg = 0.0;
         int totalBatteries = 0;
         int totalPens = 0;
-        int totalSubmissions = 0;
 
         final Map<String, _ClassPeriodStats> classMap = {};
 
@@ -77,7 +76,6 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
           final cat = (data['categoryName'] as String? ?? '').toLowerCase();
 
           totalPeriodPoints += points;
-          totalSubmissions += 1;
 
           bool isBattery = cat.contains('pin');
           bool isPen = cat.contains('bút') ||
@@ -146,7 +144,6 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildTotalKpiCard(
                   totalPeriodPoints: totalPeriodPoints,
-                  totalSubmissions: totalSubmissions,
                   totalBottles: totalBottles,
                   totalCans: totalCans,
                   totalPaperKg: totalPaperKg,
@@ -356,58 +353,75 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // Dòng 2: Lọc Khối (Tất cả, Khối 6, 7, 8, 9)
-          const Text(
-            'Lọc theo Khối:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textSecondary,
+          // Dòng 2: Lọc Khối dạng Select (Dropdown)
+          DropdownButtonFormField<int>(
+            initialValue: _selectedGrade,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Khối lớp',
+              isDense: true,
+              prefixIcon: Icon(Icons.school_rounded, size: 16),
+              prefixIconConstraints:
+                  BoxConstraints(minWidth: 32, minHeight: 32),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             ),
-          ),
-          const SizedBox(height: 8),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildGradeChip(label: 'Tất cả khối', grade: 0),
-                const SizedBox(width: 8),
-                _buildGradeChip(label: 'Khối 6', grade: 6),
-                const SizedBox(width: 8),
-                _buildGradeChip(label: 'Khối 7', grade: 7),
-                const SizedBox(width: 8),
-                _buildGradeChip(label: 'Khối 8', grade: 8),
-                const SizedBox(width: 8),
-                _buildGradeChip(label: 'Khối 9', grade: 9),
-              ],
-            ),
+            items: const [
+              DropdownMenuItem<int>(
+                value: 0,
+                child: Text(
+                  'Tất cả các khối',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 6,
+                child: Text(
+                  'Khối 6',
+                  style: TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 7,
+                child: Text(
+                  'Khối 7',
+                  style: TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 8,
+                child: Text(
+                  'Khối 8',
+                  style: TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 9,
+                child: Text(
+                  'Khối 9',
+                  style: TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedGrade = val);
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGradeChip({required String label, required int grade}) {
-    final isSelected = _selectedGrade == grade;
-    return ChoiceChip(
-      selected: isSelected,
-      label: Text(label),
-      selectedColor: AppColors.primary,
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        color: isSelected ? Colors.white : AppColors.textPrimary,
-      ),
-      onSelected: (_) => setState(() => _selectedGrade = grade),
-    );
-  }
-
   /// Khung TỔNG SỐ - Báo cáo KPI toàn trường trong kỳ
   Widget _buildTotalKpiCard({
     required int totalPeriodPoints,
-    required int totalSubmissions,
     required int totalBottles,
     required int totalCans,
     required double totalPaperKg,
@@ -461,21 +475,6 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
                     ),
                   ),
                 ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$totalSubmissions đợt nộp',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               ),
             ],
           ),
@@ -707,7 +706,7 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
                           ),
                         ),
                         Text(
-                          'Khối ${stats.grade} • ${stats.submissions} đợt nộp trong kỳ',
+                          'Khối ${stats.grade}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,

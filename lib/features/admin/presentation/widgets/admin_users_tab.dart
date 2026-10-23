@@ -104,60 +104,89 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             ),
 
             // Tìm kiếm
+            // Thanh tìm kiếm và bộ lọc Vai trò dạng Select
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Tìm theo email, họ tên...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () => setState(() => _searchQuery = ''),
-                          )
-                        : null,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                ),
-              ),
-            ),
-
-            // Bộ lọc Role
-            SliverToBoxAdapter(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    FilterChip(
-                      label: const Text('Tất cả'),
-                      selected: _selectedRoleFilter == null,
-                      onSelected: (_) =>
-                          setState(() => _selectedRoleFilter = null),
+                    // Ô Tìm kiếm
+                    Expanded(
+                      flex: 6,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Tìm theo email, họ tên...',
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () =>
+                                      setState(() => _searchQuery = ''),
+                                )
+                              : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          isDense: true,
+                        ),
+                        onChanged: (val) =>
+                            setState(() => _searchQuery = val.trim()),
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Admin'),
-                      selected: _selectedRoleFilter == UserRole.admin,
-                      onSelected: (_) =>
-                          setState(() => _selectedRoleFilter = UserRole.admin),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Lead Teacher'),
-                      selected: _selectedRoleFilter == UserRole.leadTeacher,
-                      onSelected: (_) => setState(
-                          () => _selectedRoleFilter = UserRole.leadTeacher),
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Teacher'),
-                      selected: _selectedRoleFilter == UserRole.teacher,
-                      onSelected: (_) =>
-                          setState(() => _selectedRoleFilter = UserRole.teacher),
+                    const SizedBox(width: 10),
+
+                    // Ô Select Vai trò
+                    Expanded(
+                      flex: 4,
+                      child: DropdownButtonFormField<UserRole?>(
+                        initialValue: _selectedRoleFilter,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          prefixIcon: Icon(Icons.badge_rounded, size: 18),
+                          prefixIconConstraints:
+                              BoxConstraints(minWidth: 32, minHeight: 32),
+                        ),
+                        items: const [
+                          DropdownMenuItem<UserRole?>(
+                            value: null,
+                            child: Text(
+                              'Tất cả vai trò',
+                              style: TextStyle(
+                                  fontSize: 13, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<UserRole?>(
+                            value: UserRole.admin,
+                            child: Text(
+                              'Admin',
+                              style: TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<UserRole?>(
+                            value: UserRole.leadTeacher,
+                            child: Text(
+                              'Tổng Phụ Trách',
+                              style: TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<UserRole?>(
+                            value: UserRole.teacher,
+                            child: Text(
+                              'Giáo Viên',
+                              style: TextStyle(fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => _selectedRoleFilter = val),
+                      ),
                     ),
                   ],
                 ),

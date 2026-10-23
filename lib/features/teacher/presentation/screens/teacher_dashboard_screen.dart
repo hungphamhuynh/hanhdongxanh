@@ -1310,47 +1310,40 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                     const SizedBox(height: 12),
 
                     // Lựa chọn thể loại thu gom đã cấu hình
-                    const Text(
-                      'Chọn thể loại thu gom:',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textSecondary,
+                    DropdownButtonFormField<PointRuleModel>(
+                      initialValue: rule,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Thể loại thu gom *',
+                        prefixIcon: Icon(Icons.recycling_rounded),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: rules.map((r) {
-                        final isSelected = r.id == rule.id;
-                        final isBattery = r.name.toLowerCase().contains('pin');
-                        final chipColor =
-                            isBattery ? AppColors.warning : AppColors.primary;
-
-                        return ChoiceChip(
-                          selected: isSelected,
-                          avatar: Icon(
-                            r.iconData,
-                            size: 18,
-                            color: isSelected ? Colors.white : chipColor,
+                      items: rules.map((r) {
+                        return DropdownMenuItem<PointRuleModel>(
+                          value: r,
+                          child: Row(
+                            children: [
+                              Icon(r.iconData,
+                                  size: 20, color: AppColors.primary),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  '${r.name} (${r.ruleRateText})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                          label: Text('${r.name} (${r.ruleRateText})'),
-                          selectedColor: chipColor,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.textPrimary,
-                            fontWeight:
-                                isSelected ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                          onSelected: (_) {
-                            setState(() {
-                              _selectedRule = r;
-                            });
-                          },
                         );
                       }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedRule = val);
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -1704,42 +1697,40 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                 ),
                 const SizedBox(height: 12),
 
-                // Danh sách quà tặng lựa chọn
-                const Text(
-                  'Chọn phần thưởng muốn đổi:',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary,
+                DropdownButtonFormField<RewardRuleModel>(
+                  initialValue: rule,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Phần thưởng muốn đổi *',
+                    prefixIcon: Icon(Icons.card_giftcard_rounded),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: rules.map((r) {
-                    final isSelected = r.id == rule.id;
-                    const chipColor = Color(0xFFC2410C);
-                    return ChoiceChip(
-                      selected: isSelected,
-                      avatar: Icon(
-                        r.iconData,
-                        size: 18,
-                        color: isSelected ? Colors.white : chipColor,
+                  items: rules.map((r) {
+                    return DropdownMenuItem<RewardRuleModel>(
+                      value: r,
+                      child: Row(
+                        children: [
+                          Icon(r.iconData,
+                              size: 20, color: const Color(0xFFC2410C)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '${r.name} (${r.pointsCost}đ/${r.unit})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                      label: Text('${r.name} • ${r.pointsCost}đ/${r.unit}'),
-                      selectedColor: chipColor,
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                      onSelected: (_) {
-                        setState(() => _selectedRule = r);
-                      },
                     );
                   }).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() => _selectedRule = val);
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
 

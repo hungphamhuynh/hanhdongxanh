@@ -109,7 +109,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     }
 
     // Tổng hợp số liệu từ collection `point_records`
-    int totalSchoolSubmissions = 0;
     int totalSchoolPoints = 0;
     double totalSelectedCategoryQty = 0.0;
     int activeClassesForCategory = 0;
@@ -125,7 +124,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
       final quantity = (data['quantity'] as num?)?.toDouble() ?? 0.0;
       final totalPts = (data['totalPoints'] as num?)?.toInt() ?? 0;
 
-      totalSchoolSubmissions++;
       totalSchoolPoints += totalPts;
 
       // Đảm bảo lớp có trong map kể cả khi collection `classes` chưa có
@@ -191,47 +189,132 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
 
     return CustomScrollView(
       slivers: [
-        // 1. BỘ CHỌN DANH MỤC DẠNG SELECT
+        // 1. BỘ CHỌN DANH MỤC & KHỐI DẠNG SELECT
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedRuleId,
-                  isExpanded: true,
-                  icon: const Icon(
-                    Icons.arrow_drop_down_circle_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  items: [
-                    const DropdownMenuItem<String>(
-                      value: '',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.stars_rounded,
-                            color: AppColors.primary,
-                            size: 20,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+            child: Row(
+              children: [
+                // Ô 1: Chọn Danh Mục
+                Expanded(
+                  flex: 6,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedRuleId,
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: AppColors.primary,
+                        ),
+                        items: [
+                          const DropdownMenuItem<String>(
+                            value: '',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.stars_rounded,
+                                  color: AppColors.primary,
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Tất cả danh mục',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          SizedBox(width: 10),
-                          Expanded(
+                          ...rules.map((rule) {
+                            return DropdownMenuItem<String>(
+                              value: rule.id,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    rule.iconData,
+                                    color: AppColors.primary,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '${rule.name} (${rule.unit})',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedRuleId = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                // Ô 2: Chọn Khối
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _selectedGradeFilter,
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: AppColors.primary,
+                        ),
+                        items: const [
+                          DropdownMenuItem<int>(
+                            value: 0,
                             child: Text(
-                              'Tất cả danh mục (Điểm thi đua)',
+                              'Tất cả khối',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -240,41 +323,61 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          DropdownMenuItem<int>(
+                            value: 6,
+                            child: Text(
+                              'Khối 6',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<int>(
+                            value: 7,
+                            child: Text(
+                              'Khối 7',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<int>(
+                            value: 8,
+                            child: Text(
+                              'Khối 8',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DropdownMenuItem<int>(
+                            value: 9,
+                            child: Text(
+                              'Khối 9',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedGradeFilter = val);
+                          }
+                        },
                       ),
                     ),
-                    ...rules.map((rule) {
-                      return DropdownMenuItem<String>(
-                        value: rule.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              rule.iconData,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                '${rule.name} (${rule.unit})',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedRuleId = val);
-                  },
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -282,38 +385,14 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
         // 2. BANNER THỐNG KÊ TỔNG QUAN THEO DANH MỤC ĐÃ CHỌN
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
             child: _buildBanner(
               selectedRule: selectedRule,
               totalSchoolPoints: totalSchoolPoints,
-              totalSchoolSubmissions: totalSchoolSubmissions,
               totalSelectedCategoryQty: totalSelectedCategoryQty,
               activeClassesCount: selectedRule == null
                   ? classDataMap.length
                   : activeClassesForCategory,
-            ),
-          ),
-        ),
-
-        // 3. THANH LỌC KHỐI
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildGradeChip(label: 'Tất Cả Khối', grade: 0),
-                  const SizedBox(width: 8),
-                  _buildGradeChip(label: 'Khối 6', grade: 6),
-                  const SizedBox(width: 8),
-                  _buildGradeChip(label: 'Khối 7', grade: 7),
-                  const SizedBox(width: 8),
-                  _buildGradeChip(label: 'Khối 8', grade: 8),
-                  const SizedBox(width: 8),
-                  _buildGradeChip(label: 'Khối 9', grade: 9),
-                ],
-              ),
             ),
           ),
         ),
@@ -354,27 +433,10 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     );
   }
 
-  /// Chip lọc khối
-  Widget _buildGradeChip({required String label, required int grade}) {
-    final isSelected = _selectedGradeFilter == grade;
-    return ChoiceChip(
-      selected: isSelected,
-      label: Text(label),
-      selectedColor: AppColors.primary,
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        color: isSelected ? Colors.white : AppColors.textPrimary,
-      ),
-      onSelected: (_) => setState(() => _selectedGradeFilter = grade),
-    );
-  }
-
   /// Banner tổng quan
   Widget _buildBanner({
     required PointRuleModel? selectedRule,
     required int totalSchoolPoints,
-    required int totalSchoolSubmissions,
     required double totalSelectedCategoryQty,
     required int activeClassesCount,
   }) {
@@ -463,20 +525,11 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     iconColor: Colors.amberAccent,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStatTile(
-                    icon: Icons.assignment_turned_in_rounded,
-                    label: 'Lượt Nộp',
-                    value: '$totalSchoolSubmissions lượt',
-                    iconColor: Colors.lightGreenAccent,
-                  ),
-                ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildStatTile(
                     icon: Icons.school_rounded,
-                    label: 'Lớp Tham Gia',
+                    label: 'Số Lớp Tham Gia',
                     value: '$activeClassesCount lớp',
                     iconColor: Colors.cyanAccent,
                   ),
@@ -632,7 +685,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
           ),
         ),
         subtitle: Text(
-          'Khối ${item.grade} • ${item.submissionCount} lượt nộp',
+          'Khối ${item.grade}',
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         trailing: Container(
