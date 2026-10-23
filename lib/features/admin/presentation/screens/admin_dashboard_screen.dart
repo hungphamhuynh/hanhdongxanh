@@ -794,7 +794,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _showAddPointRuleDialog(BuildContext context) {
     final nameCtrl = TextEditingController();
     String selectedUnit = 'Số lượng';
-    final unitQtyCtrl = TextEditingController(text: '5');
+    final unitQtyCtrl = TextEditingController(text: '1');
     final pointsCtrl = TextEditingController(text: '1');
     final descCtrl = TextEditingController();
     String selectedIcon = 'bottle';
@@ -882,12 +882,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
-                        onSelected: (_) => setDialogState(() {
-                          selectedUnit = 'Số lượng';
-                          if (unitQtyCtrl.text == '1') {
-                            unitQtyCtrl.text = '5';
-                          }
-                        }),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedUnit = 'Số lượng'),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -904,12 +900,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
-                        onSelected: (_) => setDialogState(() {
-                          selectedUnit = 'Kg';
-                          if (unitQtyCtrl.text == '5') {
-                            unitQtyCtrl.text = '1';
-                          }
-                        }),
+                        onSelected: (_) =>
+                            setDialogState(() => selectedUnit = 'Kg'),
                       ),
                     ),
                   ],
@@ -997,7 +989,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ],
                         decoration: InputDecoration(
                           labelText: 'Cứ mỗi',
-                          hintText: '5',
+                          hintText: '1',
                           suffixText: selectedUnit,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,

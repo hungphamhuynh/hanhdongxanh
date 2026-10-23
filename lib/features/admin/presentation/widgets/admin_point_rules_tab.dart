@@ -606,7 +606,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                         ],
                         decoration: InputDecoration(
                           labelText: 'Cứ mỗi',
-                          hintText: '5',
+                          hintText: '1',
                           suffixText: selectedUnit,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
