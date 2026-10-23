@@ -243,10 +243,10 @@ class PointRuleService {
     await batch.commit();
   }
 
-  /// Khởi tạo 4 thể loại phế liệu mẫu chuẩn phong trào: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ
-  Future<void> seedDefaultEcoRules() async {
-    final snapshot = await _rulesCollection.limit(1).get();
-    if (snapshot.docs.isNotEmpty) return; // Đã có dữ liệu, không ghi đè
+  /// Khởi tạo 5 thể loại phế liệu mẫu chuẩn phong trào: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ, Bút viết cũ
+  Future<void> seedDefaultEcoRules({bool overwrite = false}) async {
+    final snapshot = await _rulesCollection.get();
+    if (snapshot.docs.isNotEmpty && !overwrite) return; // Đã có dữ liệu và không yêu cầu ghi đè
 
     final defaultCategories = [
       {
@@ -272,26 +272,42 @@ class PointRuleService {
       {
         'name': 'Giấy vụn & Sách báo',
         'unit': 'Kg',
-        'unitQuantity': 1,
-        'points': 2,
-        'pointsPerUnit': 2,
-        'description': 'Giấy báo cũ, sách vở, bìa carton (1 kg = 2 điểm)',
+        'unitQuantity': 6,
+        'points': 1,
+        'pointsPerUnit': 1,
+        'description': 'Giấy báo cũ, sách vở, bìa carton (6 kg = 1 điểm)',
         'iconName': 'paper',
         'isActive': true,
       },
       {
         'name': 'Pin cũ',
         'unit': 'Số lượng',
-        'unitQuantity': 1,
-        'points': 5,
-        'pointsPerUnit': 5,
-        'description': 'Pin đã qua sử dụng ngăn ô nhiễm môi trường (1 viên = 5 điểm)',
+        'unitQuantity': 5,
+        'points': 1,
+        'pointsPerUnit': 1,
+        'description': 'Pin đã qua sử dụng ngăn ô nhiễm môi trường (5 viên = 1 điểm)',
         'iconName': 'battery',
+        'isActive': true,
+      },
+      {
+        'name': 'Bút viết cũ',
+        'unit': 'Số lượng',
+        'unitQuantity': 5,
+        'points': 1,
+        'pointsPerUnit': 1,
+        'description': 'Vỏ bút bi, bút dạ, bút viết đã hết mực (5 cây = 1 điểm)',
+        'iconName': 'pen',
         'isActive': true,
       },
     ];
 
     final batch = _firestore.batch();
+    if (overwrite && snapshot.docs.isNotEmpty) {
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+    }
+
     for (final item in defaultCategories) {
       final docRef = _rulesCollection.doc();
       batch.set(docRef, item);

@@ -77,11 +77,16 @@ class PointRuleModel {
         return Icons.newspaper_rounded;
       case 'box':
         return Icons.inventory_2_rounded;
+      case 'pen':
+        return Icons.edit_note_rounded;
       case 'bottle':
         return Icons.local_drink_rounded;
       default:
         final lower = name.toLowerCase();
         if (lower.contains('pin')) return Icons.battery_charging_full_rounded;
+        if (lower.contains('bút') || lower.contains('viết') || lower.contains('pen')) {
+          return Icons.edit_note_rounded;
+        }
         if (lower.contains('lon')) return Icons.recycling_rounded;
         if (lower.contains('giay') ||
             lower.contains('giấy') ||

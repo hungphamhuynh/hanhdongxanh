@@ -211,6 +211,20 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                         ),
                         onPressed: () => _showHistoryModal(context),
                       ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        icon: const Icon(Icons.auto_awesome_rounded),
+                        tooltip: 'Đặt lại 5 thể loại mẫu chuẩn',
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primaryContainer,
+                          foregroundColor: AppColors.primaryDark,
+                          padding: const EdgeInsets.all(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => _confirmResetDefaultRules(context),
+                      ),
                     ],
                   ),
                 ),
@@ -857,6 +871,65 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
         }
       }
     }
+  }
+
+  void _confirmResetDefaultRules(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
+            SizedBox(width: 8),
+            Text('Đặt Lại Danh Mục Mẫu'),
+          ],
+        ),
+        content: const Text(
+          'Hệ thống sẽ cập nhật 5 thể loại chuẩn phong trào:\n'
+          '• Chai nhựa: 5 chai = 1 điểm\n'
+          '• Lon nhôm: 5 lon = 1 điểm\n'
+          '• Giấy vụn & Sách báo: 6 kg = 1 điểm\n'
+          '• Pin cũ: 5 viên = 1 điểm\n'
+          '• Bút viết cũ: 5 cây = 1 điểm\n\n'
+          'Bạn có chắc chắn muốn áp dụng không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _pointRuleService.seedDefaultEcoRules(overwrite: true);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Đã cập nhật 5 thể loại mẫu chuẩn thành công!',
+                      ),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Lỗi: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Xác nhận áp dụng'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showHistoryModal(BuildContext context, {PointRuleModel? rule}) {
