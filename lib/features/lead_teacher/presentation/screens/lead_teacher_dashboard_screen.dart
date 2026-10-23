@@ -7,9 +7,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/services/point_rule_service.dart';
+import '../../../admin/services/reward_service.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../teacher/models/point_record_model.dart';
+import '../../../teacher/models/reward_record_model.dart';
+import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 import '../../../teacher/services/point_record_service.dart';
 
 class LeadTeacherDashboardScreen extends StatefulWidget {
@@ -26,13 +29,15 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
   final AuthService _authService = AuthService();
   final PointRuleService _pointRuleService = PointRuleService();
   final PointRecordService _pointRecordService = PointRecordService();
+  final RewardService _rewardService = RewardService();
 
   int _selectedGradeFilter = 0; // 0: Tất cả, 6: Khối 6, 7: Khối 7...
+  int _schoolHistoryTabIndex = 0; // 0: Thu gom (+), 1: Đổi quà (-)
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -75,14 +80,29 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
           indicatorWeight: 3,
-          tabs: const [
-            Tab(
+          tabs: [
+            const Tab(
               icon: Icon(Icons.leaderboard_rounded, size: 20),
-              text: 'Bảng Xếp Hạng Lớp',
+              text: 'Xếp Hạng',
             ),
             Tab(
+              icon: StreamBuilder<List<RewardRecordModel>>(
+                stream: _rewardService.getPendingOrdersStream(),
+                builder: (context, snapshot) {
+                  final count = snapshot.data?.length ?? 0;
+                  return Badge(
+                    isLabelVisible: count > 0,
+                    label: Text('$count'),
+                    backgroundColor: const Color(0xFFC2410C),
+                    child: const Icon(Icons.pending_actions_rounded, size: 20),
+                  );
+                },
+              ),
+              text: 'Đơn Đổi Quà',
+            ),
+            const Tab(
               icon: Icon(Icons.receipt_long_rounded, size: 20),
-              text: 'Nhật Ký Thu Gom',
+              text: 'Nhật Ký',
             ),
           ],
         ),
@@ -126,7 +146,10 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
             // Tab 1: Bảng Xếp Hạng Lớp Toàn Trường
             _buildLeaderboardTab(),
 
-            // Tab 2: Nhật Ký Thu Gom Toàn Trường
+            // Tab 2: Quản Lý Đơn Đổi Quà Chờ Duyệt
+            _buildPendingOrdersTab(context, user),
+
+            // Tab 3: Nhật Ký Toàn Trường (Tích điểm & Đổi quà)
             _buildSchoolHistoryTab(),
           ],
         ),
@@ -483,6 +506,7 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
         ),
       ),
       child: ListTile(
+        onTap: () => ClassDetailsSheet.show(context, item['className'] as String),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: rankBadge,
@@ -517,122 +541,732 @@ class _LeadTeacherDashboardScreenState extends State<LeadTeacherDashboardScreen>
     );
   }
 
-  Widget _buildSchoolHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('point_records')
-          .snapshots(),
+  Widget _buildPendingOrdersTab(BuildContext context, User? user) {
+    return StreamBuilder<List<RewardRecordModel>>(
+      stream: _rewardService.getPendingOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = snapshot.data?.docs ?? [];
-        final records =
-            docs.map((d) => PointRecordModel.fromFirestore(d)).toList();
-
-        // Sắp xếp mới nhất lên đầu
-        records.sort((a, b) {
-          if (a.createdAt == null) return -1;
-          if (b.createdAt == null) return 1;
-          return b.createdAt!.compareTo(a.createdAt!);
-        });
-
-        if (records.isEmpty) {
-          return const Center(
-            child: Text(
-              'Chưa có lượt thu gom nào được ghi nhận trên hệ thống.',
-              style: TextStyle(color: AppColors.textSecondary),
+        final orders = snapshot.data ?? [];
+        if (orders.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      color: AppColors.successLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.task_alt_rounded,
+                      size: 48,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Không có đơn đổi quà nào đang chờ duyệt',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Khi các giáo viên gửi yêu cầu đổi quà cho lớp,\nphiếu đổi sẽ xuất hiện tại đây để bạn duyệt & trao thưởng.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-          itemCount: records.length,
+          itemCount: orders.length,
           itemBuilder: (context, index) {
-            final rec = records[index];
-            final isBattery = rec.isBattery;
-            final color = isBattery ? AppColors.warning : AppColors.primary;
-
+            final order = orders[index];
             return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              elevation: 0.5,
+              margin: const EdgeInsets.only(bottom: 12),
+              elevation: 0.8,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 side: const BorderSide(color: AppColors.border),
               ),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(rec.iconData, color: color, size: 22),
-                ),
-                title: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryDark,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        rec.className,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${rec.categoryName}: ${rec.quantity} ${rec.unit}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                subtitle: Column(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 2),
-                    Text(
-                      '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
-                      style: const TextStyle(
-                          fontSize: 11, color: AppColors.textSecondary),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryMint,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'Lớp ${order.className}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.warningLight,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.hourglass_top_rounded,
+                                      size: 13, color: AppColors.warning),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    order.statusLabel,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          _formatDateTime(order.createdAt),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    if (rec.note.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        rec.note,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontStyle: FontStyle.italic,
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFC2410C)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(order.iconData,
+                              color: const Color(0xFFC2410C), size: 26),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                order.rewardName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Số lượng: ${order.quantity} ${order.unit} (${order.pointsCost}đ/${order.unit})',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '-${order.totalPoints}đ',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFC2410C),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (order.note.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Ghi chú: ${order.note}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ),
                     ],
+                    const SizedBox(height: 6),
+                    Text(
+                      'Người gửi: ${order.createdByEmail}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.error,
+                              side: const BorderSide(color: AppColors.error),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _confirmRejectOrder(context, order, user),
+                            child: const Text('Từ Chối'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _confirmApproveOrder(context, order, user),
+                            icon: const Icon(Icons.check_circle_outline_rounded,
+                                size: 18),
+                            label: const Text('Duyệt & Trao Quà'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                ),
-                trailing: Text(
-                  '+${rec.totalPoints}đ',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.success,
-                  ),
                 ),
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Future<void> _confirmApproveOrder(
+      BuildContext context, RewardRecordModel order, User? user) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xác nhận duyệt & trao quà'),
+        content: Text(
+          'Duyệt phát "${order.quantity} ${order.unit} ${order.rewardName}" cho lớp ${order.className}?\n\n'
+          'Hệ thống sẽ chính thức trừ ${order.totalPoints} điểm thi đua của lớp.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xác Nhận & Trừ Điểm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      try {
+        await _rewardService.approveRewardOrder(
+          orderId: order.id,
+          approvedByEmail: user?.email ?? 'tongphutrach@nth.com',
+          approvedByUid: user?.uid ?? '',
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Đã duyệt và trừ ${order.totalPoints} điểm của lớp ${order.className} thành công!',
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _confirmRejectOrder(
+      BuildContext context, RewardRecordModel order, User? user) async {
+    final reasonCtrl = TextEditingController(text: 'Kho tạm hết quà');
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Từ chối đơn đổi quà'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Từ chối đơn đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Lý do từ chối *',
+                hintText: 'Ví dụ: Tạm hết hàng trong kho, cần gom thêm...',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xác Nhận Từ Chối'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      try {
+        await _rewardService.rejectRewardOrder(
+          orderId: order.id,
+          rejectionReason: reasonCtrl.text.trim(),
+          rejectedByEmail: user?.email ?? 'tongphutrach@nth.com',
+          rejectedByUid: user?.uid ?? '',
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã từ chối đơn đổi quà thành công!'),
+              backgroundColor: AppColors.textSecondary,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Lỗi: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildSchoolHistoryTab() {
+    return Column(
+      children: [
+        // Thanh chọn lịch sử: Thu gom vs Đổi quà
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _schoolHistoryTabIndex = 0),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _schoolHistoryTabIndex == 0
+                            ? AppColors.primary
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_circle_outline_rounded,
+                            size: 15,
+                            color: _schoolHistoryTabIndex == 0
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Thu Gom Phế Liệu (+)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _schoolHistoryTabIndex == 0
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _schoolHistoryTabIndex = 1),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _schoolHistoryTabIndex == 1
+                            ? const Color(0xFFC2410C)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.card_giftcard_rounded,
+                            size: 15,
+                            color: _schoolHistoryTabIndex == 1
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Đổi Điểm Lấy Quà (-)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _schoolHistoryTabIndex == 1
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Danh sách tương ứng
+        Expanded(
+          child: _schoolHistoryTabIndex == 0
+              ? StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('point_records')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final docs = snapshot.data?.docs ?? [];
+                    final records = docs
+                        .map((d) => PointRecordModel.fromFirestore(d))
+                        .toList();
+
+                    records.sort((a, b) {
+                      if (a.createdAt == null) return -1;
+                      if (b.createdAt == null) return 1;
+                      return b.createdAt!.compareTo(a.createdAt!);
+                    });
+
+                    if (records.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Chưa có lượt thu gom nào được ghi nhận trên hệ thống.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      itemCount: records.length,
+                      itemBuilder: (context, index) {
+                        final rec = records[index];
+                        final isBattery = rec.isBattery;
+                        final color =
+                            isBattery ? AppColors.warning : AppColors.primary;
+
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          elevation: 0.5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(rec.iconData, color: color, size: 22),
+                            ),
+                            title: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryDark,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    rec.className,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${rec.categoryName}: ${rec.quantity} ${rec.unit}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
+                                  style: const TextStyle(
+                                      fontSize: 11, color: AppColors.textSecondary),
+                                ),
+                                if (rec.note.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    rec.note,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: Text(
+                              '+${rec.totalPoints}đ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                )
+              : StreamBuilder<List<RewardRecordModel>>(
+                  stream: _rewardService.getAllRewardRecordsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final orders = snapshot.data ?? [];
+                    if (orders.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Chưa có đơn đổi quà nào trên toàn trường.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      itemCount: orders.length,
+                      itemBuilder: (context, index) {
+                        final order = orders[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          elevation: 0.5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: AppColors.border),
+                          ),
+                          child: ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFC2410C)
+                                    .withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(order.iconData,
+                                  color: const Color(0xFFC2410C), size: 24),
+                            ),
+                            title: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'Lớp ${order.className}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${order.rewardName} (${order.quantity} ${order.unit})',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: order.statusColor
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    order.statusLabel,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: order.statusColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_formatDateTime(order.createdAt)} • Người xin: ${order.createdByEmail}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                if (order.isApproved &&
+                                    order.approvedByEmail != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Duyệt bởi: ${order.approvedByEmail}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ],
+                                if (order.isRejected &&
+                                    order.rejectionReason.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Từ chối: ${order.rejectionReason}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.error,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: Text(
+                              '-${order.totalPoints}đ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFFC2410C),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 

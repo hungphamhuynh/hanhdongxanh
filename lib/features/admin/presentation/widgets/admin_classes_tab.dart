@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
+import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 import '../../services/admin_class_service.dart';
 
 class AdminClassesTab extends StatefulWidget {
@@ -215,6 +216,7 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                           elevation: 0,
                           margin: const EdgeInsets.only(bottom: 10),
                           child: ListTile(
+                            onTap: () => ClassDetailsSheet.show(context, className),
                             contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
                             leading: Container(

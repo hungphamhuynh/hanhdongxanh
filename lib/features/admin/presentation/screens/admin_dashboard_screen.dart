@@ -12,8 +12,10 @@ import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../services/admin_class_service.dart';
 import '../../services/admin_user_service.dart';
 import '../../services/point_rule_service.dart';
+import '../../services/reward_service.dart';
 import '../widgets/admin_classes_tab.dart';
 import '../widgets/admin_point_rules_tab.dart';
+import '../widgets/admin_reward_rules_tab.dart';
 import '../widgets/admin_users_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _adminUserService = AdminUserService();
   final _adminClassService = AdminClassService();
   final _pointRuleService = PointRuleService();
+  final _rewardService = RewardService();
 
   String get _appBarTitle {
     switch (_currentTabIndex) {
@@ -37,6 +40,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return 'Quản Lý Lớp Học';
       case 3:
         return 'Cấu Hình Điểm Thưởng';
+      case 4:
+        return 'Cấu Hình Đổi Điểm';
       case 0:
       default:
         return 'Trang Chủ';
@@ -65,6 +70,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         onPressed: () => _showAddPointRuleDialog(context),
         icon: const Icon(Icons.add_circle_outline_rounded),
         label: const Text('Thêm Thể Loại'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      );
+    } else if (_currentTabIndex == 4) {
+      return FloatingActionButton.extended(
+        onPressed: () => _showAddRewardDialog(context),
+        icon: const Icon(Icons.add_circle_outline_rounded),
+        label: const Text('Thêm Quà Tặng'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       );
@@ -120,6 +133,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             selectedIcon: Icon(Icons.stars_rounded),
             label: 'Điểm Thưởng',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.card_giftcard_outlined),
+            selectedIcon: Icon(Icons.card_giftcard_rounded),
+            label: 'Đổi Quà',
+          ),
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(context),
@@ -137,6 +155,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
           // TAB 3: CẤU HÌNH THỂ LOẠI & ĐIỂM THƯỞNG
           const AdminPointRulesTab(),
+
+          // TAB 4: CẤU HÌNH QUÀ TẶNG & ĐỔI ĐIỂM
+          const AdminRewardRulesTab(),
         ],
       ),
     );
@@ -283,6 +304,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     setState(
                       () => _currentTabIndex = 3,
                     ); // Chuyển sang Tab 3: Điểm Thưởng
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Module 4: Cấu hình đổi điểm lấy quà
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('reward_rules')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final rewardCount = snapshot.data?.docs.length ?? 0;
+
+                return _buildModuleCard(
+                  icon: Icons.card_giftcard_rounded,
+                  title: 'Cấu Hình Đổi Điểm',
+                  description: 'Thiết lập danh mục phần thưởng, quà tặng đổi điểm cho các lớp',
+                  badgeText: rewardCount > 0 ? '$rewardCount phần thưởng' : 'Cấu hình',
+                  badgeColor: const Color(0xFFC2410C),
+                  onTap: () {
+                    setState(
+                      () => _currentTabIndex = 4,
+                    ); // Chuyển sang Tab 4: Đổi Điểm
                   },
                 );
               },
@@ -1024,6 +1069,233 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     )
                   : const Text('Tạo Thể Loại'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddRewardDialog(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final unitCtrl = TextEditingController(text: 'Cái');
+    final pointsCtrl = TextEditingController(text: '10');
+    final descCtrl = TextEditingController();
+    String selectedIcon = 'gift';
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.card_giftcard_rounded, color: AppColors.primary),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Thêm Quà Tặng Đổi Điểm',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Tên quà tặng / phần thưởng *',
+                    hintText: 'Ví dụ: Chậu sen đá mini, Tập vở viết...',
+                    prefixIcon: Icon(Icons.card_giftcard_rounded),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                TextField(
+                  controller: unitCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Đơn vị tính *',
+                    hintText: 'Ví dụ: Cái, Cuốn, Chậu, Bộ, Suất...',
+                    prefixIcon: Icon(Icons.category_rounded),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Biểu tượng quà tặng:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ('gift', Icons.card_giftcard_rounded),
+                    ('plant', Icons.yard_rounded),
+                    ('book', Icons.menu_book_rounded),
+                    ('pen', Icons.edit_rounded),
+                    ('cup', Icons.emoji_events_rounded),
+                    ('star', Icons.stars_rounded),
+                    ('bottle', Icons.water_drop_rounded),
+                  ].map((item) {
+                    final key = item.$1;
+                    final icon = item.$2;
+                    final isSelected = selectedIcon == key;
+
+                    return InkWell(
+                      onTap: () => setDialogState(() => selectedIcon = key),
+                      borderRadius: BorderRadius.circular(10),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.border,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Icon(
+                          icon,
+                          size: 22,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                TextField(
+                  controller: pointsCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Số điểm cần để đổi 1 đơn vị *',
+                    hintText: 'Ví dụ: 10, 20, 30...',
+                    prefixIcon: Icon(Icons.stars_rounded),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: descCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Mô tả phần thưởng (Tùy chọn)',
+                    hintText: 'Quy cách quà tặng, tiêu chuẩn nhận...',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      final name = nameCtrl.text.trim();
+                      final unit = unitCtrl.text.trim();
+                      final points = int.tryParse(pointsCtrl.text.trim()) ?? 0;
+
+                      if (name.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng nhập tên quà tặng!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (unit.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng nhập đơn vị tính!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (points <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Vui lòng nhập số điểm đổi > 0!'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                        return;
+                      }
+
+                      setDialogState(() => isLoading = true);
+                      final user = FirebaseAuth.instance.currentUser;
+                      try {
+                        await _rewardService.createRewardRule(
+                          name: name,
+                          unit: unit,
+                          pointsCost: points,
+                          description: descCtrl.text.trim(),
+                          iconName: selectedIcon,
+                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByUid: user?.uid ?? 'admin',
+                        );
+
+                        if (context.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Đã thêm quà tặng "$name" ($points điểm/$unit) thành công!',
+                              ),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Lỗi: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      } finally {
+                        setDialogState(() => isLoading = false);
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Thêm Quà Tặng'),
             ),
           ],
         ),

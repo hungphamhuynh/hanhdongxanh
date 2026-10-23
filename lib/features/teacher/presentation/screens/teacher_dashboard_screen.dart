@@ -6,10 +6,13 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
+import '../../../admin/models/reward_rule_model.dart';
 import '../../../admin/services/point_rule_service.dart';
+import '../../../admin/services/reward_service.dart';
 import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../models/point_record_model.dart';
+import '../../models/reward_record_model.dart';
 import '../../services/point_record_service.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
@@ -22,7 +25,9 @@ class TeacherDashboardScreen extends StatefulWidget {
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   final PointRecordService _pointRecordService = PointRecordService();
   final PointRuleService _pointRuleService = PointRuleService();
+  final RewardService _rewardService = RewardService();
   final AuthService _authService = AuthService();
+  int _historyTabIndex = 0; // 0 = Lịch sử tích điểm (+), 1 = Lịch sử đổi quà (-)
 
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'Vừa xong';
@@ -164,20 +169,47 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            heroTag: 'fab_record_points',
-            backgroundColor: AppColors.primary,
+            heroTag: 'fab_teacher_action',
+            backgroundColor: _historyTabIndex == 0
+                ? AppColors.primary
+                : const Color(0xFFC2410C),
             foregroundColor: Colors.white,
-            icon: const Icon(Icons.add_task_rounded),
-            label: const Text(
-              'Đổi Phế Liệu Nhận Điểm',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            icon: Icon(_historyTabIndex == 0
+                ? Icons.add_task_rounded
+                : Icons.card_giftcard_rounded),
+            label: Text(
+              _historyTabIndex == 0 ? 'Tích Điểm Thu Gom' : 'Lên Đơn Đổi Quà',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            onPressed: () => _showRecordPointsModal(
-              context: context,
-              className: assignedClass,
-              teacherUid: user.uid,
-              teacherEmail: user.email ?? '',
-            ),
+            onPressed: () {
+              if (_historyTabIndex == 0) {
+                _showRecordPointsModal(
+                  context: context,
+                  className: assignedClass,
+                  teacherUid: user.uid,
+                  teacherEmail: user.email ?? '',
+                );
+              } else {
+                // Lấy điểm hiện tại của lớp
+                FirebaseFirestore.instance
+                    .collection('classes')
+                    .doc(assignedClass)
+                    .get()
+                    .then((doc) {
+                  final pts =
+                      ((doc.data()?['totalPoints']) as num?)?.toInt() ?? 0;
+                  if (context.mounted) {
+                    _showRewardOrderModal(
+                      context: context,
+                      className: assignedClass,
+                      currentClassPoints: pts,
+                      teacherUid: user.uid,
+                      teacherEmail: user.email ?? '',
+                    );
+                  }
+                });
+              }
+            },
           ),
           body: ResponsiveContainer(
             maxWidth: 850,
@@ -220,134 +252,294 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             teacherUid: user.uid,
                             teacherEmail: user.email ?? '',
                           ),
+                          onTapRedeem: () => _showRewardOrderModal(
+                            context: context,
+                            className: assignedClass,
+                            currentClassPoints: totalPoints,
+                            teacherUid: user.uid,
+                            teacherEmail: user.email ?? '',
+                          ),
                         ),
                       ),
                     ),
 
-                    // Tiêu đề Lịch sử thu gom
+                    // Bộ chuyển đổi 2 Tab Lịch sử: Tích điểm (+) và Đổi quà (-)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.history_rounded,
-                                    size: 20, color: AppColors.primary),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Nhật Ký Tích Điểm Lớp',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => setState(() => _historyTabIndex = 0),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 9),
+                                    decoration: BoxDecoration(
+                                      color: _historyTabIndex == 0
+                                          ? AppColors.primary
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.add_circle_outline_rounded,
+                                          size: 16,
+                                          color: _historyTabIndex == 0
+                                              ? Colors.white
+                                              : AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Lịch Sử Tích Điểm (+)',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: _historyTabIndex == 0
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                            Text(
-                              'Lớp $assignedClass',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => setState(() => _historyTabIndex = 1),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 9),
+                                    decoration: BoxDecoration(
+                                      color: _historyTabIndex == 1
+                                          ? const Color(0xFFC2410C)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.card_giftcard_rounded,
+                                          size: 16,
+                                          color: _historyTabIndex == 1
+                                              ? Colors.white
+                                              : AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Lịch Sử Đổi Điểm (-)',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: _historyTabIndex == 1
+                                                ? Colors.white
+                                                : AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
 
-                    // Danh sách lịch sử tích điểm realtime
-                    StreamBuilder<List<PointRecordModel>>(
-                      stream: _pointRecordService
-                          .getRecordsByClassStream(assignedClass),
-                      builder: (context, recordsSnap) {
-                        if (recordsSnap.connectionState ==
-                            ConnectionState.waiting) {
-                          return const SliverFillRemaining(
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
+                    // NỘI DUNG LỊCH SỬ TÍCH ĐIỂM (TAB 0)
+                    if (_historyTabIndex == 0)
+                      StreamBuilder<List<PointRecordModel>>(
+                        stream: _pointRecordService
+                            .getRecordsByClassStream(assignedClass),
+                        builder: (context, recordsSnap) {
+                          if (recordsSnap.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SliverFillRemaining(
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
 
-                        final records = recordsSnap.data ?? [];
+                          final records = recordsSnap.data ?? [];
 
-                        if (records.isEmpty) {
-                          return SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Padding(
-                              padding: const EdgeInsets.all(32.0),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryLight
-                                            .withValues(alpha: 0.25),
-                                        shape: BoxShape.circle,
+                          if (records.isEmpty) {
+                            return SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryLight
+                                              .withValues(alpha: 0.25),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.eco_rounded,
+                                          size: 48,
+                                          color: AppColors.primary,
+                                        ),
                                       ),
-                                      child: const Icon(
-                                        Icons.eco_rounded,
-                                        size: 48,
-                                        color: AppColors.primary,
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Chưa có lượt thu gom nào',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    const Text(
-                                      'Chưa có lượt thu gom nào',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Hãy vận động các bạn học sinh trong lớp gom Vỏ chai và Pin để cùng tích lũy điểm sinh thái nhé!',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      'Hãy vận động các bạn học sinh trong lớp gom Vỏ chai và Pin để cùng tích lũy điểm sinh thái nhé!',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary,
+                                      const SizedBox(height: 20),
+                                      FilledButton.icon(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                        ),
+                                        onPressed: () => _showRecordPointsModal(
+                                          context: context,
+                                          className: assignedClass,
+                                          teacherUid: user.uid,
+                                          teacherEmail: user.email ?? '',
+                                        ),
+                                        icon: const Icon(Icons.add),
+                                        label: const Text('Tích Điểm Ngay'),
                                       ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    FilledButton.icon(
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                      ),
-                                      onPressed: () => _showRecordPointsModal(
-                                        context: context,
-                                        className: assignedClass,
-                                        teacherUid: user.uid,
-                                        teacherEmail: user.email ?? '',
-                                      ),
-                                      icon: const Icon(Icons.add),
-                                      label: const Text('Tích Điểm Ngay'),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                              ),
+                            );
+                          }
+
+                          return SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final record = records[index];
+                                  return _buildRecordCard(context, record);
+                                },
+                                childCount: records.length,
                               ),
                             ),
                           );
-                        }
+                        },
+                      )
+                    // NỘI DUNG LỊCH SỬ ĐỔI ĐIỂM (TAB 1)
+                    else
+                      StreamBuilder<List<RewardRecordModel>>(
+                        stream: _rewardService
+                            .getRewardRecordsByClassStream(assignedClass),
+                        builder: (context, ordersSnap) {
+                          if (ordersSnap.connectionState ==
+                              ConnectionState.waiting) {
+                            return const SliverFillRemaining(
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
 
-                        return SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final record = records[index];
-                                return _buildRecordCard(context, record);
-                              },
-                              childCount: records.length,
+                          final orders = ordersSnap.data ?? [];
+
+                          if (orders.isEmpty) {
+                            return SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFC2410C)
+                                              .withValues(alpha: 0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.card_giftcard_rounded,
+                                          size: 48,
+                                          color: Color(0xFFC2410C),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Chưa có đơn đổi quà nào',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Khi lớp đạt đủ điểm thi đua, bạn có thể gửi yêu cầu đổi quà để Tổng phụ trách duyệt và phát thưởng nhé!',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      FilledButton.icon(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(0xFFC2410C),
+                                        ),
+                                        onPressed: () => _showRewardOrderModal(
+                                          context: context,
+                                          className: assignedClass,
+                                          currentClassPoints: totalPoints,
+                                          teacherUid: user.uid,
+                                          teacherEmail: user.email ?? '',
+                                        ),
+                                        icon: const Icon(Icons.card_giftcard_rounded),
+                                        label: const Text('Đổi Quà Ngay'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          return SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  final order = orders[index];
+                                  return _buildRewardOrderCard(context, order);
+                                },
+                                childCount: orders.length,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
                   ],
                 );
               },
@@ -367,6 +559,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required double paperKg,
     required int batteryCount,
     required VoidCallback onTapRecord,
+    required VoidCallback onTapRedeem,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -532,6 +725,49 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   iconColor: AppColors.warning,
                   label: 'Pin cũ',
                   value: '$batteryCount viên',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primaryDark,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: onTapRecord,
+                  icon: const Icon(Icons.add_task_rounded, size: 18),
+                  label: const Text(
+                    'Tích Điểm',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    side: const BorderSide(color: Colors.white60),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: onTapRedeem,
+                  icon: const Icon(Icons.card_giftcard_rounded, size: 18),
+                  label: const Text(
+                    'Đổi Quà',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -790,6 +1026,185 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         teacherEmail: teacherEmail,
         pointRuleService: _pointRuleService,
         pointRecordService: _pointRecordService,
+      ),
+    );
+  }
+
+  void _showRewardOrderModal({
+    required BuildContext context,
+    required String className,
+    required int currentClassPoints,
+    required String teacherUid,
+    required String teacherEmail,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _RewardOrderSheet(
+        className: className,
+        currentClassPoints: currentClassPoints,
+        teacherUid: teacherUid,
+        teacherEmail: teacherEmail,
+      ),
+    );
+  }
+
+  Widget _buildRewardOrderCard(BuildContext context, RewardRecordModel order) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: AppColors.border.withValues(alpha: 0.6)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Icon quà
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC2410C).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    order.iconData,
+                    color: const Color(0xFFC2410C),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Thông tin quà & số lượng
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              order.rewardName,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: order.statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(order.statusIcon,
+                                    size: 13, color: order.statusColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  order.statusLabel,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: order.statusColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Số lượng: ${order.quantity} ${order.unit} (${order.pointsCost}đ/${order.unit})',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Số điểm trừ
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '-${order.totalPoints}đ',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFC2410C),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (order.note.isNotEmpty ||
+                (order.isRejected && order.rejectionReason.isNotEmpty)) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: order.isRejected
+                      ? AppColors.errorLight
+                      : AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  order.isRejected
+                      ? 'Lý do từ chối: ${order.rejectionReason}'
+                      : 'Ghi chú: ${order.note}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: order.isRejected
+                        ? AppColors.error
+                        : AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _formatDateTime(order.createdAt),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                if (order.isApproved && order.approvedByEmail != null)
+                  Text(
+                    'Đã duyệt bởi: ${order.approvedByEmail}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1183,6 +1598,367 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RewardOrderSheet extends StatefulWidget {
+  final String className;
+  final int currentClassPoints;
+  final String teacherUid;
+  final String teacherEmail;
+
+  const _RewardOrderSheet({
+    required this.className,
+    required this.currentClassPoints,
+    required this.teacherUid,
+    required this.teacherEmail,
+  });
+
+  @override
+  State<_RewardOrderSheet> createState() => _RewardOrderSheetState();
+}
+
+class _RewardOrderSheetState extends State<_RewardOrderSheet> {
+  final _rewardService = RewardService();
+  final _qtyCtrl = TextEditingController(text: '1');
+  final _noteCtrl = TextEditingController();
+  RewardRuleModel? _selectedRule;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _qtyCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 14,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: StreamBuilder<List<RewardRuleModel>>(
+        stream: _rewardService.getRewardRulesStream(activeOnly: true),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              heightFactor: 3,
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final rules = snapshot.data ?? [];
+          if (rules.isEmpty) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 16),
+                const Icon(Icons.card_giftcard_outlined,
+                    size: 48, color: AppColors.textMuted),
+                const SizedBox(height: 12),
+                const Text(
+                  'Hiện chưa có phần thưởng nào đang mở để đổi',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Vui lòng liên hệ Quản trị viên để cấu hình danh mục quà tặng.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Đóng'),
+                ),
+              ],
+            );
+          }
+
+          _selectedRule ??= rules.first;
+          final rule = _selectedRule!;
+          final qty = int.tryParse(_qtyCtrl.text.trim()) ?? 0;
+          final totalCost = qty * rule.pointsCost;
+          final remainingPoints = widget.currentClassPoints - totalCost;
+          final isEnough = widget.currentClassPoints >= totalCost && qty > 0;
+
+          return SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.card_giftcard_rounded,
+                            color: Color(0xFFC2410C),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Đổi Quà Lớp ${widget.className}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Danh sách quà tặng lựa chọn
+                const Text(
+                  'Chọn phần thưởng muốn đổi:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: rules.map((r) {
+                    final isSelected = r.id == rule.id;
+                    const chipColor = Color(0xFFC2410C);
+                    return ChoiceChip(
+                      selected: isSelected,
+                      avatar: Icon(
+                        r.iconData,
+                        size: 18,
+                        color: isSelected ? Colors.white : chipColor,
+                      ),
+                      label: Text('${r.name} • ${r.pointsCost}đ/${r.unit}'),
+                      selectedColor: chipColor,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                      onSelected: (_) {
+                        setState(() => _selectedRule = r);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // Nhập số lượng
+                TextField(
+                  controller: _qtyCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: 'Số lượng ${rule.unit} muốn đổi *',
+                    hintText: 'Ví dụ: 1, 2, 5...',
+                    prefixIcon: const Icon(Icons.pin_rounded),
+                    suffixText: rule.unit,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 12),
+
+                // Ghi chú
+                TextField(
+                  controller: _noteCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Ghi chú cho Tổng phụ trách (Tùy chọn)',
+                    hintText: 'Ví dụ: Đổi làm phần thưởng tuần cho bạn Hoa...',
+                    prefixIcon: Icon(Icons.notes_rounded),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Thẻ tóm tắt tính điểm đổi quà
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isEnough
+                        ? AppColors.surfaceVariant
+                        : AppColors.errorLight.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isEnough
+                          ? const Color(0xFFC2410C).withValues(alpha: 0.3)
+                          : AppColors.error.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Điểm hiện có: ${widget.currentClassPoints}đ',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Quy đổi: $qty ${rule.unit} × ${rule.pointsCost}đ = $totalCostđ',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isEnough
+                                  ? 'Điểm còn lại: $remainingPointsđ'
+                                  : 'Không đủ điểm (thiếu ${totalCost - widget.currentClassPoints}đ)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: isEnough
+                                    ? AppColors.primary
+                                    : AppColors.error,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '-$totalCost điểm',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isEnough
+                                  ? const Color(0xFFC2410C)
+                                  : AppColors.error,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Nút gửi đơn
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFC2410C),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _isLoading || !isEnough
+                      ? null
+                      : () async {
+                          setState(() => _isLoading = true);
+                          try {
+                            await _rewardService.createRewardOrder(
+                              className: widget.className,
+                              rule: rule,
+                              quantity: qty,
+                              note: _noteCtrl.text.trim(),
+                              createdByEmail: widget.teacherEmail,
+                              createdByUid: widget.teacherUid,
+                            );
+
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Đã gửi đơn đổi "$qty ${rule.unit} ${rule.name}" thành công! Đang chờ Tổng phụ trách duyệt.',
+                                  ),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Lỗi: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
+                          }
+                        },
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_rounded),
+                  label: Text(
+                    _isLoading ? 'Đang gửi...' : 'Gửi Yêu Cầu Đổi Quà',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
