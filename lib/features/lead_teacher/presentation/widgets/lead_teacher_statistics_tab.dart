@@ -293,196 +293,175 @@ class _LeadTeacherStatisticsTabState extends State<LeadTeacherStatisticsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Dòng 1: Chọn Năm và Chọn Tháng
-          Row(
-            children: [
-              // Chọn Năm
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  initialValue: _selectedYear,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Năm',
-                    isDense: true,
-                    prefixIcon: Icon(Icons.calendar_today_rounded, size: 16),
-                    prefixIconConstraints:
-                        BoxConstraints(minWidth: 32, minHeight: 32),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          // 1. Chọn Năm (Mỗi mục 1 dòng độc lập full width)
+          DropdownButtonFormField<int>(
+            initialValue: _selectedYear,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Năm',
+              isDense: true,
+              prefixIcon: Icon(Icons.calendar_today_rounded, size: 18),
+              prefixIconConstraints:
+                  BoxConstraints(minWidth: 36, minHeight: 36),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            items: availableYears.map((y) {
+              return DropdownMenuItem<int>(
+                value: y,
+                child: Text(
+                  'Năm $y',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              );
+            }).toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedYear = val);
+            },
+          ),
+          const SizedBox(height: 10),
+
+          // 2. Chọn Tháng (Full width)
+          DropdownButtonFormField<int>(
+            initialValue: _selectedMonth,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Tháng',
+              isDense: true,
+              prefixIcon: Icon(Icons.date_range_rounded, size: 18),
+              prefixIconConstraints:
+                  BoxConstraints(minWidth: 36, minHeight: 36),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            items: [
+              const DropdownMenuItem<int>(
+                value: 0,
+                child: Text(
+                  'Cả năm (Tất cả các tháng)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  items: availableYears.map((y) {
-                    return DropdownMenuItem<int>(
-                      value: y,
-                      child: Text(
-                        'Năm $y',
-                        style: const TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedYear = val);
-                  },
                 ),
               ),
-              const SizedBox(width: 10),
-
-              // Chọn Tháng
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  initialValue: _selectedMonth,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Tháng',
-                    isDense: true,
-                    prefixIcon: Icon(Icons.date_range_rounded, size: 16),
-                    prefixIconConstraints:
-                        BoxConstraints(minWidth: 32, minHeight: 32),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              ...List.generate(12, (i) => i + 1).map((m) {
+                return DropdownMenuItem<int>(
+                  value: m,
+                  child: Text(
+                    'Tháng $m',
+                    style: const TextStyle(fontSize: 14),
                   ),
-                  items: [
-                    const DropdownMenuItem<int>(
-                      value: 0,
-                      child: Text(
-                        'Cả năm',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    ...List.generate(12, (i) => i + 1).map((m) {
-                      return DropdownMenuItem<int>(
-                        value: m,
-                        child: Text(
-                          'Tháng $m',
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedMonth = val);
-                  },
+                );
+              }),
+            ],
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedMonth = val);
+            },
+          ),
+          const SizedBox(height: 10),
+
+          // 3. Chọn Khối (Full width)
+          DropdownButtonFormField<int>(
+            initialValue: _selectedGrade,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Khối lớp',
+              isDense: true,
+              prefixIcon: Icon(Icons.school_rounded, size: 18),
+              prefixIconConstraints:
+                  BoxConstraints(minWidth: 36, minHeight: 36),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            items: const [
+              DropdownMenuItem<int>(
+                value: 0,
+                child: Text(
+                  'Tất cả các khối',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 6,
+                child: Text(
+                  'Khối 6',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 7,
+                child: Text(
+                  'Khối 7',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 8,
+                child: Text(
+                  'Khối 8',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+              DropdownMenuItem<int>(
+                value: 9,
+                child: Text(
+                  'Khối 9',
+                  style: TextStyle(fontSize: 14),
                 ),
               ),
             ],
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedGrade = val);
+            },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          // Dòng 2: Chọn Khối và Chọn Danh Mục
-          Row(
-            children: [
-              // Chọn Khối
-              Expanded(
-                flex: 4,
-                child: DropdownButtonFormField<int>(
-                  initialValue: _selectedGrade,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Khối lớp',
-                    isDense: true,
-                    prefixIcon: Icon(Icons.school_rounded, size: 16),
-                    prefixIconConstraints:
-                        BoxConstraints(minWidth: 32, minHeight: 32),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          // 4. Chọn Danh Mục Phế Liệu (Full width)
+          DropdownButtonFormField<String>(
+            initialValue: _selectedRuleId,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Danh mục phế liệu',
+              isDense: true,
+              prefixIcon: Icon(Icons.category_rounded, size: 18),
+              prefixIconConstraints:
+                  BoxConstraints(minWidth: 36, minHeight: 36),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            items: [
+              const DropdownMenuItem<String>(
+                value: '',
+                child: Text(
+                  'Tất cả danh mục (Điểm thi đua)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  items: const [
-                    DropdownMenuItem<int>(
-                      value: 0,
-                      child: Text(
-                        'Tất cả khối',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    DropdownMenuItem<int>(
-                      value: 6,
-                      child: Text(
-                        'Khối 6',
-                        style: TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    DropdownMenuItem<int>(
-                      value: 7,
-                      child: Text(
-                        'Khối 7',
-                        style: TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    DropdownMenuItem<int>(
-                      value: 8,
-                      child: Text(
-                        'Khối 8',
-                        style: TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    DropdownMenuItem<int>(
-                      value: 9,
-                      child: Text(
-                        'Khối 9',
-                        style: TextStyle(fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedGrade = val);
-                  },
                 ),
               ),
-              const SizedBox(width: 10),
-
-              // Chọn Danh Mục Phế Liệu
-              Expanded(
-                flex: 6,
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedRuleId,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Danh mục',
-                    isDense: true,
-                    prefixIcon: Icon(Icons.category_rounded, size: 16),
-                    prefixIconConstraints:
-                        BoxConstraints(minWidth: 32, minHeight: 32),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  ),
-                  items: [
-                    const DropdownMenuItem<String>(
-                      value: '',
-                      child: Text(
-                        'Tất cả danh mục',
-                        style: TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    ...rules.map((rule) {
-                      return DropdownMenuItem<String>(
-                        value: rule.id,
+              ...rules.map((rule) {
+                return DropdownMenuItem<String>(
+                  value: rule.id,
+                  child: Row(
+                    children: [
+                      Icon(rule.iconData, size: 18, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
                         child: Text(
                           '${rule.name} (${rule.unit})',
-                          style: const TextStyle(fontSize: 13),
-                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 14),
                         ),
-                      );
-                    }),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setState(() => _selectedRuleId = val);
-                  },
-                ),
-              ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
             ],
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedRuleId = val);
+            },
           ),
         ],
       ),

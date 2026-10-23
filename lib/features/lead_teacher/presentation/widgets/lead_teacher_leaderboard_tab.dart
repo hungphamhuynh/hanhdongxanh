@@ -189,55 +189,78 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
 
     return CustomScrollView(
       slivers: [
-        // 1. BỘ CHỌN DANH MỤC & KHỐI DẠNG SELECT
+        // 1. BỘ CHỌN DANH MỤC & KHỐI DẠNG SELECT (MỖI MỤC 1 DÒNG ĐỘC LẬP)
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-            child: Row(
+            child: Column(
               children: [
-                // Ô 1: Chọn Danh Mục
-                Expanded(
-                  flex: 6,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                // Dòng 1: Chọn Danh Mục (Full width rộng rãi)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedRuleId,
+                      isExpanded: true,
+                      icon: const Icon(
+                        Icons.arrow_drop_down_rounded,
+                        color: AppColors.primary,
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: '',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.stars_rounded,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Tất cả danh mục (Điểm thi đua)',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedRuleId,
-                        isExpanded: true,
-                        icon: const Icon(
-                          Icons.arrow_drop_down_rounded,
-                          color: AppColors.primary,
-                        ),
-                        items: [
-                          const DropdownMenuItem<String>(
-                            value: '',
+                        ...rules.map((rule) {
+                          return DropdownMenuItem<String>(
+                            value: rule.id,
                             child: Row(
                               children: [
                                 Icon(
-                                  Icons.stars_rounded,
+                                  rule.iconData,
                                   color: AppColors.primary,
-                                  size: 18,
+                                  size: 20,
                                 ),
-                                SizedBox(width: 8),
+                                SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Tất cả danh mục',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
+                                    '${rule.name} (${rule.unit})',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                       color: AppColors.textPrimary,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -245,135 +268,155 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                                 ),
                               ],
                             ),
-                          ),
-                          ...rules.map((rule) {
-                            return DropdownMenuItem<String>(
-                              value: rule.id,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    rule.iconData,
-                                    color: AppColors.primary,
-                                    size: 18,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      '${rule.name} (${rule.unit})',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedRuleId = val);
-                          }
-                        },
-                      ),
+                          );
+                        }),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedRuleId = val);
+                        }
+                      },
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(height: 8),
 
-                // Ô 2: Chọn Khối
-                Expanded(
-                  flex: 4,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.03),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
+                // Dòng 2: Chọn Khối (Full width rõ ràng)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _selectedGradeFilter,
+                      isExpanded: true,
+                      icon: const Icon(
+                        Icons.arrow_drop_down_rounded,
+                        color: AppColors.primary,
+                      ),
+                      items: const [
+                        DropdownMenuItem<int>(
+                          value: 0,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.school_rounded,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Tất cả các khối',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<int>(
+                          value: 6,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.school_outlined,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Khối 6',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<int>(
+                          value: 7,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.school_outlined,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Khối 7',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<int>(
+                          value: 8,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.school_outlined,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Khối 8',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem<int>(
+                          value: 9,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.school_outlined,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Khối 9',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _selectedGradeFilter,
-                        isExpanded: true,
-                        icon: const Icon(
-                          Icons.arrow_drop_down_rounded,
-                          color: AppColors.primary,
-                        ),
-                        items: const [
-                          DropdownMenuItem<int>(
-                            value: 0,
-                            child: Text(
-                              'Tất cả khối',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem<int>(
-                            value: 6,
-                            child: Text(
-                              'Khối 6',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem<int>(
-                            value: 7,
-                            child: Text(
-                              'Khối 7',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem<int>(
-                            value: 8,
-                            child: Text(
-                              'Khối 8',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          DropdownMenuItem<int>(
-                            value: 9,
-                            child: Text(
-                              'Khối 9',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedGradeFilter = val);
-                          }
-                        },
-                      ),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedGradeFilter = val);
+                        }
+                      },
                     ),
                   ),
                 ),

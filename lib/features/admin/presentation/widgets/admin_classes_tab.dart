@@ -127,97 +127,87 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
               ),
 
               // Thanh tìm kiếm lớp học
-              // Thanh tìm kiếm và bộ lọc Khối dạng Select
+              // Thanh tìm kiếm và bộ lọc Khối dạng Select (Mỗi mục 1 dòng độc lập)
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
+                  child: Column(
                     children: [
-                      // Ô Tìm kiếm lớp
-                      Expanded(
-                        flex: 6,
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Tìm lớp, giáo viên...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 18),
-                                    onPressed: () =>
-                                        setState(() => _searchQuery = ''),
-                                  )
-                                : null,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            isDense: true,
-                          ),
-                          onChanged: (val) =>
-                              setState(() => _searchQuery = val.trim()),
+                      // Dòng 1: Ô Tìm kiếm lớp (Full width)
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Tìm lớp (6A1, 9A12...) hoặc giáo viên...',
+                          prefixIcon: const Icon(Icons.search, size: 20),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () =>
+                                      setState(() => _searchQuery = ''),
+                                )
+                              : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          isDense: true,
                         ),
+                        onChanged: (val) =>
+                            setState(() => _searchQuery = val.trim()),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(height: 8),
 
-                      // Ô Select Khối
-                      Expanded(
-                        flex: 4,
-                        child: DropdownButtonFormField<String?>(
-                          initialValue: _selectedGradeFilter,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 10),
-                            prefixIcon: Icon(Icons.school_rounded, size: 18),
-                            prefixIconConstraints:
-                                BoxConstraints(minWidth: 32, minHeight: 32),
-                          ),
-                          items: [
-                            const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text(
-                                'Tất cả khối',
-                                style: TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            DropdownMenuItem<String?>(
-                              value: '6',
-                              child: Text(
-                                'Khối 6 ($grade6Count)',
-                                style: const TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            DropdownMenuItem<String?>(
-                              value: '7',
-                              child: Text(
-                                'Khối 7 ($grade7Count)',
-                                style: const TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            DropdownMenuItem<String?>(
-                              value: '8',
-                              child: Text(
-                                'Khối 8 ($grade8Count)',
-                                style: const TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            DropdownMenuItem<String?>(
-                              value: '9',
-                              child: Text(
-                                'Khối 9 ($grade9Count)',
-                                style: const TextStyle(fontSize: 13),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                          onChanged: (val) =>
-                              setState(() => _selectedGradeFilter = val),
+                      // Dòng 2: Ô Select Khối (Full width rõ ràng)
+                      DropdownButtonFormField<String?>(
+                        initialValue: _selectedGradeFilter,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Lọc theo khối lớp',
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          prefixIcon: Icon(Icons.school_rounded, size: 18),
+                          prefixIconConstraints:
+                              BoxConstraints(minWidth: 36, minHeight: 36),
                         ),
+                        items: [
+                          const DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text(
+                              'Tất cả các khối',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          DropdownMenuItem<String?>(
+                            value: '6',
+                            child: Text(
+                              'Khối 6 ($grade6Count lớp)',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                          DropdownMenuItem<String?>(
+                            value: '7',
+                            child: Text(
+                              'Khối 7 ($grade7Count lớp)',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                          DropdownMenuItem<String?>(
+                            value: '8',
+                            child: Text(
+                              'Khối 8 ($grade8Count lớp)',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                          DropdownMenuItem<String?>(
+                            value: '9',
+                            child: Text(
+                              'Khối 9 ($grade9Count lớp)',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => _selectedGradeFilter = val),
                       ),
                     ],
                   ),
