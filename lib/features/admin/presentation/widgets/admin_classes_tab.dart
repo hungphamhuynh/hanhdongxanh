@@ -18,11 +18,18 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
 
   String _searchQuery = '';
   String? _selectedGradeFilter; // null = Tất cả, '6', '7', '8', '9'
+  late final Stream<QuerySnapshot> _classesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _classesStream = _adminClassService.getClassesStream();
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: _adminClassService.getClassesStream(),
+      stream: _classesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

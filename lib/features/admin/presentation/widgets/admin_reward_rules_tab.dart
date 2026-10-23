@@ -18,6 +18,13 @@ class AdminRewardRulesTab extends StatefulWidget {
 class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
   final _rewardService = RewardService();
   String _searchQuery = '';
+  late final Stream<List<RewardRuleModel>> _rewardsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _rewardsStream = _rewardService.getRewardRulesStream();
+  }
 
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'Vừa xong';
@@ -32,7 +39,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<RewardRuleModel>>(
-      stream: _rewardService.getRewardRulesStream(),
+      stream: _rewardsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

@@ -1234,6 +1234,13 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
   final TextEditingController _noteCtrl = TextEditingController();
   PointRuleModel? _selectedRule;
   bool _isLoading = false;
+  late final Stream<List<PointRuleModel>> _rulesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _rulesStream = widget.pointRuleService.getPointRulesStream(onlyActive: true);
+  }
 
   @override
   void dispose() {
@@ -1257,7 +1264,7 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: StreamBuilder<List<PointRuleModel>>(
-            stream: widget.pointRuleService.getPointRulesStream(onlyActive: true),
+            stream: _rulesStream,
             builder: (context, rulesSnap) {
               final rules = rulesSnap.data ?? [];
 
@@ -1628,6 +1635,13 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
   final _noteCtrl = TextEditingController();
   RewardRuleModel? _selectedRule;
   bool _isLoading = false;
+  late final Stream<List<RewardRuleModel>> _rewardsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _rewardsStream = _rewardService.getRewardRulesStream(activeOnly: true);
+  }
 
   @override
   void dispose() {
@@ -1650,7 +1664,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: StreamBuilder<List<RewardRuleModel>>(
-        stream: _rewardService.getRewardRulesStream(activeOnly: true),
+        stream: _rewardsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(

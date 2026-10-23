@@ -1312,6 +1312,17 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
   String? _selectedClass;
   PointRuleModel? _selectedRule;
   bool _isLoading = false;
+  late final Stream<QuerySnapshot> _classesStream;
+  late final Stream<List<PointRuleModel>> _rulesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _classesStream =
+        FirebaseFirestore.instance.collection('classes').snapshots();
+    _rulesStream =
+        widget.pointRuleService.getPointRulesStream(onlyActive: true);
+  }
 
   @override
   void dispose() {
@@ -1335,8 +1346,7 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: StreamBuilder<QuerySnapshot>(
-            stream:
-                FirebaseFirestore.instance.collection('classes').snapshots(),
+            stream: _classesStream,
             builder: (context, classesSnap) {
               final classDocs = classesSnap.data?.docs ?? [];
               final classNames = classDocs
@@ -1351,8 +1361,7 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
               }
 
               return StreamBuilder<List<PointRuleModel>>(
-                stream: widget.pointRuleService
-                    .getPointRulesStream(onlyActive: true),
+                stream: _rulesStream,
                 builder: (context, rulesSnap) {
                   final rules = rulesSnap.data ?? [];
 

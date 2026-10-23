@@ -141,26 +141,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(context),
-      body: IndexedStack(
-        index: _currentTabIndex,
-        children: [
-          // TAB 0: TỔNG QUAN HỆ THỐNG (ADMIN HUB)
-          _buildOverviewTab(context),
-
-          // TAB 1: QUẢN LÝ TÀI KHOẢN CHUYÊN BIỆT
-          const AdminUsersTab(),
-
-          // TAB 2: QUẢN LÝ LỚP HỌC & GIÁO VIÊN PHỤ TRÁCH
-          const AdminClassesTab(),
-
-          // TAB 3: CẤU HÌNH THỂ LOẠI & ĐIỂM THƯỞNG
-          const AdminPointRulesTab(),
-
-          // TAB 4: CẤU HÌNH QUÀ TẶNG & ĐỔI ĐIỂM
-          const AdminRewardRulesTab(),
-        ],
-      ),
+      body: _buildCurrentTabBody(context),
     );
+  }
+
+  /// Dựng nội dung tab đang chọn - Tự động giải phóng (kill) tab cũ khi chuyển tab
+  Widget _buildCurrentTabBody(BuildContext context) {
+    switch (_currentTabIndex) {
+      case 0:
+        return _buildOverviewTab(context);
+      case 1:
+        return const AdminUsersTab();
+      case 2:
+        return const AdminClassesTab();
+      case 3:
+        return const AdminPointRulesTab();
+      case 4:
+        return const AdminRewardRulesTab();
+      default:
+        return _buildOverviewTab(context);
+    }
   }
 
   Widget _buildOverviewTab(BuildContext context) {

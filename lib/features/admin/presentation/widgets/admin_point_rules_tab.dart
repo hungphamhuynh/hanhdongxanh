@@ -27,11 +27,18 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
   }
   final _pointRuleService = PointRuleService();
   String _searchQuery = '';
+  late final Stream<List<PointRuleModel>> _rulesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _rulesStream = _pointRuleService.getPointRulesStream();
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<PointRuleModel>>(
-      stream: _pointRuleService.getPointRulesStream(),
+      stream: _rulesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
