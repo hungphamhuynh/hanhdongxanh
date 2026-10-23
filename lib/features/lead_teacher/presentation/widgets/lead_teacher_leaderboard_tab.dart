@@ -191,59 +191,90 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
 
     return CustomScrollView(
       slivers: [
-        // 1. THANH CHỌN DANH MỤC ĐỘNG (Lấy từ point_rules)
+        // 1. BỘ CHỌN DANH MỤC DẠNG SELECT
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.category_rounded,
-                        size: 16, color: AppColors.primary),
-                    SizedBox(width: 6),
-                    Text(
-                      'Xếp hạng theo danh mục:',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textSecondary,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedRuleId,
+                  isExpanded: true,
+                  icon: const Icon(
+                    Icons.arrow_drop_down_circle_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: '',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.stars_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Tất cả danh mục (Điểm thi đua)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    ...rules.map((rule) {
+                      return DropdownMenuItem<String>(
+                        value: rule.id,
+                        child: Row(
+                          children: [
+                            Icon(
+                              rule.iconData,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '${rule.name} (${rule.unit})',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedRuleId = val);
+                  },
                 ),
-                const SizedBox(height: 6),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Tất cả danh mục
-                      _buildCategoryChip(
-                        label: 'Tất cả danh mục',
-                        icon: Icons.stars_rounded,
-                        isSelected: _selectedRuleId.isEmpty,
-                        onTap: () => setState(() => _selectedRuleId = ''),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Danh sách các danh mục động từ Admin
-                      ...rules.map((rule) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _buildCategoryChip(
-                            label: rule.name,
-                            icon: rule.iconData,
-                            isSelected: _selectedRuleId == rule.id,
-                            onTap: () =>
-                                setState(() => _selectedRuleId = rule.id),
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -320,59 +351,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
             ),
           ),
       ],
-    );
-  }
-
-  /// Chip chọn danh mục
-  Widget _buildCategoryChip({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 1.5 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : AppColors.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -489,8 +467,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                 Expanded(
                   child: _buildStatTile(
                     icon: Icons.assignment_turned_in_rounded,
-                    label: 'Đợt Thu Gom',
-                    value: '$totalSchoolSubmissions đợt',
+                    label: 'Lượt Nộp',
+                    value: '$totalSchoolSubmissions lượt',
                     iconColor: Colors.lightGreenAccent,
                   ),
                 ),
@@ -654,7 +632,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
           ),
         ),
         subtitle: Text(
-          'Khối ${item.grade} • ${item.submissionCount} đợt nộp',
+          'Khối ${item.grade} • ${item.submissionCount} lượt nộp',
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         trailing: Container(
