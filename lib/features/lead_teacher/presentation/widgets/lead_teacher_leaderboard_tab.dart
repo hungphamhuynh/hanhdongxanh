@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../admin/models/point_rule_model.dart';
+import '../../../admin/presentation/widgets/past_school_years_sheet.dart';
 import '../../../admin/services/point_rule_service.dart';
 import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 
@@ -263,15 +264,40 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                             ),
                           ],
                         ),
-                        Text(
-                          _selectedMonth == 0
-                              ? 'Năm $_selectedYear'
-                              : 'Tháng $_selectedMonth/$_selectedYear',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                          ),
+                        Row(
+                          children: [
+                            TextButton.icon(
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: const Icon(Icons.emoji_events_outlined,
+                                  size: 16, color: AppColors.primary),
+                              label: const Text(
+                                'Bảng vàng năm cũ',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              onPressed: () =>
+                                  PastAcademicYearsSheet.show(context),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _selectedMonth == 0
+                                  ? 'Năm $_selectedYear'
+                                  : 'Tháng $_selectedMonth/$_selectedYear',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

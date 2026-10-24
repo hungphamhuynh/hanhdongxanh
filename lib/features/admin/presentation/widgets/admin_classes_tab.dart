@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 import '../../services/admin_class_service.dart';
+import 'close_school_year_dialog.dart';
+import 'past_school_years_sheet.dart';
 
 class AdminClassesTab extends StatefulWidget {
   const AdminClassesTab({super.key});
@@ -119,6 +122,71 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                           title: 'Khối 8 & 9',
                           count: '${grade8Count + grade9Count}',
                           color: AppColors.roleLeadTeacher,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Thanh công cụ Niên khóa: Xem Bảng Vàng & Đóng Sổ Năm Học
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 11, horizontal: 10),
+                            side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.5)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.emoji_events_outlined,
+                              size: 18, color: AppColors.primary),
+                          label: const Text(
+                            'Bảng Vàng Năm Cũ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          onPressed: () =>
+                              PastAcademicYearsSheet.show(context),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFC2410C),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 11, horizontal: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.archive_outlined, size: 18),
+                          label: const Text(
+                            'Đóng Sổ Năm Học',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onPressed: () {
+                            final user = FirebaseAuth.instance.currentUser;
+                            CloseSchoolYearDialog.show(
+                              context: context,
+                              userEmail: user?.email ?? '',
+                              userUid: user?.uid ?? '',
+                            );
+                          },
                         ),
                       ),
                     ],
