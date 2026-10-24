@@ -112,7 +112,7 @@ class _LeadTeacherDashboardScreenState
           const NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),
             selectedIcon: Icon(Icons.leaderboard_rounded),
-            label: 'Xếp Hạng',
+            label: 'Thống Kê & Xếp Hạng',
           ),
           NavigationDestination(
             icon: StreamBuilder<List<RewardRecordModel>>(
@@ -401,12 +401,16 @@ class _LeadTeacherDashboardScreenState
                                       const SizedBox(width: 4),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 4, vertical: 1),
+                                          horizontal: 4,
+                                          vertical: 1,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.warning
-                                              .withValues(alpha: 0.15),
-                                          borderRadius:
-                                              BorderRadius.circular(4),
+                                          color: AppColors.warning.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: const Text(
                                           'Đã sửa',
@@ -479,9 +483,11 @@ class _LeadTeacherDashboardScreenState
                                       value: 'edit',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.edit_outlined,
-                                              size: 18,
-                                              color: AppColors.primary),
+                                          Icon(
+                                            Icons.edit_outlined,
+                                            size: 18,
+                                            color: AppColors.primary,
+                                          ),
                                           SizedBox(width: 8),
                                           Text('Chỉnh sửa'),
                                         ],
@@ -491,12 +497,18 @@ class _LeadTeacherDashboardScreenState
                                       value: 'delete',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.delete_outline_rounded,
-                                              size: 18, color: AppColors.error),
+                                          Icon(
+                                            Icons.delete_outline_rounded,
+                                            size: 18,
+                                            color: AppColors.error,
+                                          ),
                                           SizedBox(width: 8),
-                                          Text('Hủy lượt thu gom',
-                                              style: TextStyle(
-                                                  color: AppColors.error)),
+                                          Text(
+                                            'Hủy lượt thu gom',
+                                            style: TextStyle(
+                                              color: AppColors.error,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -865,8 +877,11 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                 value: r,
                                 child: Row(
                                   children: [
-                                    Icon(r.iconData,
-                                        size: 20, color: AppColors.primary),
+                                    Icon(
+                                      r.iconData,
+                                      size: 20,
+                                      color: AppColors.primary,
+                                    ),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(

@@ -238,7 +238,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     ),
                   ),
 
-                // 4. Tiêu đề Bảng Tổng Sắp
+                // 4. Tiêu đề Bảng Xếp Hạng
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -254,7 +254,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Bảng Tổng Sắp Thi Đua (${rankedClasses.length} lớp)',
+                              'Bảng Xếp Hạng Các Lớp (${rankedClasses.length})',
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -301,7 +301,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                             ),
                             const SizedBox(height: 12),
                             const Text(
-                              'Chưa có dữ liệu thi đua trong đợt này',
+                              'Chưa có dữ liệu thu gom trong đợt này',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -505,7 +505,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               const DropdownMenuItem<String>(
                 value: '',
                 child: Text(
-                  'Tất cả danh mục (Điểm thi đua)',
+                  'Tất cả danh mục (Xếp theo điểm)',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -579,7 +579,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                   children: [
                     Text(
                       isAll
-                          ? 'TỔNG SỐ THI ĐUA TRONG KỲ'
+                          ? 'TỔNG KẾT THU GOM'
                           : 'TỔNG THU GOM: ${selectedRule.name.toUpperCase()}',
                       style: const TextStyle(
                         color: Colors.white70,
@@ -630,7 +630,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                 Expanded(
                   child: _buildKpiStatTile(
                     icon: Icons.stars_rounded,
-                    label: 'Tổng Điểm Thi Đua',
+                    label: 'Tổng Điểm Đã Tích',
                     value: '+$totalPeriodPoints đ',
                     iconColor: Colors.amberAccent,
                   ),
@@ -754,7 +754,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               Text('🏆', style: TextStyle(fontSize: 18)),
               SizedBox(width: 6),
               Text(
-                'VINH DANH DẪN ĐẦU THI ĐUA',
+                'TOP 3 DẪN ĐẦU',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
