@@ -17,7 +17,6 @@ import '../../../teacher/presentation/widgets/edit_point_record_sheet.dart';
 import '../../../teacher/services/point_record_service.dart';
 import '../widgets/lead_teacher_leaderboard_tab.dart';
 import '../widgets/lead_teacher_pending_orders_tab.dart';
-import '../widgets/lead_teacher_statistics_tab.dart';
 
 class LeadTeacherDashboardScreen extends StatefulWidget {
   const LeadTeacherDashboardScreen({super.key});
@@ -45,12 +44,10 @@ class _LeadTeacherDashboardScreenState
   String get _appBarTitle {
     switch (_currentTabIndex) {
       case 0:
-        return 'Thống Kê Thu Gom';
+        return 'Xếp Hạng & Thống Kê';
       case 1:
-        return 'Bảng Xếp Hạng';
-      case 2:
         return 'Duyệt Đơn Đổi Quà';
-      case 3:
+      case 2:
         return 'Nhật Ký Toàn Trường';
       default:
         return 'Tổng Phụ Trách';
@@ -112,11 +109,6 @@ class _LeadTeacherDashboardScreenState
         onDestinationSelected: (index) =>
             setState(() => _currentTabIndex = index),
         destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights_rounded),
-            label: 'Thống Kê',
-          ),
           const NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),
             selectedIcon: Icon(Icons.leaderboard_rounded),
@@ -181,15 +173,13 @@ class _LeadTeacherDashboardScreenState
   Widget _buildCurrentTabBody(BuildContext context, User? user) {
     switch (_currentTabIndex) {
       case 0:
-        return const LeadTeacherStatisticsTab();
-      case 1:
         return const LeadTeacherLeaderboardTab();
-      case 2:
+      case 1:
         return LeadTeacherPendingOrdersTab(user: user);
-      case 3:
+      case 2:
         return _buildSchoolHistoryTab();
       default:
-        return const LeadTeacherStatisticsTab();
+        return const LeadTeacherLeaderboardTab();
     }
   }
 
