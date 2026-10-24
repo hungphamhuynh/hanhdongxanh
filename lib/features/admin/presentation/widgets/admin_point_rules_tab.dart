@@ -89,7 +89,11 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                   FilledButton.icon(
                     onPressed: () async {
                       try {
-                        await _pointRuleService.seedDefaultEcoRules();
+                        final user = FirebaseAuth.instance.currentUser;
+                        await _pointRuleService.seedDefaultEcoRules(
+                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByUid: user?.uid ?? 'admin',
+                        );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -903,7 +907,12 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                await _pointRuleService.seedDefaultEcoRules(overwrite: true);
+                final user = FirebaseAuth.instance.currentUser;
+                await _pointRuleService.seedDefaultEcoRules(
+                  overwrite: true,
+                  changedByEmail: user?.email ?? 'admin@nth.com',
+                  changedByUid: user?.uid ?? 'admin',
+                );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

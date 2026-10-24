@@ -247,7 +247,11 @@ class PointRuleService {
   }
 
   /// Khởi tạo 5 thể loại phế liệu mẫu chuẩn phong trào: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ, Bút viết cũ
-  Future<void> seedDefaultEcoRules({bool overwrite = false}) async {
+  Future<void> seedDefaultEcoRules({
+    bool overwrite = false,
+    String changedByEmail = 'admin@nth.com',
+    String changedByUid = 'system',
+  }) async {
     final snapshot = await _rulesCollection.get();
     if (snapshot.docs.isNotEmpty && !overwrite) return; // Đã có dữ liệu và không yêu cầu ghi đè
 
@@ -307,13 +311,39 @@ class PointRuleService {
     final batch = _firestore.batch();
     if (overwrite && snapshot.docs.isNotEmpty) {
       for (final doc in snapshot.docs) {
+        final oldData = doc.data() as Map<String, dynamic>? ?? {};
+        final ruleName = oldData['name'] as String? ?? 'Thể loại phế liệu';
         batch.delete(doc.reference);
+
+        final histDeleteRef = _historyCollection.doc();
+        batch.set(histDeleteRef, {
+          'ruleId': doc.id,
+          'ruleName': ruleName,
+          'action': 'delete',
+          'oldValues': oldData,
+          'newValues': {},
+          'changedByEmail': changedByEmail.trim(),
+          'changedByUid': changedByUid.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
     }
 
     for (final item in defaultCategories) {
       final docRef = _rulesCollection.doc();
       batch.set(docRef, item);
+
+      final historyRef = _historyCollection.doc();
+      batch.set(historyRef, {
+        'ruleId': docRef.id,
+        'ruleName': item['name'],
+        'action': 'create',
+        'oldValues': {},
+        'newValues': Map<String, dynamic>.from(item),
+        'changedByEmail': changedByEmail.trim(),
+        'changedByUid': changedByUid.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     }
     await batch.commit();
   }
