@@ -98,17 +98,25 @@ class PointRecordModel {
       categoryName.toLowerCase().contains('sách') ||
       categoryName.toLowerCase().contains('báo');
 
+  bool get isPen =>
+      categoryName.toLowerCase().contains('bút') ||
+      categoryName.toLowerCase().contains('pen');
+
+  bool get isKg => unit.toLowerCase().contains('kg');
+
   IconData get iconData {
     if (isBattery) return Icons.battery_charging_full_rounded;
     if (isCan) return Icons.recycling_rounded;
     if (isPaper) return Icons.newspaper_rounded;
-    return Icons.local_drink_rounded;
+    if (isPen) return Icons.edit_rounded;
+    return Icons.eco_rounded;
   }
 
   Color get categoryColor {
     if (isBattery) return AppColors.warning;
     if (isCan) return AppColors.secondary;
     if (isPaper) return const Color(0xFF8D6E63);
+    if (isPen) return const Color(0xFF7C3AED);
     return AppColors.primary;
   }
 }

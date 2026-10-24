@@ -102,4 +102,32 @@ class PointRuleModel {
         return Icons.local_drink_rounded;
     }
   }
+
+  /// Kiểm tra có phải đơn vị Kg hay không
+  bool get isKg => unit.toLowerCase().contains('kg');
+
+  /// Màu sắc nhận diện từng loại danh mục phế liệu
+  Color get categoryColor {
+    final lower = name.toLowerCase();
+    if (iconName == 'battery' || lower.contains('pin')) {
+      return const Color(0xFFD97706);
+    }
+    if (iconName == 'can' || lower.contains('lon')) {
+      return const Color(0xFF0284C7);
+    }
+    if (iconName == 'paper' ||
+        lower.contains('giấy') ||
+        lower.contains('giay') ||
+        lower.contains('sách') ||
+        lower.contains('báo')) {
+      return const Color(0xFF8D6E63);
+    }
+    if (iconName == 'pen' ||
+        lower.contains('bút') ||
+        lower.contains('viết') ||
+        lower.contains('pen')) {
+      return const Color(0xFF7C3AED);
+    }
+    return const Color(0xFF10B981);
+  }
 }

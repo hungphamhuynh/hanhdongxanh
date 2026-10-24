@@ -197,18 +197,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     classSnap.data?.data() as Map<String, dynamic>? ?? {};
                 final totalPoints =
                     (classData['totalPoints'] as num?)?.toInt() ?? 0;
-                final bottleCount =
-                    (classData['bottleCount'] as num?)?.toInt() ?? 0;
-                final canCount =
-                    (classData['canCount'] as num?)?.toInt() ?? 0;
-                final paperKg =
-                    (classData['paperKg'] as num?)?.toDouble() ?? 0.0;
-                final batteryCount =
-                    (classData['batteryCount'] as num?)?.toInt() ?? 0;
 
                 return CustomScrollView(
                   slivers: [
-                    // Thẻ tổng quan điểm số lớp học
+                    // Thẻ tổng quan điểm số lớp học (Động 100%)
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -216,10 +208,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           assignedClass: assignedClass,
                           fullName: fullName,
                           totalPoints: totalPoints,
-                          bottleCount: bottleCount,
-                          canCount: canCount,
-                          paperKg: paperKg,
-                          batteryCount: batteryCount,
                         ),
                       ),
                     ),
@@ -537,10 +525,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required String assignedClass,
     required String fullName,
     required int totalPoints,
-    required int bottleCount,
-    required int canCount,
-    required double paperKg,
-    required int batteryCount,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -666,49 +650,64 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 4 ô thống kê phế liệu: Chai, Lon, Giấy, Pin
-          Row(
-            children: [
-              Expanded(
-                child: _buildScrapMiniTile(
-                  icon: Icons.local_drink_rounded,
-                  iconColor: AppColors.primary,
-                  label: 'Chai nhựa',
-                  value: '$bottleCount chai',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildScrapMiniTile(
-                  icon: Icons.recycling_rounded,
-                  iconColor: AppColors.secondary,
-                  label: 'Lon nhôm',
-                  value: '$canCount lon',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _buildScrapMiniTile(
-                  icon: Icons.newspaper_rounded,
-                  iconColor: const Color(0xFF8D6E63),
-                  label: 'Giấy vụn',
-                  value: paperKg > 0 ? '${paperKg.toStringAsFixed(1)} kg' : '0 kg',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildScrapMiniTile(
-                  icon: Icons.battery_charging_full_rounded,
-                  iconColor: AppColors.warning,
-                  label: 'Pin cũ',
-                  value: '$batteryCount viên',
-                ),
-              ),
-            ],
+          // Các ô thống kê phế liệu ĐỘNG 100% (tính từ các thể loại đang áp dụng và lịch sử thu gom của lớp)
+          StreamBuilder<List<PointRuleModel>>(
+            stream: _pointRuleService.getPointRulesStream(onlyActive: true),
+            builder: (context, rulesSnap) {
+              final rules = rulesSnap.data ?? [];
+              if (rules.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return StreamBuilder<List<PointRecordModel>>(
+                stream: _pointRecordService.getRecordsByClassStream(assignedClass),
+                builder: (context, recordsSnap) {
+                  final records = recordsSnap.data ?? [];
+                  final Map<String, double> collectedMap = {};
+                  for (final rec in records) {
+                    final keyById = rec.ruleId;
+                    final keyByName = rec.categoryName.trim().toLowerCase();
+                    if (keyById.isNotEmpty) {
+                      collectedMap[keyById] =
+                          (collectedMap[keyById] ?? 0.0) + rec.quantity;
+                    }
+                    collectedMap[keyByName] =
+                        (collectedMap[keyByName] ?? 0.0) + rec.quantity;
+                  }
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final itemWidth = (constraints.maxWidth - 8) / 2;
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: rules.map((rule) {
+                          final qty = collectedMap[rule.id] ??
+                              collectedMap[rule.name.trim().toLowerCase()] ??
+                              0.0;
+                          final isKg = rule.isKg;
+                          final valueStr = isKg
+                              ? (qty > 0
+                                  ? '${qty.toStringAsFixed(qty.truncateToDouble() == qty ? 0 : 1)} ${rule.unit}'
+                                  : '0 ${rule.unit}')
+                              : '${qty.toInt()} ${rule.unit}';
+
+                          return SizedBox(
+                            width: itemWidth > 0 ? itemWidth : 160,
+                            child: _buildScrapMiniTile(
+                              icon: rule.iconData,
+                              iconColor: rule.categoryColor,
+                              label: rule.name,
+                              value: valueStr,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
@@ -766,11 +765,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Widget _buildRecordCard(BuildContext context, PointRecordModel record) {
-    final isBattery = record.isBattery;
-    final color = isBattery ? AppColors.warning : AppColors.primary;
-    final unitDisplay = record.unit.toLowerCase().contains('kg')
-        ? '${record.quantity.toStringAsFixed(1)} kg'
-        : '${record.quantity.toInt()} ${record.categoryName.toLowerCase().contains('pin') ? 'viên' : record.categoryName.toLowerCase().contains('lon') ? 'lon' : 'cái'}';
+    final color = record.categoryColor;
+    final isKg = record.isKg;
+    final unitDisplay = isKg
+        ? '${record.quantity.toStringAsFixed(record.quantity.truncateToDouble() == record.quantity ? 0 : 1)} ${record.unit}'
+        : '${record.quantity.toInt()} ${record.unit}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),

@@ -51,17 +51,9 @@ class PointRecordService {
     final recordRef = _firestore.collection('point_records').doc();
     final classRef = _firestore.collection('classes').doc(cleanClass);
 
-    final lower = categoryName.toLowerCase();
-    final isBattery = lower.contains('pin');
-    final isCan = lower.contains('lon');
-    final isPaper = lower.contains('giấy') ||
-        lower.contains('giay') ||
-        lower.contains('carton');
-    final isKg = unit.toLowerCase().contains('kg');
-
     final batch = _firestore.batch();
 
-    // 1. Tạo bản ghi chi tiết
+    // 1. Tạo bản ghi chi tiết trong collection point_records (Mỗi giao dịch là 1 document riêng biệt)
     batch.set(recordRef, {
       'className': cleanClass,
       'ruleId': ruleId,
@@ -78,37 +70,11 @@ class PointRecordService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // 2. Cập nhật tổng điểm và khối lượng/số lượng thu gom của lớp
+    // 2. Chỉ cập nhật tổng điểm thi đua và thời gian ghi nhận của lớp trong collection classes
     final Map<String, dynamic> classUpdates = {
       'totalPoints': FieldValue.increment(calculatedPoints),
       'lastRecordedAt': FieldValue.serverTimestamp(),
     };
-
-    if (isBattery) {
-      if (isKg) {
-        classUpdates['batteryKg'] = FieldValue.increment(quantity);
-      } else {
-        classUpdates['batteryCount'] = FieldValue.increment(quantity.toInt());
-      }
-    } else if (isCan) {
-      if (isKg) {
-        classUpdates['canKg'] = FieldValue.increment(quantity);
-      } else {
-        classUpdates['canCount'] = FieldValue.increment(quantity.toInt());
-      }
-    } else if (isPaper) {
-      if (isKg) {
-        classUpdates['paperKg'] = FieldValue.increment(quantity);
-      } else {
-        classUpdates['paperCount'] = FieldValue.increment(quantity.toInt());
-      }
-    } else {
-      if (isKg) {
-        classUpdates['bottleKg'] = FieldValue.increment(quantity);
-      } else {
-        classUpdates['bottleCount'] = FieldValue.increment(quantity.toInt());
-      }
-    }
 
     batch.set(classRef, classUpdates, SetOptions(merge: true));
     await batch.commit();
@@ -119,47 +85,12 @@ class PointRecordService {
     final recordRef = _firestore.collection('point_records').doc(record.id);
     final classRef = _firestore.collection('classes').doc(record.className);
 
-    final isBattery = record.isBattery;
-    final isCan = record.isCan;
-    final isPaper = record.isPaper;
-    final isKg = record.unit.toLowerCase().contains('kg');
-
     final batch = _firestore.batch();
     batch.delete(recordRef);
 
     final Map<String, dynamic> classUpdates = {
       'totalPoints': FieldValue.increment(-record.totalPoints),
     };
-
-    if (isBattery) {
-      if (isKg) {
-        classUpdates['batteryKg'] = FieldValue.increment(-record.quantity);
-      } else {
-        classUpdates['batteryCount'] =
-            FieldValue.increment(-record.quantity.toInt());
-      }
-    } else if (isCan) {
-      if (isKg) {
-        classUpdates['canKg'] = FieldValue.increment(-record.quantity);
-      } else {
-        classUpdates['canCount'] =
-            FieldValue.increment(-record.quantity.toInt());
-      }
-    } else if (isPaper) {
-      if (isKg) {
-        classUpdates['paperKg'] = FieldValue.increment(-record.quantity);
-      } else {
-        classUpdates['paperCount'] =
-            FieldValue.increment(-record.quantity.toInt());
-      }
-    } else {
-      if (isKg) {
-        classUpdates['bottleKg'] = FieldValue.increment(-record.quantity);
-      } else {
-        classUpdates['bottleCount'] =
-            FieldValue.increment(-record.quantity.toInt());
-      }
-    }
 
     batch.set(classRef, classUpdates, SetOptions(merge: true));
     await batch.commit();
