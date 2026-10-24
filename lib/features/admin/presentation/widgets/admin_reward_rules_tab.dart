@@ -480,7 +480,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                   controller: nameCtrl,
                   decoration: const InputDecoration(
                     labelText: 'Tên quà tặng / phần thưởng *',
-                    hintText: 'Ví dụ: Chậu sen đá, Tập vở viết...',
+                    hintText: 'Ví dụ: Chậu cây xanh, Tập vở viết...',
                     prefixIcon: Icon(Icons.card_giftcard_rounded),
                   ),
                 ),

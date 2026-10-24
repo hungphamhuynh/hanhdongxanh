@@ -892,7 +892,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
           'Hệ thống sẽ cập nhật 5 thể loại chuẩn phong trào:\n'
           '• Chai nhựa: 5 chai = 1 điểm\n'
           '• Lon nhôm: 5 lon = 1 điểm\n'
-          '• Giấy vụn & Sách báo: 6 kg = 1 điểm\n'
+          '• Giấy vụn & Sách báo: 1 kg = 1 điểm\n'
           '• Pin cũ: 5 viên = 1 điểm\n'
           '• Bút viết cũ: 5 cây = 1 điểm\n\n'
           'Bạn có chắc chắn muốn áp dụng không?',

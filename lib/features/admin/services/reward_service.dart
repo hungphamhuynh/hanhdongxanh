@@ -190,7 +190,7 @@ class RewardService {
   }) async {
     final sampleRewards = [
       {
-        'name': 'Chậu sen đá mini',
+        'name': 'Chậu cây xanh',
         'unit': 'Chậu',
         'pointsCost': 30,
         'description': 'Cây xanh để bàn học tập rèn luyện lối sống xanh',
@@ -213,7 +213,7 @@ class RewardService {
       {
         'name': 'Bình nước giữ nhiệt sinh thái',
         'unit': 'Cái',
-        'pointsCost': 60,
+        'pointsCost': 80,
         'description': 'Bình nước cá nhân 500ml hạn chế sử dụng chai nhựa 1 lần',
         'iconName': 'bottle',
       },

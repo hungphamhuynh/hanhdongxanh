@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class RewardRuleModel {
   final String id;
-  final String name; // Tên quà tặng (Chậu sen đá, Tập vở học sinh, Bình giữ nhiệt...)
+  final String name; // Tên quà tặng (Chậu cây xanh, Tập vở học sinh, Bình giữ nhiệt...)
   final String unit; // "Cái", "Quyển", "Chậu", "Bộ", "Suất"...
   final int pointsCost; // Số điểm cần đổi trên mỗi đơn vị quà
   final String description; // Mô tả phần thưởng

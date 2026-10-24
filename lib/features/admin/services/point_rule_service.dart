@@ -279,10 +279,10 @@ class PointRuleService {
       {
         'name': 'Giấy vụn & Sách báo',
         'unit': 'Kg',
-        'unitQuantity': 6,
+        'unitQuantity': 1,
         'points': 1,
         'pointsPerUnit': 1,
-        'description': 'Giấy báo cũ, sách vở, bìa carton (6 kg = 1 điểm)',
+        'description': 'Giấy báo cũ, sách vở, bìa carton (1 kg = 1 điểm)',
         'iconName': 'paper',
         'isActive': true,
       },
