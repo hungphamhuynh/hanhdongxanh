@@ -29,8 +29,31 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
   int _selectedGrade = 0; // 0 = Tất cả các khối, 6..9 = Khối 6..9
   String _selectedRuleId = ''; // '' = Tất cả danh mục (Xếp hạng theo điểm)
 
-  late final Stream<QuerySnapshot> _recordsStream;
+  late Stream<QuerySnapshot> _recordsStream;
   late final Stream<List<PointRuleModel>> _rulesStream;
+
+  Stream<QuerySnapshot> _buildRecordsStream(int year, int month) {
+    final collection = FirebaseFirestore.instance.collection('point_records');
+    if (month == 0) {
+      // Cả năm: từ 01/01/year đến 01/01/(year+1)
+      final start = DateTime(year, 1, 1);
+      final end = DateTime(year + 1, 1, 1);
+      return collection
+          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('createdAt', isLessThan: Timestamp.fromDate(end))
+          .snapshots();
+    } else {
+      // Tháng cụ thể: từ 01/month/year đến 01/(month+1)/year
+      final start = DateTime(year, month, 1);
+      final end = month == 12
+          ? DateTime(year + 1, 1, 1)
+          : DateTime(year, month + 1, 1);
+      return collection
+          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('createdAt', isLessThan: Timestamp.fromDate(end))
+          .snapshots();
+    }
+  }
 
   @override
   void initState() {
@@ -38,8 +61,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     final now = DateTime.now();
     _selectedYear = now.year;
     _selectedMonth = now.month; // Mặc định mở tháng thi đua hiện tại
-    _recordsStream =
-        FirebaseFirestore.instance.collection('point_records').snapshots();
+    _recordsStream = _buildRecordsStream(_selectedYear, _selectedMonth);
     _rulesStream = _pointRuleService.getPointRulesStream(onlyActive: true);
   }
 
@@ -422,7 +444,13 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     );
                   }).toList(),
                   onChanged: (val) {
-                    if (val != null) setState(() => _selectedYear = val);
+                    if (val != null) {
+                      setState(() {
+                        _selectedYear = val;
+                        _recordsStream =
+                            _buildRecordsStream(_selectedYear, _selectedMonth);
+                      });
+                    }
                   },
                 ),
               ),
@@ -465,7 +493,13 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     }),
                   ],
                   onChanged: (val) {
-                    if (val != null) setState(() => _selectedMonth = val);
+                    if (val != null) {
+                      setState(() {
+                        _selectedMonth = val;
+                        _recordsStream =
+                            _buildRecordsStream(_selectedYear, _selectedMonth);
+                      });
+                    }
                   },
                 ),
               ),

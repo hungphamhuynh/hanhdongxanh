@@ -410,9 +410,14 @@ class RewardService {
     });
   }
 
-  /// Stream tất cả các đơn đổi quà TOÀN TRƯỜNG
-  Stream<List<RewardRecordModel>> getAllRewardRecordsStream() {
-    return _recordsCol.snapshots().map((snapshot) {
+  /// Stream tất cả các đơn đổi quà TOÀN TRƯỜNG (Hỗ trợ phân trang limit)
+  Stream<List<RewardRecordModel>> getAllRewardRecordsStream({int? limit}) {
+    Query query = _recordsCol;
+    if (limit != null && limit > 0) {
+      query = query.orderBy('createdAt', descending: true).limit(limit);
+    }
+
+    return query.snapshots().map((snapshot) {
       final list = snapshot.docs
           .map((doc) => RewardRecordModel.fromFirestore(doc))
           .toList();

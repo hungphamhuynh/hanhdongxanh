@@ -37,9 +37,24 @@ class _LeadTeacherDashboardScreenState
       0; // 0: Thống kê, 1: Xếp hạng, 2: Đơn đổi quà, 3: Nhật ký
   int _schoolHistoryTabIndex = 0; // 0: Thu gom (+), 1: Đổi quà (-)
 
+  int _pointRecordsLimit = 25;
+  int _rewardRecordsLimit = 25;
+
   late final Stream<List<RewardRecordModel>> _pendingOrdersStream;
-  late final Stream<QuerySnapshot> _pointRecordsStream;
-  late final Stream<List<RewardRecordModel>> _allRewardRecordsStream;
+  late Stream<QuerySnapshot> _pointRecordsStream;
+  late Stream<List<RewardRecordModel>> _allRewardRecordsStream;
+
+  Stream<QuerySnapshot> _buildPointRecordsStream(int limit) {
+    return FirebaseFirestore.instance
+        .collection('point_records')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots();
+  }
+
+  Stream<List<RewardRecordModel>> _buildRewardRecordsStream(int limit) {
+    return _rewardService.getAllRewardRecordsStream(limit: limit);
+  }
 
   String get _appBarTitle {
     switch (_currentTabIndex) {
@@ -58,10 +73,8 @@ class _LeadTeacherDashboardScreenState
   void initState() {
     super.initState();
     _pendingOrdersStream = _rewardService.getPendingOrdersStream();
-    _pointRecordsStream = FirebaseFirestore.instance
-        .collection('point_records')
-        .snapshots();
-    _allRewardRecordsStream = _rewardService.getAllRewardRecordsStream();
+    _pointRecordsStream = _buildPointRecordsStream(_pointRecordsLimit);
+    _allRewardRecordsStream = _buildRewardRecordsStream(_rewardRecordsLimit);
   }
 
   String _formatDateTime(DateTime? dt) {
@@ -322,10 +335,48 @@ class _LeadTeacherDashboardScreenState
                       );
                     }
 
+                    final hasMore = records.length >= _pointRecordsLimit;
+
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                      itemCount: records.length,
+                      itemCount: records.length + (hasMore ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == records.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Center(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 10),
+                                  side: BorderSide(
+                                      color: AppColors.primary
+                                          .withValues(alpha: 0.5)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(10)),
+                                ),
+                                icon: const Icon(Icons.expand_more_rounded,
+                                    size: 20, color: AppColors.primary),
+                                label: Text(
+                                  'Tải thêm 25 lượt thu gom cũ hơn (Đang xem ${records.length})',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _pointRecordsLimit += 25;
+                                    _pointRecordsStream =
+                                        _buildPointRecordsStream(
+                                            _pointRecordsLimit);
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        }
+
                         final rec = records[index];
                         final isBattery = rec.isBattery;
                         final color = isBattery
@@ -548,10 +599,48 @@ class _LeadTeacherDashboardScreenState
                       );
                     }
 
+                    final hasMore = orders.length >= _rewardRecordsLimit;
+
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                      itemCount: orders.length,
+                      itemCount: orders.length + (hasMore ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == orders.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Center(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 10),
+                                  side: BorderSide(
+                                      color: const Color(0xFFC2410C)
+                                          .withValues(alpha: 0.5)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(10)),
+                                ),
+                                icon: const Icon(Icons.expand_more_rounded,
+                                    size: 20, color: Color(0xFFC2410C)),
+                                label: Text(
+                                  'Tải thêm 25 đơn đổi quà cũ hơn (Đang xem ${orders.length})',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFC2410C)),
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _rewardRecordsLimit += 25;
+                                    _allRewardRecordsStream =
+                                        _buildRewardRecordsStream(
+                                            _rewardRecordsLimit);
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                        }
+
                         final order = orders[index];
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
