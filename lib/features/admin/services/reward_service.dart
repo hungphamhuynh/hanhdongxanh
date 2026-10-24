@@ -234,9 +234,10 @@ class RewardService {
 
   // ==========================================
   // QUY TRÌNH ĐỔI ĐIỂM: LÊN ĐƠN & DUYỆT ĐƠN
+  // (Cơ chế: Lên đơn TRỪ ĐIỂM NGAY, Từ chối HOÀN LẠI ĐIỂM)
   // ==========================================
 
-  /// 1. Giáo viên chủ nhiệm LÊN ĐƠN đổi quà cho lớp
+  /// 1. Giáo viên chủ nhiệm LÊN ĐƠN đổi quà cho lớp (Trừ điểm của lớp ngay lập tức)
   Future<void> createRewardOrder({
     required String className,
     required RewardRuleModel rule,
@@ -250,39 +251,52 @@ class RewardService {
     }
 
     final cleanClass = className.trim().toUpperCase();
-    final classDoc = await _classesCol.doc(cleanClass).get();
-    if (!classDoc.exists) {
-      throw Exception('Lớp $cleanClass không tồn tại trong hệ thống!');
-    }
-
-    final classData = classDoc.data() as Map<String, dynamic>? ?? {};
-    final currentPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
     final totalCost = quantity * rule.pointsCost;
 
-    if (currentPoints < totalCost) {
-      throw Exception('Điểm hiện tại của lớp ($currentPoints đ) không đủ để đổi ($totalCost đ)!');
-    }
+    await _firestore.runTransaction((transaction) async {
+      final classRef = _classesCol.doc(cleanClass);
+      final classDoc = await transaction.get(classRef);
+      if (!classDoc.exists) {
+        throw Exception('Lớp $cleanClass không tồn tại trong hệ thống!');
+      }
 
-    final recordRef = _recordsCol.doc();
-    final newRecord = RewardRecordModel(
-      id: recordRef.id,
-      className: cleanClass,
-      rewardId: rule.id,
-      rewardName: rule.name,
-      unit: rule.unit,
-      quantity: quantity,
-      pointsCost: rule.pointsCost,
-      totalPoints: totalCost,
-      note: note.trim(),
-      status: 'pending',
-      createdByEmail: createdByEmail.trim(),
-      createdByUid: createdByUid.trim(),
-    );
+      final classData = classDoc.data() as Map<String, dynamic>? ?? {};
+      final currentPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
 
-    await recordRef.set(newRecord.toMap());
+      if (currentPoints < totalCost) {
+        throw Exception(
+            'Điểm hiện tại của lớp ($currentPoints đ) không đủ để đổi ($totalCost đ)!');
+      }
+
+      // 1. Trừ điểm thi đua ngay lập tức của lớp
+      transaction.update(classRef, {
+        'totalPoints': FieldValue.increment(-totalCost),
+        'totalPointsRedeemed': FieldValue.increment(totalCost),
+        'lastRedeemedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Tạo phiếu đổi quà ở trạng thái chờ duyệt (pending)
+      final recordRef = _recordsCol.doc();
+      final newRecord = RewardRecordModel(
+        id: recordRef.id,
+        className: cleanClass,
+        rewardId: rule.id,
+        rewardName: rule.name,
+        unit: rule.unit,
+        quantity: quantity,
+        pointsCost: rule.pointsCost,
+        totalPoints: totalCost,
+        note: note.trim(),
+        status: 'pending',
+        createdByEmail: createdByEmail.trim(),
+        createdByUid: createdByUid.trim(),
+      );
+
+      transaction.set(recordRef, newRecord.toMap());
+    });
   }
 
-  /// 2. Tổng phụ trách DUYỆT & TRAO QUÀ (Trừ điểm lớp thi đua)
+  /// 2. Tổng phụ trách DUYỆT & TRAO QUÀ (Xác nhận trao quà, điểm đã trừ từ lúc lên đơn)
   Future<void> approveRewardOrder({
     required String orderId,
     required String approvedByEmail,
@@ -301,31 +315,7 @@ class RewardService {
         throw Exception('Phiếu đổi quà này đã được xử lý từ trước!');
       }
 
-      final className = (orderData['className'] as String? ?? '').trim().toUpperCase();
-      final totalPointsToDeduct = (orderData['totalPoints'] as num?)?.toInt() ?? 0;
-
-      final classRef = _classesCol.doc(className);
-      final classSnap = await transaction.get(classRef);
-      if (!classSnap.exists) {
-        throw Exception('Lớp $className không tồn tại!');
-      }
-
-      final classData = classSnap.data() as Map<String, dynamic>;
-      final currentPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
-
-      if (currentPoints < totalPointsToDeduct) {
-        throw Exception(
-            'Lớp $className hiện chỉ còn $currentPoints điểm, không đủ $totalPointsToDeduct điểm để duyệt!');
-      }
-
-      // 1. Trừ điểm của lớp
-      transaction.update(classRef, {
-        'totalPoints': FieldValue.increment(-totalPointsToDeduct),
-        'totalPointsRedeemed': FieldValue.increment(totalPointsToDeduct),
-        'lastRedeemedAt': FieldValue.serverTimestamp(),
-      });
-
-      // 2. Cập nhật phiếu đổi quà thành đã duyệt & trao quà
+      // Cập nhật phiếu đổi quà thành đã duyệt & trao quà thành công
       transaction.update(orderRef, {
         'status': 'approved',
         'approvedByEmail': approvedByEmail.trim(),
@@ -335,30 +325,46 @@ class RewardService {
     });
   }
 
-  /// 3. Tổng phụ trách TỪ CHỐI ĐƠN (Hết hàng / Lý do khác, không trừ điểm)
+  /// 3. Tổng phụ trách TỪ CHỐI ĐƠN (Hết hàng / Lý do khác -> TỰ ĐỘNG HOÀN LẠI ĐIỂM CHO LỚP)
   Future<void> rejectRewardOrder({
     required String orderId,
     required String rejectionReason,
     required String rejectedByEmail,
     required String rejectedByUid,
   }) async {
-    final orderRef = _recordsCol.doc(orderId);
-    final orderSnap = await orderRef.get();
-    if (!orderSnap.exists) {
-      throw Exception('Phiếu đổi quà không tồn tại!');
-    }
+    await _firestore.runTransaction((transaction) async {
+      final orderRef = _recordsCol.doc(orderId);
+      final orderSnap = await transaction.get(orderRef);
+      if (!orderSnap.exists) {
+        throw Exception('Phiếu đổi quà không tồn tại!');
+      }
 
-    final data = orderSnap.data() as Map<String, dynamic>;
-    if (data['status'] != 'pending') {
-      throw Exception('Phiếu đổi quà này đã được xử lý từ trước!');
-    }
+      final data = orderSnap.data() as Map<String, dynamic>;
+      final status = data['status'] as String? ?? 'pending';
+      if (status != 'pending') {
+        throw Exception('Phiếu đổi quà này đã được xử lý từ trước!');
+      }
 
-    await orderRef.update({
-      'status': 'rejected',
-      'rejectionReason': rejectionReason.trim(),
-      'approvedByEmail': rejectedByEmail.trim(),
-      'approvedByUid': rejectedByUid.trim(),
-      'resolvedAt': FieldValue.serverTimestamp(),
+      final className = (data['className'] as String? ?? '').trim().toUpperCase();
+      final totalPointsToRefund = (data['totalPoints'] as num?)?.toInt() ?? 0;
+
+      // 1. Hoàn trả lại điểm thi đua cho lớp
+      if (className.isNotEmpty && totalPointsToRefund > 0) {
+        final classRef = _classesCol.doc(className);
+        transaction.update(classRef, {
+          'totalPoints': FieldValue.increment(totalPointsToRefund),
+          'totalPointsRedeemed': FieldValue.increment(-totalPointsToRefund),
+        });
+      }
+
+      // 2. Cập nhật phiếu đổi quà thành từ chối kèm lý do
+      transaction.update(orderRef, {
+        'status': 'rejected',
+        'rejectionReason': rejectionReason.trim(),
+        'approvedByEmail': rejectedByEmail.trim(),
+        'approvedByUid': rejectedByUid.trim(),
+        'resolvedAt': FieldValue.serverTimestamp(),
+      });
     });
   }
 

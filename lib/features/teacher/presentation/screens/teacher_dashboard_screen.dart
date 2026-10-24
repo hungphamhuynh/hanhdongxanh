@@ -1861,7 +1861,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Đã gửi đơn đổi "$qty ${rule.unit} ${rule.name}" thành công! Đang chờ Tổng phụ trách duyệt.',
+                                    'Đã gửi đơn đổi "$qty ${rule.unit} ${rule.name}" thành công (đã trừ $totalCost điểm). Đang chờ Tổng phụ trách trao quà.',
                                   ),
                                   backgroundColor: AppColors.success,
                                 ),

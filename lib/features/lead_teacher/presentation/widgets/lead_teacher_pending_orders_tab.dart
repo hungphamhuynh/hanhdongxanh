@@ -50,10 +50,10 @@ class _LeadTeacherPendingOrdersTabState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận duyệt & trao quà'),
+        title: const Text('Xác nhận trao quà'),
         content: Text(
-          'Duyệt phát "${order.quantity} ${order.unit} ${order.rewardName}" cho lớp ${order.className}?\n\n'
-          'Hệ thống sẽ chính thức trừ ${order.totalPoints} điểm thi đua của lớp.',
+          'Duyệt trao "${order.quantity} ${order.unit} ${order.rewardName}" cho lớp ${order.className}?\n\n'
+          '(Lớp đã được trừ ${order.totalPoints} điểm khi lên đơn).',
         ),
         actions: [
           TextButton(
@@ -63,7 +63,7 @@ class _LeadTeacherPendingOrdersTabState
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xác Nhận & Trừ Điểm'),
+            child: const Text('Xác Nhận Đã Trao Quà'),
           ),
         ],
       ),
@@ -80,7 +80,7 @@ class _LeadTeacherPendingOrdersTabState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Đã duyệt và trừ ${order.totalPoints} điểm của lớp ${order.className} thành công!',
+                'Đã duyệt trao quà cho lớp ${order.className} thành công!',
               ),
               backgroundColor: AppColors.success,
             ),
@@ -112,7 +112,8 @@ class _LeadTeacherPendingOrdersTabState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Từ chối đơn đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?',
+              'Từ chối đơn đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?\n\n'
+              'Hệ thống sẽ tự động HOÀN LẠI ${order.totalPoints} điểm cho lớp.',
             ),
             const SizedBox(height: 12),
             TextField(
@@ -132,7 +133,7 @@ class _LeadTeacherPendingOrdersTabState
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xác Nhận Từ Chối'),
+            child: const Text('Xác Nhận & Hoàn Điểm'),
           ),
         ],
       ),
@@ -148,8 +149,10 @@ class _LeadTeacherPendingOrdersTabState
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Đã từ chối đơn đổi quà thành công!'),
+            SnackBar(
+              content: Text(
+                'Đã từ chối đơn và hoàn lại ${order.totalPoints} điểm cho lớp ${order.className} thành công!',
+              ),
               backgroundColor: AppColors.textSecondary,
             ),
           );
