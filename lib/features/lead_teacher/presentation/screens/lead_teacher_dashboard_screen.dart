@@ -12,6 +12,8 @@ import '../../../auth/services/auth_service.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../teacher/models/point_record_model.dart';
 import '../../../teacher/models/reward_record_model.dart';
+import '../../../teacher/presentation/widgets/delete_point_record_dialog.dart';
+import '../../../teacher/presentation/widgets/edit_point_record_sheet.dart';
 import '../../../teacher/services/point_record_service.dart';
 import '../widgets/lead_teacher_leaderboard_tab.dart';
 import '../widgets/lead_teacher_pending_orders_tab.dart';
@@ -393,12 +395,40 @@ class _LeadTeacherDashboardScreenState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const SizedBox(height: 2),
-                                Text(
-                                  '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (rec.isEdited) ...[
+                                      const SizedBox(width: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warning
+                                              .withValues(alpha: 0.15),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          'Đã sửa',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.warning,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 if (rec.note.isNotEmpty) ...[
                                   const SizedBox(height: 2),
@@ -412,13 +442,77 @@ class _LeadTeacherDashboardScreenState
                                 ],
                               ],
                             ),
-                            trailing: Text(
-                              '+${rec.totalPoints}đ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColors.success,
-                              ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '+${rec.totalPoints}đ',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_vert,
+                                    size: 18,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  tooltip: 'Tùy chọn',
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  onSelected: (val) {
+                                    final user =
+                                        FirebaseAuth.instance.currentUser;
+                                    final email = user?.email ?? '';
+                                    final uid = user?.uid ?? '';
+                                    if (val == 'edit') {
+                                      EditPointRecordSheet.show(
+                                        context: context,
+                                        record: rec,
+                                        userEmail: email,
+                                        userUid: uid,
+                                      );
+                                    } else if (val == 'delete') {
+                                      showConfirmDeletePointRecordDialog(
+                                        context: context,
+                                        record: rec,
+                                        userEmail: email,
+                                        userUid: uid,
+                                      );
+                                    }
+                                  },
+                                  itemBuilder: (ctx) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.edit_outlined,
+                                              size: 18,
+                                              color: AppColors.primary),
+                                          SizedBox(width: 8),
+                                          Text('Chỉnh sửa'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.delete_outline_rounded,
+                                              size: 18, color: AppColors.error),
+                                          SizedBox(width: 8),
+                                          Text('Hủy lượt thu gom',
+                                              style: TextStyle(
+                                                  color: AppColors.error)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         );

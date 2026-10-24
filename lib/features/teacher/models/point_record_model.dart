@@ -18,6 +18,9 @@ class PointRecordModel {
   final String createdByEmail;
   final String createdByUid;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final String? updatedByEmail;
+  final String? updatedByUid;
 
   const PointRecordModel({
     required this.id,
@@ -34,7 +37,12 @@ class PointRecordModel {
     required this.createdByEmail,
     required this.createdByUid,
     this.createdAt,
+    this.updatedAt,
+    this.updatedByEmail,
+    this.updatedByUid,
   });
+
+  bool get isEdited => updatedAt != null;
 
   /// Chuỗi hiển thị tỷ lệ quy đổi (Ví dụ: "5 Số lượng = 1 điểm")
   String get ruleRateText => '$unitQuantity $unit = $points điểm';
@@ -61,6 +69,9 @@ class PointRecordModel {
       createdByEmail: data['createdByEmail'] ?? '',
       createdByUid: data['createdByUid'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      updatedByEmail: data['updatedByEmail'] as String?,
+      updatedByUid: data['updatedByUid'] as String?,
     );
   }
 
@@ -79,6 +90,9 @@ class PointRecordModel {
       'createdByEmail': createdByEmail.trim(),
       'createdByUid': createdByUid.trim(),
       'createdAt': FieldValue.serverTimestamp(),
+      if (updatedAt != null) 'updatedAt': updatedAt,
+      if (updatedByEmail != null) 'updatedByEmail': updatedByEmail,
+      if (updatedByUid != null) 'updatedByUid': updatedByUid,
     };
   }
 

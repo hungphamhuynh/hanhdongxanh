@@ -14,6 +14,8 @@ import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../models/point_record_model.dart';
 import '../../models/reward_record_model.dart';
 import '../../services/point_record_service.dart';
+import '../widgets/delete_point_record_dialog.dart';
+import '../widgets/edit_point_record_sheet.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -401,7 +403,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) {
                                   final record = records[index];
-                                  return _buildRecordCard(context, record);
+                                  return _buildRecordCard(
+                                    context,
+                                    record,
+                                    userEmail: user.email ?? '',
+                                    userUid: user.uid,
+                                  );
                                 },
                                 childCount: records.length,
                               ),
@@ -764,12 +771,25 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildRecordCard(BuildContext context, PointRecordModel record) {
+  Widget _buildRecordCard(
+    BuildContext context,
+    PointRecordModel record, {
+    required String userEmail,
+    required String userUid,
+  }) {
     final color = record.categoryColor;
     final isKg = record.isKg;
     final unitDisplay = isKg
         ? '${record.quantity.toStringAsFixed(record.quantity.truncateToDouble() == record.quantity ? 0 : 1)} ${record.unit}'
         : '${record.quantity.toInt()} ${record.unit}';
+
+    // Quyền chỉnh sửa: chính người tạo phiếu và trong vòng 24 giờ
+    final isAuthor = record.createdByUid == userUid;
+    final difference = record.createdAt != null
+        ? DateTime.now().difference(record.createdAt!)
+        : Duration.zero;
+    final isWithin24h = difference.inHours < 24;
+    final canManage = isAuthor && isWithin24h;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -832,12 +852,35 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 3),
-                  Text(
-                    _formatDateTime(record.createdAt),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        _formatDateTime(record.createdAt),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (record.isEdited) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Đã sửa',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   if (record.note.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -854,7 +897,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ),
             ),
 
-            // Điểm số cộng & Tùy chọn xóa
+            // Điểm số cộng
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -884,67 +927,89 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
               ],
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline,
-                  size: 18, color: AppColors.textSecondary),
-              tooltip: 'Xóa lượt ghi này',
-              onPressed: () => _confirmDeleteRecord(context, record),
-            ),
+
+            // Nút Menu thao tác (Sửa / Hủy)
+            if (canManage)
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert,
+                    size: 20, color: AppColors.textSecondary),
+                tooltip: 'Tùy chọn',
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onSelected: (val) {
+                  if (val == 'edit') {
+                    EditPointRecordSheet.show(
+                      context: context,
+                      record: record,
+                      userEmail: userEmail,
+                      userUid: userUid,
+                    );
+                  } else if (val == 'delete') {
+                    showConfirmDeletePointRecordDialog(
+                      context: context,
+                      record: record,
+                      userEmail: userEmail,
+                      userUid: userUid,
+                    );
+                  }
+                },
+                itemBuilder: (ctx) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            size: 18, color: AppColors.primary),
+                        SizedBox(width: 8),
+                        Text('Chỉnh sửa số lượng'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline_rounded,
+                            size: 18, color: AppColors.error),
+                        SizedBox(width: 8),
+                        Text('Hủy lượt thu gom',
+                            style: TextStyle(color: AppColors.error)),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            else if (isAuthor && !isWithin24h)
+              const Tooltip(
+                message:
+                    'Đã quá 24 giờ. Chỉ Tổng phụ trách / Quản trị viên mới có thể chỉnh sửa hoặc hủy phiếu này.',
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Icon(
+                    Icons.lock_clock_outlined,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              )
+            else
+              Tooltip(
+                message:
+                    'Phiếu do ${record.createdByEmail.isNotEmpty ? record.createdByEmail : "Tổng phụ trách"} ghi nhận.',
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 18,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _confirmDeleteRecord(
-      BuildContext context, PointRecordModel record) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Xác nhận hoàn tác điểm'),
-        content: Text(
-          'Bạn có chắc chắn muốn xóa lượt tích điểm này?\n\n'
-          '• Thể loại: ${record.categoryName} (${record.quantity} ${record.unit})\n'
-          '• Điểm bị trừ lại: -${record.totalPoints} điểm',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xóa & Trừ Điểm'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      try {
-        await _pointRecordService.deleteRecord(record);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Đã hoàn tác và trừ ${record.totalPoints} điểm của lớp!',
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi: $e'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    }
   }
 
   void _showRecordPointsModal({

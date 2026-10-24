@@ -80,19 +80,99 @@ class PointRecordService {
     await batch.commit();
   }
 
-  /// Xóa lượt tích điểm (hoàn tác điểm nếu nhập nhầm)
-  Future<void> deleteRecord(PointRecordModel record) async {
+  /// Chỉnh sửa lượt thu gom (cập nhật số lượng, tính lại điểm và bù trừ chênh lệch an toàn)
+  Future<void> updateRecord({
+    required PointRecordModel oldRecord,
+    required double newQuantity,
+    String newNote = '',
+    required String updatedByEmail,
+    required String updatedByUid,
+  }) async {
+    if (newQuantity <= 0) {
+      throw Exception('Số lượng thu gom phải lớn hơn 0!');
+    }
+
+    final effectiveUnitQty =
+        oldRecord.unitQuantity > 0 ? oldRecord.unitQuantity : 1;
+    final calculatedNewPoints =
+        ((newQuantity * oldRecord.points) / effectiveUnitQty).round();
+    final deltaPoints = calculatedNewPoints - oldRecord.totalPoints;
+
+    final cleanClass = oldRecord.className.trim().toUpperCase();
+    final recordRef = _firestore.collection('point_records').doc(oldRecord.id);
+    final classRef = _firestore.collection('classes').doc(cleanClass);
+
+    await _firestore.runTransaction((transaction) async {
+      final classSnap = await transaction.get(classRef);
+      if (!classSnap.exists) {
+        throw Exception('Lớp $cleanClass không tồn tại trong hệ thống!');
+      }
+
+      final classData = classSnap.data() ?? {};
+      final currentPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
+
+      // Nếu chỉnh sửa làm giảm điểm (deltaPoints < 0), kiểm tra lớp có đủ điểm để khấu trừ không
+      if (deltaPoints < 0 && currentPoints < -deltaPoints) {
+        throw Exception(
+            'Lớp $cleanClass hiện chỉ còn $currentPoints điểm, không đủ để giảm ${-deltaPoints} điểm (lớp đã sử dụng điểm này để đổi quà)!');
+      }
+
+      // 1. Cập nhật điểm chênh lệch vào lớp học
+      if (deltaPoints != 0) {
+        transaction.update(classRef, {
+          'totalPoints': FieldValue.increment(deltaPoints),
+          'lastRecordedAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // 2. Cập nhật phiếu thu gom trong point_records
+      transaction.update(recordRef, {
+        'quantity': newQuantity,
+        'totalPoints': calculatedNewPoints,
+        'note': newNote.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedByEmail': updatedByEmail.trim(),
+        'updatedByUid': updatedByUid.trim(),
+      });
+    });
+  }
+
+  /// Hủy lượt tích điểm (thu hồi điểm lớp và kiểm tra chống âm điểm)
+  Future<void> deleteRecord({
+    required PointRecordModel record,
+    required String userEmail,
+    required String userUid,
+  }) async {
+    final cleanClass = record.className.trim().toUpperCase();
     final recordRef = _firestore.collection('point_records').doc(record.id);
-    final classRef = _firestore.collection('classes').doc(record.className);
+    final classRef = _firestore.collection('classes').doc(cleanClass);
 
-    final batch = _firestore.batch();
-    batch.delete(recordRef);
+    await _firestore.runTransaction((transaction) async {
+      final recordSnap = await transaction.get(recordRef);
+      if (!recordSnap.exists) {
+        throw Exception('Lượt thu gom này không còn tồn tại!');
+      }
 
-    final Map<String, dynamic> classUpdates = {
-      'totalPoints': FieldValue.increment(-record.totalPoints),
-    };
+      final classSnap = await transaction.get(classRef);
+      if (!classSnap.exists) {
+        throw Exception('Lớp $cleanClass không tồn tại trong hệ thống!');
+      }
 
-    batch.set(classRef, classUpdates, SetOptions(merge: true));
-    await batch.commit();
+      final classData = classSnap.data() ?? {};
+      final currentPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
+
+      if (currentPoints < record.totalPoints) {
+        throw Exception(
+            'Lớp $cleanClass hiện chỉ còn $currentPoints điểm, không đủ để thu hồi ${record.totalPoints} điểm (lớp đã sử dụng điểm này để đổi quà)!');
+      }
+
+      // 1. Thu hồi lại số điểm của lượt nộp này
+      transaction.update(classRef, {
+        'totalPoints': FieldValue.increment(-record.totalPoints),
+      });
+
+      // 2. Xóa phiếu nộp khỏi point_records
+      transaction.delete(recordRef);
+    });
   }
 }
