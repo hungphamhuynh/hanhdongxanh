@@ -81,12 +81,12 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
 
         return StreamBuilder<List<PointRuleModel>>(
           stream: _rulesStream,
-      builder: (context, rulesSnap) {
-        final rules = rulesSnap.data ?? [];
+          builder: (context, rulesSnap) {
+            final rules = rulesSnap.data ?? [];
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: _recordsStream,
-          builder: (context, snapshot) {
+            return StreamBuilder<QuerySnapshot>(
+              stream: _recordsStream,
+              builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting &&
                 !snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -376,14 +376,14 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     ),
                   ),
               ],
-            );
-          },
-        );
-      },
-    );
-  },
-);
-  }
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
 
   /// Khung bộ lọc Năm, Tháng, Khối và Danh Mục
   Widget _buildFilterCard(
