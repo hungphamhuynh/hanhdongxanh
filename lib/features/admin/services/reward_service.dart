@@ -213,7 +213,7 @@ class RewardService {
       {
         'name': 'Bình nước giữ nhiệt sinh thái',
         'unit': 'Cái',
-        'pointsCost': 80,
+        'pointsCost': 60,
         'description': 'Bình nước cá nhân 500ml hạn chế sử dụng chai nhựa 1 lần',
         'iconName': 'bottle',
       },
