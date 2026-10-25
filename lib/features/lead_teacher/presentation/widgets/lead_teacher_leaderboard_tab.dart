@@ -258,48 +258,35 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Bảng Xếp Hạng Các Lớp (${rankedClasses.length})',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                        Expanded(
+                          child: Text(
+                            'Bảng Xếp Hạng Các Lớp (${rankedClasses.length})',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Row(
-                          children: [
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Bảng vàng năm cũ',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              onPressed: () =>
-                                  PastAcademicYearsSheet.show(context),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Bảng vàng năm cũ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _selectedMonth == 0
-                                  ? 'Năm $_selectedYear'
-                                  : 'Tháng $_selectedMonth/$_selectedYear',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                          ),
+                          onPressed: () =>
+                              PastAcademicYearsSheet.show(context),
                         ),
                       ],
                     ),
