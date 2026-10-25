@@ -1290,21 +1290,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           color: order.statusColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(order.statusIcon,
-                                size: 11, color: order.statusColor),
-                            const SizedBox(width: 3),
-                            Text(
-                              order.statusLabel,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: order.statusColor,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          order.statusLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: order.statusColor,
+                          ),
                         ),
                       ),
                       Container(
@@ -1548,26 +1540,14 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.eco_rounded,
-                                color: AppColors.primary,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Tích Điểm Lớp ${widget.className}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Tích Điểm Lớp ${widget.className}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         IconButton(
@@ -1584,27 +1564,17 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: 'Thể loại thu gom *',
-                        prefixIcon: Icon(Icons.recycling_rounded),
                       ),
                       items: rules.map((r) {
                         return DropdownMenuItem<PointRuleModel>(
                           value: r,
-                          child: Row(
-                            children: [
-                              Icon(r.iconData,
-                                  size: 20, color: AppColors.primary),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  '${r.name} (${r.ruleRateText})',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            '${r.name} (${r.ruleRateText})',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         );
                       }).toList(),
@@ -1641,11 +1611,6 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                         hintText: rule.unit.toLowerCase().contains('kg')
                             ? 'Ví dụ: 2.5'
                             : 'Ví dụ: 10, 20...',
-                        prefixIcon: Icon(
-                          rule.unit.toLowerCase().contains('kg')
-                              ? Icons.scale_rounded
-                              : Icons.format_list_numbered_rounded,
-                        ),
                         suffixText: rule.unit,
                         helperText:
                             'Tối thiểu: ${rule.unitQuantity} ${rule.unit} (${rule.ruleRateText})',
@@ -1726,7 +1691,6 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                       decoration: const InputDecoration(
                         labelText: 'Ghi chú (Tùy chọn)',
                         hintText: 'Ví dụ: Học sinh nộp sau giờ sinh hoạt...',
-                        prefixIcon: Icon(Icons.notes_rounded),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -1866,7 +1830,7 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                     const SizedBox(height: 18),
 
                     // Nút xác nhận tích điểm
-                    FilledButton.icon(
+                    FilledButton(
                       style: FilledButton.styleFrom(
                         backgroundColor: isEnough
                             ? AppColors.primary
@@ -1961,27 +1925,24 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                                 }
                               }
                             },
-                      icon: _isLoading
+                      child: _isLoading
                           ? const SizedBox(
-                              width: 18,
-                              height: 18,
+                              width: 20,
+                              height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.check_circle_outline_rounded),
-                      label: Text(
-                        _isLoading
-                            ? 'Đang Lưu...'
-                            : (!isEnough
-                                ? 'Chưa Đủ Mốc Tối Thiểu (${rule.unitQuantity} ${rule.unit})'
-                                : 'Xác Nhận Tích Điểm'),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                          : Text(
+                              !isEnough
+                                  ? 'Chưa Đủ Mốc Tối Thiểu (${rule.unitQuantity} ${rule.unit})'
+                                  : 'Xác Nhận Tích Điểm',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ],
                 ),
@@ -2119,26 +2080,14 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.card_giftcard_rounded,
-                            color: Color(0xFFC2410C),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Đổi Quà Lớp ${widget.className}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'Đổi Quà Lớp ${widget.className}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
@@ -2154,27 +2103,17 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Phần thưởng muốn đổi *',
-                    prefixIcon: Icon(Icons.card_giftcard_rounded),
                   ),
                   items: rules.map((r) {
                     return DropdownMenuItem<RewardRuleModel>(
                       value: r,
-                      child: Row(
-                        children: [
-                          Icon(r.iconData,
-                              size: 20, color: const Color(0xFFC2410C)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              '${r.name} (${r.pointsCost}đ/${r.unit})',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '${r.name} (${r.pointsCost}đ/${r.unit})',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     );
                   }).toList(),
@@ -2194,7 +2133,6 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                   decoration: InputDecoration(
                     labelText: 'Số lượng ${rule.unit} muốn đổi *',
                     hintText: 'Ví dụ: 1, 2, 5...',
-                    prefixIcon: const Icon(Icons.pin_rounded),
                     suffixText: rule.unit,
                   ),
                   onChanged: (_) => setState(() {}),
@@ -2207,7 +2145,6 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                   decoration: const InputDecoration(
                     labelText: 'Ghi chú cho Tổng phụ trách (Tùy chọn)',
                     hintText: 'Ví dụ: Đổi làm phần thưởng tuần cho bạn Hoa...',
-                    prefixIcon: Icon(Icons.notes_rounded),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -2324,7 +2261,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                 const SizedBox(height: 18),
 
                 // Nút gửi đơn
-                FilledButton.icon(
+                FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFC2410C),
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -2399,7 +2336,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                             }
                           }
                         },
-                  icon: _isLoading
+                  child: _isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
@@ -2408,14 +2345,13 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Icon(Icons.send_rounded),
-                  label: Text(
-                    _isLoading ? 'Đang gửi...' : 'Gửi Yêu Cầu Đổi Quà',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                      : const Text(
+                          'Gửi Yêu Cầu Đổi Quà',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             ),

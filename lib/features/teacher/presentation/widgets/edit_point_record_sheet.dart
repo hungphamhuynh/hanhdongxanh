@@ -366,7 +366,6 @@ class _EditPointRecordSheetState extends State<EditPointRecordSheet> {
                       labelText: rec.isKg ? 'Khối lượng mới' : 'Số lượng mới',
                       hintText: 'Nhập số lượng chính xác...',
                       suffixText: rec.unit,
-                      prefixIcon: const Icon(Icons.pin_outlined),
                       helperText:
                           'Tối thiểu: $_effectiveUnitQty ${rec.unit} (${rec.ruleRateText})',
                       errorText: (isBelowMinimum && _enteredQty > 0)
@@ -596,7 +595,6 @@ class _EditPointRecordSheetState extends State<EditPointRecordSheet> {
                     decoration: InputDecoration(
                       labelText: 'Lý do / Ghi chú điều chỉnh',
                       hintText: 'Ví dụ: Cân lại bị nhầm, nhập thừa số lượng...',
-                      prefixIcon: const Icon(Icons.note_alt_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
