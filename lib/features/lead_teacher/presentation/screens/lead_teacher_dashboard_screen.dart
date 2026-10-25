@@ -730,10 +730,9 @@ class _LeadTeacherDashboardScreenState
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 2),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${_formatDateTime(order.createdAt)} • Người xin: ${order.createdByEmail}',
+                                  _formatDateTime(order.createdAt),
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.textSecondary,
