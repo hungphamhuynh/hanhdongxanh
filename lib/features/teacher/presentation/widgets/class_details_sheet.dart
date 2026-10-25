@@ -370,7 +370,7 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
             child: Padding(
               padding: EdgeInsets.all(24.0),
               child: Text(
-                'Lớp này chưa có đơn đổi quà nào.',
+                'Lớp này chưa có lượt đổi quà nào.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),

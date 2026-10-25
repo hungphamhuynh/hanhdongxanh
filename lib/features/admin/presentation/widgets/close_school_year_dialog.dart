@@ -338,7 +338,7 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Có $_pendingCount đơn đổi quà đang chờ duyệt! Vui lòng hoàn tất duyệt hoặc từ chối trước khi đóng sổ.',
+                                    'Có $_pendingCount yêu cầu đổi quà đang chờ duyệt! Vui lòng hoàn tất duyệt hoặc từ chối trước khi đóng sổ.',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,

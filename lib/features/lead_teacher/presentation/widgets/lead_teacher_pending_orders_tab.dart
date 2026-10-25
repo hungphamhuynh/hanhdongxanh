@@ -53,7 +53,7 @@ class _LeadTeacherPendingOrdersTabState
         title: const Text('Xác nhận trao quà'),
         content: Text(
           'Duyệt trao "${order.quantity} ${order.unit} ${order.rewardName}" cho lớp ${order.className}?\n\n'
-          '(Lớp đã được trừ ${order.totalPoints} điểm khi lên đơn).',
+          '(Lớp đã được trừ ${order.totalPoints} điểm khi tạo yêu cầu).',
         ),
         actions: [
           TextButton(
@@ -106,13 +106,13 @@ class _LeadTeacherPendingOrdersTabState
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Từ chối đơn đổi quà'),
+        title: const Text('Từ chối yêu cầu đổi quà'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Từ chối đơn đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?\n\n'
+              'Từ chối yêu cầu đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?\n\n'
               'Hệ thống sẽ tự động HOÀN LẠI ${order.totalPoints} điểm cho lớp.',
             ),
             const SizedBox(height: 12),
@@ -151,7 +151,7 @@ class _LeadTeacherPendingOrdersTabState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Đã từ chối đơn và hoàn lại ${order.totalPoints} điểm cho lớp ${order.className} thành công!',
+                'Đã từ chối yêu cầu và hoàn lại ${order.totalPoints} điểm cho lớp ${order.className} thành công!',
               ),
               backgroundColor: AppColors.textSecondary,
             ),
@@ -189,7 +189,7 @@ class _LeadTeacherPendingOrdersTabState
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Không thể tải danh sách đơn đổi quà',
+                    'Không thể tải danh sách yêu cầu đổi quà',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -248,7 +248,7 @@ class _LeadTeacherPendingOrdersTabState
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Không có đơn đổi quà nào đang chờ duyệt',
+                    'Không có yêu cầu đổi quà nào đang chờ duyệt',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

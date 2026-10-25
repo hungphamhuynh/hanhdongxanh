@@ -193,7 +193,7 @@ Future<bool> showConfirmLargeRewardOrderDialog({
           const SizedBox(width: 10),
           const Expanded(
             child: Text(
-              'Xác Nhận Đơn Đổi Quà Lớn',
+              'Xác Nhận Đổi Quà Số Lượng Lớn',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
           ),
@@ -204,7 +204,7 @@ Future<bool> showConfirmLargeRewardOrderDialog({
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Bạn đang tạo đơn đổi quà có số lượng lớn cho lớp $className:',
+            'Bạn đang tạo yêu cầu đổi quà có số lượng lớn cho lớp $className:',
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 12),
@@ -269,7 +269,7 @@ Future<bool> showConfirmLargeRewardOrderDialog({
           style:
               FilledButton.styleFrom(backgroundColor: const Color(0xFFC2410C)),
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Xác Nhận Gửi Đơn'),
+          child: const Text('Xác Nhận Gửi Yêu Cầu'),
         ),
       ],
     ),

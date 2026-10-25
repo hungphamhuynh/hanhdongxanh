@@ -213,7 +213,7 @@ class AcademicYearService {
     final pendingCount = await countPendingRewardOrders();
     if (pendingCount > 0) {
       throw Exception(
-          'Hiện vẫn còn $pendingCount đơn đổi quà đang chờ duyệt! Vui lòng duyệt hoặc từ chối các đơn này trước khi đóng sổ năm học.');
+          'Hiện vẫn còn $pendingCount yêu cầu đổi quà đang chờ duyệt! Vui lòng duyệt hoặc từ chối các yêu cầu này trước khi đóng sổ năm học.');
     }
 
     final cleanYearId = academicYearId.trim();

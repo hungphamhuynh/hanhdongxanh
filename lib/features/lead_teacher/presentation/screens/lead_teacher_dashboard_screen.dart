@@ -585,7 +585,7 @@ class _LeadTeacherDashboardScreenState
                     if (orders.isEmpty) {
                       return const Center(
                         child: Text(
-                          'Chưa có đơn đổi quà nào trên toàn trường.',
+                          'Chưa có yêu cầu đổi quà nào trên toàn trường.',
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
                       );
@@ -615,7 +615,7 @@ class _LeadTeacherDashboardScreenState
                                 icon: const Icon(Icons.expand_more_rounded,
                                     size: 20, color: Color(0xFFC2410C)),
                                 label: Text(
-                                  'Tải thêm 25 đơn đổi quà cũ hơn (Đang xem ${orders.length})',
+                                  'Tải thêm 25 lượt đổi quà cũ hơn (Đang xem ${orders.length})',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFFC2410C)),

@@ -36,7 +36,35 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   final AcademicYearService _academicYearService = AcademicYearService();
   final AuthService _authService = AuthService();
   int _currentTabIndex = 0; // 0 = Tổng quan, 1 = Tích điểm, 2 = Đổi quà
-  bool _isLoadingReward = false;
+  final ValueNotifier<bool> _isLoadingRewardNotifier = ValueNotifier<bool>(false);
+
+  Stream<List<PointRecordModel>>? _pointRecordsStream;
+  String? _cachedClassForPointStream;
+
+  Stream<List<PointRecordModel>> _getPointRecordsStream(String assignedClass) {
+    if (_pointRecordsStream == null || _cachedClassForPointStream != assignedClass) {
+      _cachedClassForPointStream = assignedClass;
+      _pointRecordsStream = _pointRecordService.getRecordsByClassStream(assignedClass);
+    }
+    return _pointRecordsStream!;
+  }
+
+  Stream<List<RewardRecordModel>>? _rewardRecordsStream;
+  String? _cachedClassForRewardStream;
+
+  Stream<List<RewardRecordModel>> _getRewardRecordsStream(String assignedClass) {
+    if (_rewardRecordsStream == null || _cachedClassForRewardStream != assignedClass) {
+      _cachedClassForRewardStream = assignedClass;
+      _rewardRecordsStream = _rewardService.getRewardRecordsByClassStream(assignedClass);
+    }
+    return _rewardRecordsStream!;
+  }
+
+  @override
+  void dispose() {
+    _isLoadingRewardNotifier.dispose();
+    super.dispose();
+  }
 
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'Vừa xong';
@@ -54,7 +82,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required String assignedClass,
     required User user,
   }) async {
-    setState(() => _isLoadingReward = true);
+    _isLoadingRewardNotifier.value = true;
     try {
       final doc = await FirebaseFirestore.instance
           .collection('classes')
@@ -63,7 +91,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           .timeout(const Duration(seconds: 4));
       final pts = ((doc.data()?['totalPoints']) as num?)?.toInt() ?? 0;
       if (mounted) {
-        setState(() => _isLoadingReward = false);
+        _isLoadingRewardNotifier.value = false;
       }
       if (context.mounted) {
         _showRewardOrderModal(
@@ -76,7 +104,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoadingReward = false);
+        _isLoadingRewardNotifier.value = false;
       }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -129,31 +157,36 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         ),
       );
     } else if (_currentTabIndex == 2) {
-      return FloatingActionButton.extended(
-        heroTag: 'fab_teacher_reward',
-        backgroundColor: const Color(0xFFC2410C),
-        foregroundColor: Colors.white,
-        icon: _isLoadingReward
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.card_giftcard_rounded),
-        label: Text(
-          _isLoadingReward ? 'Đang kiểm tra điểm...' : 'Lên Đơn Đổi Quà',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        onPressed: _isLoadingReward
-            ? null
-            : () => _handleOpenRewardOrder(
-                  context: context,
-                  assignedClass: assignedClass,
-                  user: user,
-                ),
+      return ValueListenableBuilder<bool>(
+        valueListenable: _isLoadingRewardNotifier,
+        builder: (context, isLoading, _) {
+          return FloatingActionButton.extended(
+            heroTag: 'fab_teacher_reward',
+            backgroundColor: const Color(0xFFC2410C),
+            foregroundColor: Colors.white,
+            icon: isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.card_giftcard_rounded),
+            label: Text(
+              isLoading ? 'Đang kiểm tra điểm...' : 'Đổi Quà Cho Lớp',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: isLoading
+                ? null
+                : () => _handleOpenRewardOrder(
+                      context: context,
+                      assignedClass: assignedClass,
+                      user: user,
+                    ),
+          );
+        },
       );
     }
     return null;
@@ -481,7 +514,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return ResponsiveContainer(
       maxWidth: 850,
       child: StreamBuilder<List<PointRecordModel>>(
-        stream: _pointRecordService.getRecordsByClassStream(assignedClass),
+        stream: _getPointRecordsStream(assignedClass),
         builder: (context, recordsSnap) {
           if (recordsSnap.hasError) {
             return Center(
@@ -496,7 +529,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             );
           }
 
-          if (recordsSnap.connectionState == ConnectionState.waiting) {
+          if (recordsSnap.connectionState == ConnectionState.waiting &&
+              !recordsSnap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -585,14 +619,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return ResponsiveContainer(
       maxWidth: 850,
       child: StreamBuilder<List<RewardRecordModel>>(
-        stream: _rewardService.getRewardRecordsByClassStream(assignedClass),
+        stream: _getRewardRecordsStream(assignedClass),
         builder: (context, ordersSnap) {
           if (ordersSnap.hasError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Text(
-                  'Lỗi tải đơn đổi quà: ${ordersSnap.error}',
+                  'Lỗi tải lịch sử đổi quà: ${ordersSnap.error}',
                   style: const TextStyle(color: AppColors.error),
                   textAlign: TextAlign.center,
                 ),
@@ -600,7 +634,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             );
           }
 
-          if (ordersSnap.connectionState == ConnectionState.waiting) {
+          if (ordersSnap.connectionState == ConnectionState.waiting &&
+              !ordersSnap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -627,7 +662,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'Chưa có đơn đổi quà nào',
+                      'Chưa có lượt đổi quà nào',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -636,7 +671,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Khi lớp đạt đủ điểm thi đua, bạn có thể gửi yêu cầu đổi quà để Tổng phụ trách duyệt và phát thưởng nhé!',
+                      'Khi lớp đạt đủ điểm thi đua, bạn có thể tạo yêu cầu đổi quà để Tổng phụ trách duyệt và trao thưởng nhé!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -644,19 +679,24 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFC2410C),
-                      ),
-                      onPressed: _isLoadingReward
-                          ? null
-                          : () => _handleOpenRewardOrder(
-                                context: context,
-                                assignedClass: assignedClass,
-                                user: user,
-                              ),
-                      icon: const Icon(Icons.card_giftcard_rounded),
-                      label: const Text('Đổi Quà Ngay'),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: _isLoadingRewardNotifier,
+                      builder: (context, isLoading, _) {
+                        return FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFC2410C),
+                          ),
+                          onPressed: isLoading
+                              ? null
+                              : () => _handleOpenRewardOrder(
+                                    context: context,
+                                    assignedClass: assignedClass,
+                                    user: user,
+                                  ),
+                          icon: const Icon(Icons.card_giftcard_rounded),
+                          label: const Text('Đổi Quà Ngay'),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -2246,7 +2286,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Lưu ý: Bạn đang đặt đổi số lượng lớn ($qty ${rule.unit} = -$totalCost điểm). Hệ thống sẽ yêu cầu xác nhận trước khi gửi đơn.',
+                            'Lưu ý: Bạn đang đặt đổi số lượng lớn ($qty ${rule.unit} = -$totalCost điểm). Hệ thống sẽ yêu cầu xác nhận trước khi gửi yêu cầu.',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -2260,7 +2300,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                 ],
                 const SizedBox(height: 18),
 
-                // Nút gửi đơn
+                // Nút gửi yêu cầu
                 FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFC2410C),
@@ -2313,7 +2353,7 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Đã gửi đơn đổi "$qty ${rule.unit} ${rule.name}" thành công (đã trừ $totalCost điểm). Đang chờ Tổng phụ trách trao quà.',
+                                    'Đã gửi yêu cầu đổi "$qty ${rule.unit} ${rule.name}" thành công (đã trừ $totalCost điểm). Đang chờ Tổng phụ trách trao quà.',
                                   ),
                                   backgroundColor: AppColors.success,
                                 ),
