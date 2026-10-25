@@ -226,28 +226,17 @@ class _LeadTeacherDashboardScreenState
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_circle_outline_rounded,
-                            size: 15,
+                      child: Center(
+                        child: Text(
+                          'Thu Gom Phế Liệu',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                             color: _schoolHistoryTabIndex == 0
                                 ? Colors.white
                                 : AppColors.textSecondary,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Thu Gom Phế Liệu',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _schoolHistoryTabIndex == 0
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -265,28 +254,17 @@ class _LeadTeacherDashboardScreenState
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.card_giftcard_rounded,
-                            size: 15,
+                      child: Center(
+                        child: Text(
+                          'Đổi Điểm Lấy Quà',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                             color: _schoolHistoryTabIndex == 1
                                 ? Colors.white
                                 : AppColors.textSecondary,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Đổi Điểm Lấy Quà',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _schoolHistoryTabIndex == 1
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -948,22 +926,12 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Row(
-                              children: [
-                                Icon(
-                                  Icons.stars_rounded,
-                                  color: AppColors.primary,
-                                  size: 24,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Tích Điểm Toàn Trường',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            const Text(
+                              'Tích Điểm Toàn Trường',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             IconButton(
                               icon: const Icon(Icons.close_rounded),
@@ -978,7 +946,6 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                           initialValue: _selectedClass,
                           decoration: const InputDecoration(
                             labelText: 'Chọn Lớp Được Tích Điểm *',
-                            prefixIcon: Icon(Icons.school_rounded),
                           ),
                           items: classNames.map((c) {
                             return DropdownMenuItem<String>(
@@ -1006,30 +973,17 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             isExpanded: true,
                             decoration: const InputDecoration(
                               labelText: 'Thể loại thu gom *',
-                              prefixIcon: Icon(Icons.recycling_rounded),
                             ),
                             items: rules.map((r) {
                               return DropdownMenuItem<PointRuleModel>(
                                 value: r,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      r.iconData,
-                                      size: 20,
-                                      color: AppColors.primary,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        '${r.name} (${r.ruleRateText})',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
+                                child: Text(
+                                  '${r.name} (${r.ruleRateText})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               );
                             }).toList(),
@@ -1064,7 +1018,6 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             labelText:
                                 'Nhập ${rule?.unit ?? 'số lượng'} thu gom *',
                             suffixText: rule?.unit ?? '',
-                            prefixIcon: const Icon(Icons.scale_rounded),
                             helperText: rule != null
                                 ? 'Tối thiểu: ${rule.unitQuantity} ${rule.unit} (${rule.ruleRateText})'
                                 : null,
@@ -1149,7 +1102,6 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                           controller: _noteCtrl,
                           decoration: const InputDecoration(
                             labelText: 'Ghi chú (Tùy chọn)',
-                            prefixIcon: Icon(Icons.notes_rounded),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -1279,7 +1231,7 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                         ],
                         const SizedBox(height: 18),
 
-                        FilledButton.icon(
+                        FilledButton(
                           style: FilledButton.styleFrom(
                             backgroundColor: isEnough
                                 ? AppColors.primary
@@ -1381,28 +1333,21 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                     }
                                   }
                                 },
-                          icon: _isLoading
+                          child: _isLoading
                               ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
+                                  width: 20,
+                                  height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: Colors.white,
                                   ),
                                 )
-                              : Icon(
+                              : Text(
                                   isEnough
-                                      ? Icons.check_circle_rounded
-                                      : Icons.lock_outline_rounded,
+                                      ? 'Xác Nhận Tích +$estimatedPoints Điểm'
+                                      : 'Chưa Đủ Mốc Tối Thiểu (${rule?.unitQuantity ?? 1} ${rule?.unit ?? ""})',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
-                          label: Text(
-                            _isLoading
-                                ? 'Đang Lưu...'
-                                : (isEnough
-                                    ? 'Xác Nhận Tích +$estimatedPoints Điểm'
-                                    : 'Chưa Đủ Mốc Tối Thiểu (${rule?.unitQuantity ?? 1} ${rule?.unit ?? ""})'),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
                         ),
                       ],
                     ),

@@ -320,24 +320,13 @@ class _LeadTeacherPendingOrdersTabState
                                 color: AppColors.warningLight,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.hourglass_top_rounded,
-                                    size: 13,
-                                    color: AppColors.warning,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    order.statusLabel,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.warning,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                order.statusLabel,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.warning,
+                                ),
                               ),
                             ),
                           ],
@@ -450,7 +439,7 @@ class _LeadTeacherPendingOrdersTabState
                         const SizedBox(width: 10),
                         Expanded(
                           flex: 2,
-                          child: FilledButton.icon(
+                          child: FilledButton(
                             style: FilledButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -459,11 +448,7 @@ class _LeadTeacherPendingOrdersTabState
                               ),
                             ),
                             onPressed: () => _confirmApproveOrder(order),
-                            icon: const Icon(
-                              Icons.check_circle_outline_rounded,
-                              size: 18,
-                            ),
-                            label: const Text('Duyệt & Trao Quà'),
+                            child: const Text('Duyệt & Trao Quà'),
                           ),
                         ),
                       ],

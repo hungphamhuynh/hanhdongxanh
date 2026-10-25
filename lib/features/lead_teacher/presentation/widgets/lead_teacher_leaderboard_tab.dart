@@ -269,36 +269,24 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.format_list_numbered_rounded,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Bảng Xếp Hạng Các Lớp (${rankedClasses.length})',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Bảng Xếp Hạng Các Lớp (${rankedClasses.length})',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                         Row(
                           children: [
-                            TextButton.icon(
+                            TextButton(
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              icon: const Icon(Icons.emoji_events_outlined,
-                                  size: 16, color: AppColors.primary),
-                              label: const Text(
+                              child: const Text(
                                 'Bảng vàng năm cũ',
                                 style: TextStyle(
                                   fontSize: 12,
@@ -429,11 +417,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                   decoration: const InputDecoration(
                     labelText: 'Năm',
                     isDense: true,
-                    prefixIcon: Icon(Icons.calendar_today_rounded, size: 18),
-                    prefixIconConstraints:
-                        BoxConstraints(minWidth: 36, minHeight: 36),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                   items: availableYears.map((y) {
                     return DropdownMenuItem<int>(
@@ -465,11 +450,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                   decoration: const InputDecoration(
                     labelText: 'Tháng',
                     isDense: true,
-                    prefixIcon: Icon(Icons.date_range_rounded, size: 18),
-                    prefixIconConstraints:
-                        BoxConstraints(minWidth: 36, minHeight: 36),
                     contentPadding:
-                        EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                   items: [
                     const DropdownMenuItem<int>(
@@ -515,11 +497,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
             decoration: const InputDecoration(
               labelText: 'Khối Lớp',
               isDense: true,
-              prefixIcon: Icon(Icons.school_rounded, size: 18),
-              prefixIconConstraints:
-                  BoxConstraints(minWidth: 36, minHeight: 36),
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             items: const [
               DropdownMenuItem<int>(
@@ -556,11 +535,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
             decoration: const InputDecoration(
               labelText: 'Danh Mục Xếp Hạng',
               isDense: true,
-              prefixIcon: Icon(Icons.category_rounded, size: 18),
-              prefixIconConstraints:
-                  BoxConstraints(minWidth: 36, minHeight: 36),
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             items: [
               const DropdownMenuItem<String>(
@@ -577,18 +553,10 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               ...rules.map((rule) {
                 return DropdownMenuItem<String>(
                   value: rule.id,
-                  child: Row(
-                    children: [
-                      Icon(rule.iconData, size: 18, color: rule.categoryColor),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${rule.name} (${rule.unit})',
-                          style: const TextStyle(fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    '${rule.name} (${rule.unit})',
+                    style: const TextStyle(fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               }),
@@ -690,39 +658,31 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               if (isAll) ...[
                 Expanded(
                   child: _buildKpiStatTile(
-                    icon: Icons.stars_rounded,
                     label: 'Tổng Điểm Đã Tích',
                     value: '+$totalPeriodPoints đ',
-                    iconColor: Colors.amberAccent,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildKpiStatTile(
-                    icon: Icons.school_rounded,
                     label: 'Số Lớp Tham Gia',
                     value: '$activeClassesCount lớp',
-                    iconColor: Colors.cyanAccent,
                   ),
                 ),
               ] else ...[
                 Expanded(
                   child: _buildKpiStatTile(
-                    icon: selectedRule.iconData,
                     label: 'Tổng Thu Gom',
                     value: totalCategoryQty % 1 == 0
                         ? '${totalCategoryQty.toInt()} ${selectedRule.unit}'
                         : '${totalCategoryQty.toStringAsFixed(1)} ${selectedRule.unit}',
-                    iconColor: Colors.amberAccent,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildKpiStatTile(
-                    icon: Icons.school_rounded,
                     label: 'Số Lớp Đã Nộp',
                     value: '$activeClassesCount lớp',
-                    iconColor: Colors.cyanAccent,
                   ),
                 ),
               ],
@@ -734,10 +694,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
   }
 
   Widget _buildKpiStatTile({
-    required IconData icon,
     required String label,
     required String value,
-    required Color iconColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -748,8 +706,6 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 22, color: iconColor),
-          const SizedBox(height: 5),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -757,11 +713,11 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 15,
+                fontSize: 16,
               ),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             label,
             style: const TextStyle(color: Colors.white70, fontSize: 11),
