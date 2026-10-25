@@ -263,62 +263,55 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                                 size: 26,
                               ),
                             ),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    rule.name,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: rule.isActive
-                                          ? AppColors.textPrimary
-                                          : Colors.grey,
-                                      decoration: rule.isActive
-                                          ? null
-                                          : TextDecoration.lineThrough,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: rule.isActive
-                                            ? AppColors.secondaryLight
-                                            : Colors.grey.shade200,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        '-${rule.pointsCost} điểm / ${rule.unit}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: rule.isActive
-                                              ? const Color(0xFFC2410C)
-                                              : Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            title: Text(
+                              rule.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: rule.isActive
+                                    ? AppColors.textPrimary
+                                    : Colors.grey,
+                                decoration: rule.isActive
+                                    ? null
+                                    : TextDecoration.lineThrough,
+                              ),
                             ),
                             subtitle: Padding(
                               padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                rule.description.isEmpty
-                                    ? 'Đổi: 1 ${rule.unit} = ${rule.pointsCost} điểm thi đua'
-                                    : rule.description,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: rule.isActive
+                                          ? AppColors.secondaryLight
+                                          : Colors.grey.shade200,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '-${rule.pointsCost} điểm / ${rule.unit}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: rule.isActive
+                                            ? const Color(0xFFC2410C)
+                                            : Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                  if (rule.description.isNotEmpty) ...[
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      rule.description,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                             trailing: PopupMenuButton<String>(
