@@ -1,11 +1,11 @@
 {
-    "name": "Hành động xanh",
-    "short_name": "Hành động xanh",
+    "name": "Hành Động Xanh - Trường THCS Nguyễn Thị Hương",
+    "short_name": "Hành Động Xanh",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#2E7D32",
     "theme_color": "#2E7D32",
-    "description": "Hành động xanh - Ứng dụng tích điểm sống xanh vì môi trường.",
+    "description": "Hành Động Xanh - Trường THCS Nguyễn Thị Hương: Ứng dụng tích điểm sống xanh vì môi trường.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

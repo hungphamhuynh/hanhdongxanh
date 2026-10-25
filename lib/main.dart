@@ -20,7 +20,7 @@ class HanhDongXanhApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hành động xanh',
+      title: 'Hành Động Xanh - Trường THCS Nguyễn Thị Hương',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       builder: (context, child) {

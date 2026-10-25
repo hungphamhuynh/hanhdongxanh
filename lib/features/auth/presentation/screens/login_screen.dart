@@ -112,6 +112,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  const Text(
+                    'TRƯỜNG THCS NGUYỄN THỊ HƯƠNG',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     'Hành Động Xanh',
                     textAlign: TextAlign.center,
@@ -229,6 +240,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Footer trường học
+                  const Text(
+                    'Trường THCS Nguyễn Thị Hương',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
