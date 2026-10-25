@@ -92,7 +92,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                       try {
                         final user = FirebaseAuth.instance.currentUser;
                         await _rewardService.seedDefaultRewardRules(
-                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                           changedByUid: user?.uid ?? 'admin',
                         );
                         if (context.mounted) {
@@ -329,7 +329,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                                       id: rule.id,
                                       currentActive: rule.isActive,
                                       oldRule: rule,
-                                      changedByEmail: user?.email ?? 'admin@nth.com',
+                                      changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                                       changedByUid: user?.uid ?? 'admin',
                                     );
                                     break;
@@ -613,7 +613,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
                           oldRule: rule,
-                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                           changedByUid: user?.uid ?? 'admin',
                         );
 
@@ -695,7 +695,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
           rule.id,
           ruleName: rule.name,
           oldRule: rule,
-          changedByEmail: user?.email ?? 'admin@nth.com',
+          changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
           changedByUid: user?.uid ?? 'admin',
         );
         if (context.mounted) {

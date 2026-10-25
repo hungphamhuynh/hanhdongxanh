@@ -56,7 +56,7 @@ class PointRuleService {
     required int points,
     String description = '',
     String iconName = 'bottle',
-    String changedByEmail = 'admin@nth.com',
+    String changedByEmail = 'admin@thcsnguyenthihuong.hcm.edu.vn',
     String changedByUid = '',
   }) async {
     final cleanName = name.trim();
@@ -109,7 +109,7 @@ class PointRuleService {
     String description = '',
     String iconName = 'bottle',
     PointRuleModel? oldRule,
-    String changedByEmail = 'admin@nth.com',
+    String changedByEmail = 'admin@thcsnguyenthihuong.hcm.edu.vn',
     String changedByUid = '',
   }) async {
     final cleanName = name.trim();
@@ -187,7 +187,7 @@ class PointRuleService {
     required String id,
     required bool currentActive,
     String ruleName = '',
-    String changedByEmail = 'admin@nth.com',
+    String changedByEmail = 'admin@thcsnguyenthihuong.hcm.edu.vn',
     String changedByUid = '',
   }) async {
     final batch = _firestore.batch();
@@ -215,7 +215,7 @@ class PointRuleService {
     String id, {
     String ruleName = '',
     PointRuleModel? oldRule,
-    String changedByEmail = 'admin@nth.com',
+    String changedByEmail = 'admin@thcsnguyenthihuong.hcm.edu.vn',
     String changedByUid = '',
   }) async {
     final Map<String, dynamic> oldValues = oldRule != null
@@ -249,7 +249,7 @@ class PointRuleService {
   /// Khởi tạo 5 thể loại phế liệu mẫu chuẩn phong trào: Chai nhựa, Lon nhôm, Giấy vụn, Pin cũ, Bút viết cũ
   Future<void> seedDefaultEcoRules({
     bool overwrite = false,
-    String changedByEmail = 'admin@nth.com',
+    String changedByEmail = 'admin@thcsnguyenthihuong.hcm.edu.vn',
     String changedByUid = 'system',
   }) async {
     final snapshot = await _rulesCollection.get();

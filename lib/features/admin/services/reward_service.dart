@@ -193,7 +193,7 @@ class RewardService {
 
   /// Khởi tạo 4 phần thưởng mẫu ban đầu
   Future<void> seedDefaultRewardRules({
-    String changedByEmail = 'admin@nth.com',
+    String changedByEmail = 'admin@thcsnguyenthihuong.hcm.edu.vn',
     String changedByUid = 'system',
   }) async {
     final sampleRewards = [

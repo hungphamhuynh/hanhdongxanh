@@ -442,7 +442,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     labelText: 'Email đăng nhập',
-                    hintText: 'vidu@nth.com',
+                    hintText: 'vidu@thcsnguyenthihuong.hcm.edu.vn',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -583,7 +583,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           final className = '${selectedGrade}A$selectedClassNum';
-          final email = '${selectedGrade}a$selectedClassNum@nth.com';
+          final email =
+              '${selectedGrade}a$selectedClassNum@thcsnguyenthihuong.hcm.edu.vn';
 
           return AlertDialog(
             insetPadding: const EdgeInsets.symmetric(
@@ -1135,7 +1136,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           points: points,
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
-                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByEmail:
+                              user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                           changedByUid: user?.uid ?? '',
                         );
 
@@ -1356,7 +1358,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           pointsCost: points,
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
-                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByEmail:
+                              user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                           changedByUid: user?.uid ?? 'admin',
                         );
 

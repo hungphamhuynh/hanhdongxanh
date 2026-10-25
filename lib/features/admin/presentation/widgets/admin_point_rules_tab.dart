@@ -91,7 +91,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                       try {
                         final user = FirebaseAuth.instance.currentUser;
                         await _pointRuleService.seedDefaultEcoRules(
-                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                           changedByUid: user?.uid ?? 'admin',
                         );
                         if (context.mounted) {
@@ -765,7 +765,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                           description: descCtrl.text.trim(),
                           iconName: selectedIcon,
                           oldRule: rule,
-                          changedByEmail: user?.email ?? 'admin@nth.com',
+                          changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                           changedByUid: user?.uid ?? '',
                         );
 
@@ -844,7 +844,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
           rule.id,
           ruleName: rule.name,
           oldRule: rule,
-          changedByEmail: user?.email ?? 'admin@nth.com',
+          changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
           changedByUid: user?.uid ?? '',
         );
         if (context.mounted) {
@@ -901,7 +901,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                 final user = FirebaseAuth.instance.currentUser;
                 await _pointRuleService.seedDefaultEcoRules(
                   overwrite: true,
-                  changedByEmail: user?.email ?? 'admin@nth.com',
+                  changedByEmail: user?.email ?? 'admin@thcsnguyenthihuong.hcm.edu.vn',
                   changedByUid: user?.uid ?? 'admin',
                 );
                 if (context.mounted) {

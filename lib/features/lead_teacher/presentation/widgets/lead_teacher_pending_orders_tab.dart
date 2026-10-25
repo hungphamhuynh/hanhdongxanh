@@ -75,7 +75,7 @@ class _LeadTeacherPendingOrdersTabState
       try {
         await _rewardService.approveRewardOrder(
           orderId: order.id,
-          approvedByEmail: widget.user?.email ?? 'tongphutrach@nth.com',
+          approvedByEmail: widget.user?.email ?? 'tongphutrach@thcsnguyenthihuong.hcm.edu.vn',
           approvedByUid: widget.user?.uid ?? '',
         );
         if (mounted) {
@@ -152,7 +152,7 @@ class _LeadTeacherPendingOrdersTabState
           await _rewardService.rejectRewardOrder(
             orderId: order.id,
             rejectionReason: reasonCtrl.text.trim(),
-            rejectedByEmail: widget.user?.email ?? 'tongphutrach@nth.com',
+            rejectedByEmail: widget.user?.email ?? 'tongphutrach@thcsnguyenthihuong.hcm.edu.vn',
             rejectedByUid: widget.user?.uid ?? '',
           );
           if (mounted) {

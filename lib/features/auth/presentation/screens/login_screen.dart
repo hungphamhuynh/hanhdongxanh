@@ -157,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Tài khoản Email',
-                      hintText: 'vidu: 6a1@nth.com',
+                      hintText: 'vidu: 6a1@thcsnguyenthihuong.hcm.edu.vn',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (val) {

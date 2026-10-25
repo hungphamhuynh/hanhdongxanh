@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/user_role.dart';
 import '../../../../firebase_options.dart';
 
@@ -13,7 +14,7 @@ class AdminClassService {
     return _firestore.collection('classes').snapshots();
   }
 
-  /// Thêm lớp học mới: Tự động tạo tài khoản tương ứng `<ten_lop>@nth.com`
+  /// Thêm lớp học mới: Tự động tạo tài khoản tương ứng `<ten_lop>@thcsnguyenthihuong.hcm.edu.vn`
   /// và liên kết chặt chẽ giữa classes/{className} và users/{uid}
   Future<void> createClass({
     required String className,
@@ -28,8 +29,8 @@ class AdminClassService {
     }
 
     final cleanLower = cleanClassName.toLowerCase();
-    final email = '$cleanLower@nth.com';
-    final password = '$cleanLower@nth.com';
+    final email = '$cleanLower${AppConstants.schoolEmailSuffix}';
+    final password = '$cleanLower${AppConstants.schoolEmailSuffix}';
     final fullName = 'Lớp $cleanClassName';
 
     // 1. Kiểm tra lớp học đã tồn tại trong Firestore chưa
