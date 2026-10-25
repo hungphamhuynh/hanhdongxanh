@@ -419,34 +419,42 @@ class _LeadTeacherDashboardScreenState
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const SizedBox(height: 3),
+                                const SizedBox(height: 4),
+                                // 1. Số lượng thu gom
                                 Text(
-                                  'Số lượng: $formattedQty ${rec.unit} • Tỷ lệ: ${rec.ruleRateText}',
+                                  'Số lượng: $formattedQty ${rec.unit}',
                                   style: const TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
+                                // 2. Tỷ lệ quy đổi riêng biệt
+                                Text(
+                                  'Quy đổi: ${rec.ruleRateText}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                // 3. Thời gian tạo & Nhãn Đã sửa (nếu có)
                                 Row(
                                   children: [
-                                    Expanded(
-                                      child: Text(
-                                        '${_formatDateTime(rec.createdAt)} • ${rec.createdByEmail}',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                    Text(
+                                      _formatDateTime(rec.createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                     if (rec.isEdited) ...[
-                                      const SizedBox(width: 4),
+                                      const SizedBox(width: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 1,
+                                          horizontal: 5,
+                                          vertical: 1.5,
                                         ),
                                         decoration: BoxDecoration(
                                           color: AppColors.warning.withValues(
@@ -468,13 +476,27 @@ class _LeadTeacherDashboardScreenState
                                     ],
                                   ],
                                 ),
-                                if (rec.note.isNotEmpty) ...[
+                                // 4. Email người ghi nhận (xuống hàng riêng biệt)
+                                if (rec.createdByEmail.isNotEmpty) ...[
                                   const SizedBox(height: 2),
                                   Text(
-                                    rec.note,
+                                    'Người ghi: ${rec.createdByEmail}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                                // 5. Ghi chú (nếu có)
+                                if (rec.note.isNotEmpty) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Ghi chú: ${rec.note}',
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontStyle: FontStyle.italic,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                 ],

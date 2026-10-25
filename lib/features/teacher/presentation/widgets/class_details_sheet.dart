@@ -344,11 +344,21 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 3),
+                    Text(
+                      'Số lượng: $formattedQty ${rec.unit}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
-                      '$formattedQty ${rec.unit} • Tỷ lệ: ${rec.ruleRateText}',
+                      'Quy đổi: ${rec.ruleRateText}',
                       style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       _formatDateTime(rec.createdAt),
                       style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
