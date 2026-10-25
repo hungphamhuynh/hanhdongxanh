@@ -683,19 +683,19 @@ class _LeadTeacherDashboardScreenState
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
+                                    horizontal: 8,
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surfaceVariant,
+                                    color: AppColors.primaryDark,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    'Lớp ${order.className}',
+                                    order.className,
                                     style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: AppColors.primary,
                                     ),
                                   ),
                                 ),
@@ -715,7 +715,27 @@ class _LeadTeacherDashboardScreenState
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const SizedBox(height: 4),
+                                // 1. Số lượng đổi (đứng riêng một dòng nổi bật)
+                                Text(
+                                  'Số lượng: ${order.quantity} ${order.unit}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                // 2. Mức đổi (đứng riêng một dòng rõ ràng)
+                                Text(
+                                  'Mức đổi: ${order.pointsCost} điểm / ${order.unit}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                                 const SizedBox(height: 3),
+                                // 3. Trạng thái & Thời gian tạo
                                 Row(
                                   children: [
                                     Container(
@@ -738,30 +758,20 @@ class _LeadTeacherDashboardScreenState
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        'Số lượng: ${order.quantity} ${order.unit} (${order.pointsCost}đ/${order.unit})',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _formatDateTime(order.createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _formatDateTime(order.createdAt),
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
+                                // 4. Thông tin duyệt (nếu có)
                                 if (order.isApproved &&
-                                    order.approvedByEmail != null) ...[
+                                    order.approvedByEmail != null &&
+                                    order.approvedByEmail!.isNotEmpty) ...[
                                   const SizedBox(height: 2),
                                   Text(
                                     'Duyệt bởi: ${order.approvedByEmail}',
@@ -771,15 +781,28 @@ class _LeadTeacherDashboardScreenState
                                     ),
                                   ),
                                 ],
+                                // 5. Thông tin từ chối (nếu có)
                                 if (order.isRejected &&
                                     order.rejectionReason.isNotEmpty) ...[
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Từ chối: ${order.rejectionReason}',
+                                    'Lý do từ chối: ${order.rejectionReason}',
                                     style: const TextStyle(
                                       fontSize: 11,
                                       color: AppColors.error,
                                       fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                                // 6. Ghi chú của lớp (nếu có)
+                                if (order.note.isNotEmpty) ...[
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Ghi chú: ${order.note}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                 ],

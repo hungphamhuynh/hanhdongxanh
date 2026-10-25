@@ -448,7 +448,24 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 3),
+                              Text(
+                                'Số lượng: ${order.quantity} ${order.unit}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Mức đổi: ${order.pointsCost} điểm / ${order.unit}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
                               Row(
                                 children: [
                                   Container(
@@ -468,15 +485,12 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      'SL: ${order.quantity} ${order.unit} • ${_formatDateTime(order.createdAt)}',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _formatDateTime(order.createdAt),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
                                 ],
