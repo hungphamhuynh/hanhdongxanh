@@ -24,6 +24,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
   void initState() {
     super.initState();
     _rewardsStream = _rewardService.getRewardRulesStream();
+    _rewardService.alignSampleRewardNames();
   }
 
   String _formatDateTime(DateTime? dt) {
@@ -77,7 +78,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Bạn có thể khởi tạo nhanh 4 phần thưởng sinh thái mẫu: Sen đá mini, Vở học sinh tái chế, Bút bi xanh, Bình giữ nhiệt.',
+                    'Bạn có thể khởi tạo nhanh 4 phần thưởng sinh thái mẫu: Chậu cây xanh, Tập vở học sinh, Bút bi xanh, Bình giữ nhiệt.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,

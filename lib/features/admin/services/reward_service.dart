@@ -205,10 +205,10 @@ class RewardService {
         'iconName': 'plant',
       },
       {
-        'name': 'Tập vở học sinh tái chế',
+        'name': 'Tập vở học sinh',
         'unit': 'Cuốn',
         'pointsCost': 15,
-        'description': 'Vở 96 trang sản xuất từ giấy tái chế thân thiện môi trường',
+        'description': 'Vở 96 trang dành cho học sinh',
         'iconName': 'book',
       },
       {
@@ -259,6 +259,21 @@ class RewardService {
       }
       if (hasUpdate) {
         await batch.commit();
+      }
+    } catch (_) {}
+  }
+
+  /// Tự động đồng bộ tên quà mẫu nếu còn tồn tại tên cũ "tái chế"
+  Future<void> alignSampleRewardNames() async {
+    try {
+      final snap = await _rulesCol
+          .where('name', isEqualTo: 'Tập vở học sinh tái chế')
+          .get();
+      for (final doc in snap.docs) {
+        await doc.reference.update({
+          'name': 'Tập vở học sinh',
+          'description': 'Vở 96 trang dành cho học sinh',
+        });
       }
     } catch (_) {}
   }
