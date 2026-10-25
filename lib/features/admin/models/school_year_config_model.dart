@@ -4,7 +4,10 @@ import '../../teacher/models/point_record_model.dart';
 
 /// Model cấu hình năm học của hệ thống (lưu trong `system_settings/school_year_config`)
 class SchoolYearConfigModel {
-  /// Niên khóa đang vận hành (Ví dụ: "2025-2026")
+  /// Niên khóa mặc định của hệ thống
+  static const String defaultAcademicYear = '2026-2027';
+
+  /// Niên khóa đang vận hành (Ví dụ: "2026-2027")
   final String currentAcademicYear;
 
   /// Niên khóa vừa được đóng sổ gần nhất (nếu có)
@@ -24,13 +27,8 @@ class SchoolYearConfigModel {
   });
 
   factory SchoolYearConfigModel.fromFirestore(DocumentSnapshot doc) {
-    final now = DateTime.now();
-    final defaultYear = now.month >= 8
-        ? '${now.year}-${now.year + 1}'
-        : '${now.year - 1}-${now.year}';
-
     if (!doc.exists || doc.data() == null) {
-      return SchoolYearConfigModel(currentAcademicYear: defaultYear);
+      return const SchoolYearConfigModel(currentAcademicYear: defaultAcademicYear);
     }
 
     final data = doc.data() as Map<String, dynamic>;
@@ -39,7 +37,7 @@ class SchoolYearConfigModel {
     return SchoolYearConfigModel(
       currentAcademicYear: (rawYear != null && rawYear.trim().isNotEmpty)
           ? rawYear.trim()
-          : defaultYear,
+          : defaultAcademicYear,
       lastClosedAcademicYear: data['lastClosedAcademicYear'] as String?,
       currentYearStartedAt:
           (data['currentYearStartedAt'] as Timestamp?)?.toDate(),

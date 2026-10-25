@@ -25,20 +25,31 @@ class AcademicYearService {
         .map((doc) => SchoolYearConfigModel.fromFirestore(doc));
   }
 
-  /// Lấy cấu hình năm học bất đồng bộ
+  /// Lấy cấu hình năm học bất đồng bộ. Tự động khởi tạo doc trong Firestore nếu chưa có.
   Future<SchoolYearConfigModel> getSchoolYearConfig() async {
     try {
-      final doc = await _firestore
+      final docRef = _firestore
           .collection('system_settings')
-          .doc('school_year_config')
-          .get();
+          .doc('school_year_config');
+      final doc = await docRef.get();
+
+      if (!doc.exists || doc.data() == null) {
+        // Tự động tạo doc lưu trữ trong DB để admin có thể lên Firestore chỉnh sửa trực tiếp bất cứ lúc nào
+        const defaultYear = SchoolYearConfigModel.defaultAcademicYear;
+        await docRef.set({
+          'currentAcademicYear': defaultYear,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        return const SchoolYearConfigModel(currentAcademicYear: defaultYear);
+      }
+
       return SchoolYearConfigModel.fromFirestore(doc);
     } catch (_) {
-      final now = DateTime.now();
-      final defaultYear = now.month >= 8
-          ? '${now.year}-${now.year + 1}'
-          : '${now.year - 1}-${now.year}';
-      return SchoolYearConfigModel(currentAcademicYear: defaultYear);
+      return const SchoolYearConfigModel(
+        currentAcademicYear: SchoolYearConfigModel.defaultAcademicYear,
+      );
     }
   }
 

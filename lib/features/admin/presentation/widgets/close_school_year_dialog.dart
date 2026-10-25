@@ -37,8 +37,8 @@ class CloseSchoolYearDialog extends StatefulWidget {
 class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
   final AcademicYearService _service = AcademicYearService();
 
-  late final TextEditingController _closingYearCtrl;
-  late final TextEditingController _nextYearCtrl;
+  String _currentAcademicYear = '';
+  String _nextAcademicYear = '';
 
   bool _isLoading = true;
   bool _isSubmitting = false;
@@ -53,16 +53,7 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
   @override
   void initState() {
     super.initState();
-    _closingYearCtrl = TextEditingController();
-    _nextYearCtrl = TextEditingController();
     _loadInitialData();
-  }
-
-  @override
-  void dispose() {
-    _closingYearCtrl.dispose();
-    _nextYearCtrl.dispose();
-    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -71,21 +62,24 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
       final preview =
           await _service.previewClosureData(targetAcademicYear: currentYear);
 
-      // Tính năm học kế tiếp từ currentYear (Ví dụ: "2025-2026" -> "2026-2027")
+      // Tự động tính niên khóa kế tiếp (+1 năm) từ currentYear (Ví dụ: "2026-2027" -> "2027-2028")
       String nextYear = '';
       final parts = currentYear.split('-');
       if (parts.length == 2) {
-        final start = int.tryParse(parts[0]);
-        final end = int.tryParse(parts[1]);
+        final start = int.tryParse(parts[0].trim());
+        final end = int.tryParse(parts[1].trim());
         if (start != null && end != null) {
           nextYear = '${start + 1}-${end + 1}';
         }
       }
+      if (nextYear.isEmpty) {
+        nextYear = '2027-2028';
+      }
 
       if (mounted) {
         setState(() {
-          _closingYearCtrl.text = currentYear;
-          _nextYearCtrl.text = nextYear.isNotEmpty ? nextYear : currentYear;
+          _currentAcademicYear = currentYear;
+          _nextAcademicYear = nextYear;
 
           _pendingCount = preview['pendingCount'] as int;
           _totalClasses = preview['totalClasses'] as int;
@@ -107,14 +101,50 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
     }
   }
 
+  Future<void> _editNextAcademicYear() async {
+    final ctrl = TextEditingController(text: _nextAcademicYear);
+    final customYear = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Tùy chỉnh niên khóa mới',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Niên khóa mới',
+            hintText: 'VD: 2027-2028',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Lưu'),
+          ),
+        ],
+      ),
+    );
+    if (customYear != null && customYear.isNotEmpty && mounted) {
+      setState(() {
+        _nextAcademicYear = customYear;
+      });
+    }
+  }
+
   Future<void> _handleConfirm() async {
-    final closingYear = _closingYearCtrl.text.trim();
-    final nextYear = _nextYearCtrl.text.trim();
+    final closingYear = _currentAcademicYear.trim();
+    final nextYear = _nextAcademicYear.trim();
 
     if (closingYear.isEmpty || nextYear.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng nhập đầy đủ niên khóa cũ và niên khóa mới!'),
+          content: Text('Không tìm thấy thông tin niên khóa hợp lệ!'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -322,30 +352,97 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Ô nhập niên khóa xếp dọc để tránh tràn chữ
-                        TextField(
-                          controller: _closingYearCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Niên khóa đóng sổ',
-                            hintText: 'VD: 2025-2026',
-                            helperText:
-                                'Thành tích thi đua sẽ được lưu trữ Bảng Vàng theo niên khóa này',
-                            helperMaxLines: 2,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 12),
+                        // Thẻ chuyển giao niên khóa tự động (lấy trực tiếp từ database)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _nextYearCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Niên khóa mới',
-                            hintText: 'VD: 2026-2027',
-                            helperText:
-                                'Năm học mới sẽ bắt đầu với điểm thi đua bằng 0',
-                            helperMaxLines: 2,
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Niên khóa đóng sổ',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _currentAcademicYear.isNotEmpty
+                                          ? _currentAcademicYear
+                                          : '...',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6),
+                                child: Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: AppColors.primary,
+                                  size: 18,
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Niên khóa mới',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        InkWell(
+                                          onTap: _editNextAcademicYear,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(2),
+                                            child: Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _nextAcademicYear.isNotEmpty
+                                          ? _nextAcademicYear
+                                          : '...',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
