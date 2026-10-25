@@ -35,7 +35,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   final RewardService _rewardService = RewardService();
   final AcademicYearService _academicYearService = AcademicYearService();
   final AuthService _authService = AuthService();
-  int _historyTabIndex = 0; // 0 = Lịch sử tích điểm (+), 1 = Lịch sử đổi quà (-)
+  int _currentTabIndex = 0; // 0 = Tổng quan, 1 = Tích điểm, 2 = Đổi quà
   bool _isLoadingReward = false;
 
   String _formatDateTime(DateTime? dt) {
@@ -46,6 +46,117 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
     return '$day/$month/$year $hour:$minute';
+  }
+
+  /// Mở modal đổi quà an toàn có khóa chống double-tap và timeout
+  Future<void> _handleOpenRewardOrder({
+    required BuildContext context,
+    required String assignedClass,
+    required User user,
+  }) async {
+    setState(() => _isLoadingReward = true);
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(assignedClass)
+          .get()
+          .timeout(const Duration(seconds: 4));
+      final pts = ((doc.data()?['totalPoints']) as num?)?.toInt() ?? 0;
+      if (mounted) {
+        setState(() => _isLoadingReward = false);
+      }
+      if (context.mounted) {
+        _showRewardOrderModal(
+          context: context,
+          className: assignedClass,
+          currentClassPoints: pts,
+          teacherUid: user.uid,
+          teacherEmail: user.email ?? '',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingReward = false);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e is TimeoutException
+                  ? 'Mạng không ổn định, vui lòng kiểm tra lại kết nối!'
+                  : FirebaseErrorMapper.getCleanErrorMessage(e),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getAppBarTitle(String assignedClass) {
+    switch (_currentTabIndex) {
+      case 0:
+        return 'Lớp $assignedClass • Tổng Quan';
+      case 1:
+        return 'Lớp $assignedClass • Lịch Sử Tích Điểm';
+      case 2:
+        return 'Lớp $assignedClass • Lịch Sử Đổi Điểm';
+      default:
+        return 'Lớp $assignedClass';
+    }
+  }
+
+  Widget? _buildFloatingActionButton({
+    required BuildContext context,
+    required String assignedClass,
+    required User user,
+  }) {
+    if (_currentTabIndex == 1) {
+      return FloatingActionButton.extended(
+        heroTag: 'fab_teacher_record',
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_task_rounded),
+        label: const Text(
+          'Tích Điểm Mới',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        onPressed: () => _showRecordPointsModal(
+          context: context,
+          className: assignedClass,
+          teacherUid: user.uid,
+          teacherEmail: user.email ?? '',
+        ),
+      );
+    } else if (_currentTabIndex == 2) {
+      return FloatingActionButton.extended(
+        heroTag: 'fab_teacher_reward',
+        backgroundColor: const Color(0xFFC2410C),
+        foregroundColor: Colors.white,
+        icon: _isLoadingReward
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.card_giftcard_rounded),
+        label: Text(
+          _isLoadingReward ? 'Đang kiểm tra điểm...' : 'Lên Đơn Đổi Quà',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        onPressed: _isLoadingReward
+            ? null
+            : () => _handleOpenRewardOrder(
+                  context: context,
+                  assignedClass: assignedClass,
+                  user: user,
+                ),
+      );
+    }
+    return null;
   }
 
   @override
@@ -127,9 +238,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           appBar: AppBar(
             centerTitle: true,
             title: Text(
-              _historyTabIndex == 0
-                  ? 'Lớp $assignedClass • Thu Gom Phế Liệu'
-                  : 'Lớp $assignedClass • Đơn Đổi Quà',
+              _getAppBarTitle(assignedClass),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             actions: [
@@ -151,419 +260,214 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            heroTag: 'fab_teacher_action',
-            backgroundColor: _historyTabIndex == 0
-                ? AppColors.primary
-                : const Color(0xFFC2410C),
-            foregroundColor: Colors.white,
-            icon: _isLoadingReward
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Icon(_historyTabIndex == 0
-                    ? Icons.add_task_rounded
-                    : Icons.card_giftcard_rounded),
-            label: Text(
-              _isLoadingReward
-                  ? 'Đang kiểm tra điểm...'
-                  : (_historyTabIndex == 0
-                      ? 'Tích Điểm Thu Gom'
-                      : 'Lên Đơn Đổi Quà'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            onPressed: _isLoadingReward
-                ? null
-                : () async {
-                    if (_historyTabIndex == 0) {
-                      _showRecordPointsModal(
-                        context: context,
-                        className: assignedClass,
-                        teacherUid: user.uid,
-                        teacherEmail: user.email ?? '',
-                      );
-                    } else {
-                      setState(() => _isLoadingReward = true);
-                      try {
-                        final doc = await FirebaseFirestore.instance
-                            .collection('classes')
-                            .doc(assignedClass)
-                            .get()
-                            .timeout(const Duration(seconds: 4));
-                        final pts =
-                            ((doc.data()?['totalPoints']) as num?)?.toInt() ??
-                                0;
-                        if (mounted) {
-                          setState(() => _isLoadingReward = false);
-                        }
-                        if (context.mounted) {
-                          _showRewardOrderModal(
-                            context: context,
-                            className: assignedClass,
-                            currentClassPoints: pts,
-                            teacherUid: user.uid,
-                            teacherEmail: user.email ?? '',
-                          );
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          setState(() => _isLoadingReward = false);
-                        }
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                e is TimeoutException
-                                    ? 'Mạng không ổn định, vui lòng kiểm tra lại kết nối!'
-                                    : FirebaseErrorMapper.getCleanErrorMessage(e),
-                              ),
-                              backgroundColor: AppColors.error,
-                            ),
-                          );
-                        }
-                      }
-                    }
-                  },
+          body: IndexedStack(
+            index: _currentTabIndex,
+            children: [
+              _buildOverviewTab(
+                context: context,
+                assignedClass: assignedClass,
+                fullName: fullName,
+                user: user,
+              ),
+              _buildPointHistoryTab(
+                context: context,
+                assignedClass: assignedClass,
+                user: user,
+              ),
+              _buildRewardHistoryTab(
+                context: context,
+                assignedClass: assignedClass,
+                user: user,
+              ),
+            ],
           ),
-          body: ResponsiveContainer(
-            maxWidth: 850,
-            child: StreamBuilder<DocumentSnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('classes')
-                  .doc(assignedClass)
-                  .snapshots(),
-              builder: (context, classSnap) {
-                final classData =
-                    classSnap.data?.data() as Map<String, dynamic>? ?? {};
-                final totalPoints =
-                    (classData['totalPoints'] as num?)?.toInt() ?? 0;
+          floatingActionButton: _buildFloatingActionButton(
+            context: context,
+            assignedClass: assignedClass,
+            user: user,
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _currentTabIndex,
+            onDestinationSelected: (index) =>
+                setState(() => _currentTabIndex = index),
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard_rounded),
+                label: 'Tổng Quan',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.history_outlined),
+                selectedIcon: Icon(Icons.history_rounded),
+                label: 'Tích Điểm',
+              ),
+              NavigationDestination(
+                icon: StreamBuilder<List<RewardRecordModel>>(
+                  stream: _rewardService
+                      .getRewardRecordsByClassStream(assignedClass),
+                  builder: (context, snapshot) {
+                    final pendingCount = (snapshot.data ?? [])
+                        .where((o) => o.isPending)
+                        .length;
+                    return Badge(
+                      isLabelVisible: pendingCount > 0,
+                      label: Text('$pendingCount'),
+                      child: const Icon(Icons.card_giftcard_outlined),
+                    );
+                  },
+                ),
+                selectedIcon: StreamBuilder<List<RewardRecordModel>>(
+                  stream: _rewardService
+                      .getRewardRecordsByClassStream(assignedClass),
+                  builder: (context, snapshot) {
+                    final pendingCount = (snapshot.data ?? [])
+                        .where((o) => o.isPending)
+                        .length;
+                    return Badge(
+                      isLabelVisible: pendingCount > 0,
+                      label: Text('$pendingCount'),
+                      child: const Icon(Icons.card_giftcard_rounded),
+                    );
+                  },
+                ),
+                label: 'Đổi Quà',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-                return CustomScrollView(
-                  slivers: [
-                    // Thẻ tổng quan điểm số lớp học (Động 100%)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: _buildEcoOverviewCard(
-                          assignedClass: assignedClass,
-                          fullName: fullName,
-                          totalPoints: totalPoints,
-                        ),
-                      ),
-                    ),
+  Widget _buildOverviewTab({
+    required BuildContext context,
+    required String assignedClass,
+    required String fullName,
+    required User user,
+  }) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('classes')
+          .doc(assignedClass)
+          .snapshots(),
+      builder: (context, classSnap) {
+        final classData = classSnap.data?.data() as Map<String, dynamic>? ?? {};
+        final totalPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
 
-                    // Bộ chuyển đổi 2 Tab Lịch sử: Tích điểm (+) và Đổi quà (-)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceVariant,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: Row(
+        return ResponsiveContainer(
+          maxWidth: 850,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildEcoOverviewCard(
+                  assignedClass: assignedClass,
+                  fullName: fullName,
+                  totalPoints: totalPoints,
+                  context: context,
+                  user: user,
+                ),
+                const SizedBox(height: 16),
+                // Card danh sách thu gom gần nhất
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() => _historyTabIndex = 0),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 9),
-                                    decoration: BoxDecoration(
-                                      color: _historyTabIndex == 0
-                                          ? AppColors.primary
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.add_circle_outline_rounded,
-                                          size: 16,
-                                          color: _historyTabIndex == 0
-                                              ? Colors.white
-                                              : AppColors.textSecondary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Lịch Sử Tích Điểm',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: _historyTabIndex == 0
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight
+                                      .withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.history_rounded,
+                                  size: 18,
+                                  color: AppColors.primary,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => setState(() => _historyTabIndex = 1),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 9),
-                                    decoration: BoxDecoration(
-                                      color: _historyTabIndex == 1
-                                          ? const Color(0xFFC2410C)
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.card_giftcard_rounded,
-                                          size: 16,
-                                          color: _historyTabIndex == 1
-                                              ? Colors.white
-                                              : AppColors.textSecondary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Lịch Sử Đổi Điểm',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: _historyTabIndex == 1
-                                                ? Colors.white
-                                                : AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Lượt Thu Gom Gần Đây',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ],
                           ),
-                        ),
+                          TextButton(
+                            onPressed: () =>
+                                setState(() => _currentTabIndex = 1),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Xem tất cả',
+                                    style: TextStyle(fontSize: 13)),
+                                SizedBox(width: 2),
+                                Icon(Icons.arrow_forward_ios_rounded, size: 12),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-
-                    // NỘI DUNG LỊCH SỬ TÍCH ĐIỂM (TAB 0)
-                    if (_historyTabIndex == 0)
+                      const SizedBox(height: 8),
                       StreamBuilder<List<PointRecordModel>>(
                         stream: _pointRecordService
                             .getRecordsByClassStream(assignedClass),
-                        builder: (context, recordsSnap) {
-                          if (recordsSnap.hasError) {
-                            return SliverFillRemaining(
-                              child: Center(
-                                child: Text(
-                                  'Lỗi tải nhật ký: ${recordsSnap.error}',
-                                  style: const TextStyle(color: AppColors.error),
-                                ),
+                        builder: (context, snap) {
+                          if (snap.connectionState == ConnectionState.waiting) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
                               ),
                             );
                           }
-
-                          if (recordsSnap.connectionState ==
-                              ConnectionState.waiting) {
-                            return const SliverFillRemaining(
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-
-                          final records = recordsSnap.data ?? [];
-
-                          if (records.isEmpty) {
-                            return SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primaryLight
-                                              .withValues(alpha: 0.25),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.eco_rounded,
-                                          size: 48,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'Chưa có lượt thu gom nào',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Hãy vận động các bạn học sinh trong lớp gom Vỏ chai và Pin để cùng tích lũy điểm sinh thái nhé!',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      FilledButton.icon(
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                        ),
-                                        onPressed: () => _showRecordPointsModal(
-                                          context: context,
-                                          className: assignedClass,
-                                          teacherUid: user.uid,
-                                          teacherEmail: user.email ?? '',
-                                        ),
-                                        icon: const Icon(Icons.add),
-                                        label: const Text('Tích Điểm Ngay'),
-                                      ),
-                                    ],
+                          final recent = (snap.data ?? []).take(3).toList();
+                          if (recent.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.0),
+                              child: Center(
+                                child: Text(
+                                  'Chưa có lượt thu gom nào trong năm học',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
                             );
                           }
-
-                          return SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final record = records[index];
-                                  return _buildRecordCard(
-                                    context,
-                                    record,
-                                    userEmail: user.email ?? '',
-                                    userUid: user.uid,
-                                  );
-                                },
-                                childCount: records.length,
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    // NỘI DUNG LỊCH SỬ ĐỔI ĐIỂM (TAB 1)
-                    else
-                      StreamBuilder<List<RewardRecordModel>>(
-                        stream: _rewardService
-                            .getRewardRecordsByClassStream(assignedClass),
-                        builder: (context, ordersSnap) {
-                          if (ordersSnap.hasError) {
-                            return SliverFillRemaining(
-                              child: Center(
-                                child: Text(
-                                  'Lỗi tải đơn đổi quà: ${ordersSnap.error}',
-                                  style: const TextStyle(color: AppColors.error),
-                                ),
-                              ),
-                            );
-                          }
-
-                          if (ordersSnap.connectionState ==
-                              ConnectionState.waiting) {
-                            return const SliverFillRemaining(
-                              child: Center(child: CircularProgressIndicator()),
-                            );
-                          }
-
-                          final orders = ordersSnap.data ?? [];
-
-                          if (orders.isEmpty) {
-                            return SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFC2410C)
-                                              .withValues(alpha: 0.15),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.card_giftcard_rounded,
-                                          size: 48,
-                                          color: Color(0xFFC2410C),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'Chưa có đơn đổi quà nào',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Khi lớp đạt đủ điểm thi đua, bạn có thể gửi yêu cầu đổi quà để Tổng phụ trách duyệt và phát thưởng nhé!',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      FilledButton.icon(
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: const Color(0xFFC2410C),
-                                        ),
-                                        onPressed: () => _showRewardOrderModal(
-                                          context: context,
-                                          className: assignedClass,
-                                          currentClassPoints: totalPoints,
-                                          teacherUid: user.uid,
-                                          teacherEmail: user.email ?? '',
-                                        ),
-                                        icon: const Icon(Icons.card_giftcard_rounded),
-                                        label: const Text('Đổi Quà Ngay'),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          return SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  final order = orders[index];
-                                  return _buildRewardOrderCard(context, order);
-                                },
-                                childCount: orders.length,
-                              ),
-                            ),
+                          return Column(
+                            children: recent
+                                .map((rec) => _buildRecordCard(
+                                      context,
+                                      rec,
+                                      userEmail: user.email ?? '',
+                                      userUid: user.uid,
+                                    ))
+                                .toList(),
                           );
                         },
                       ),
-                  ],
-                );
-              },
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -571,10 +475,216 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
+  Widget _buildPointHistoryTab({
+    required BuildContext context,
+    required String assignedClass,
+    required User user,
+  }) {
+    return ResponsiveContainer(
+      maxWidth: 850,
+      child: StreamBuilder<List<PointRecordModel>>(
+        stream: _pointRecordService.getRecordsByClassStream(assignedClass),
+        builder: (context, recordsSnap) {
+          if (recordsSnap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Lỗi tải nhật ký: ${recordsSnap.error}',
+                  style: const TextStyle(color: AppColors.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          if (recordsSnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final records = recordsSnap.data ?? [];
+
+          if (records.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight.withValues(alpha: 0.25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.eco_rounded,
+                        size: 48,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Chưa có lượt thu gom nào',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Hãy vận động các bạn học sinh trong lớp gom Vỏ chai, Giấy, Pin để cùng tích lũy điểm sinh thái nhé!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      onPressed: () => _showRecordPointsModal(
+                        context: context,
+                        className: assignedClass,
+                        teacherUid: user.uid,
+                        teacherEmail: user.email ?? '',
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Tích Điểm Ngay'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+            itemCount: records.length,
+            itemBuilder: (context, index) {
+              final record = records[index];
+              return _buildRecordCard(
+                context,
+                record,
+                userEmail: user.email ?? '',
+                userUid: user.uid,
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRewardHistoryTab({
+    required BuildContext context,
+    required String assignedClass,
+    required User user,
+  }) {
+    return ResponsiveContainer(
+      maxWidth: 850,
+      child: StreamBuilder<List<RewardRecordModel>>(
+        stream: _rewardService.getRewardRecordsByClassStream(assignedClass),
+        builder: (context, ordersSnap) {
+          if (ordersSnap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Lỗi tải đơn đổi quà: ${ordersSnap.error}',
+                  style: const TextStyle(color: AppColors.error),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
+          if (ordersSnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final orders = ordersSnap.data ?? [];
+
+          if (orders.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFC2410C).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.card_giftcard_rounded,
+                        size: 48,
+                        color: Color(0xFFC2410C),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Chưa có đơn đổi quà nào',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Khi lớp đạt đủ điểm thi đua, bạn có thể gửi yêu cầu đổi quà để Tổng phụ trách duyệt và phát thưởng nhé!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFC2410C),
+                      ),
+                      onPressed: _isLoadingReward
+                          ? null
+                          : () => _handleOpenRewardOrder(
+                                context: context,
+                                assignedClass: assignedClass,
+                                user: user,
+                              ),
+                      icon: const Icon(Icons.card_giftcard_rounded),
+                      label: const Text('Đổi Quà Ngay'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              return _buildRewardOrderCard(context, order);
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildEcoOverviewCard({
     required String assignedClass,
     required String fullName,
     required int totalPoints,
+    required BuildContext context,
+    required User user,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -789,6 +899,72 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ],
               );
             },
+          ),
+          const SizedBox(height: 18),
+          // 2 nút thao tác nhanh
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primaryDark,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: () => _showRecordPointsModal(
+                    context: context,
+                    className: assignedClass,
+                    teacherUid: user.uid,
+                    teacherEmail: user.email ?? '',
+                  ),
+                  icon: const Icon(Icons.add_task_rounded, size: 18),
+                  label: const Text(
+                    'Tích Điểm',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.22),
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white38),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: _isLoadingReward
+                      ? null
+                      : () => _handleOpenRewardOrder(
+                            context: context,
+                            assignedClass: assignedClass,
+                            user: user,
+                          ),
+                  icon: _isLoadingReward
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.card_giftcard_rounded, size: 18),
+                  label: Text(
+                    _isLoadingReward ? 'Kiểm tra...' : 'Đổi Quà',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
