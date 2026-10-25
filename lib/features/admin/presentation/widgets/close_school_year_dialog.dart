@@ -207,9 +207,10 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 720),
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 720),
         child: _isLoading
             ? const Padding(
                 padding: EdgeInsets.all(40),
@@ -256,34 +257,21 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                         // Tiêu đề Dialog
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.school_rounded,
-                                color: AppColors.primary,
-                                size: 24,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
                             const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Đóng Sổ & Khởi Tạo Năm Học Mới',
+                                    'Đóng Sổ Năm Học',
                                     style: TextStyle(
-                                      fontSize: 17,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.textPrimary,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  SizedBox(height: 3),
                                   Text(
-                                    'Lưu trữ Bảng Vàng và đặt lại điểm thi đua về 0',
+                                    'Lưu trữ Bảng Vàng và khởi tạo điểm năm học mới',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
@@ -294,6 +282,7 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.close_rounded),
+                              tooltip: 'Đóng',
                               onPressed: () => Navigator.pop(context),
                             ),
                           ],
@@ -312,13 +301,14 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                               ),
                             ),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Icon(Icons.warning_amber_rounded,
-                                    color: AppColors.error, size: 24),
-                                const SizedBox(width: 10),
+                                    color: AppColors.error, size: 20),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Có $_pendingCount đơn đổi quà đang chờ duyệt! Vui lòng vào duyệt hoặc từ chối các đơn này trước khi đóng sổ.',
+                                    'Có $_pendingCount đơn đổi quà đang chờ duyệt! Vui lòng hoàn tất duyệt hoặc từ chối trước khi đóng sổ.',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -329,40 +319,34 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                         ],
 
-                        // 2 ô nhập niên khóa
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _closingYearCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Niên khóa đóng sổ',
-                                  hintText: '2025-2026',
-                                  prefixIcon:
-                                      Icon(Icons.archive_outlined, size: 18),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: TextField(
-                                controller: _nextYearCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Niên khóa mới',
-                                  hintText: '2026-2027',
-                                  prefixIcon:
-                                      Icon(Icons.start_rounded, size: 18),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                ),
-                              ),
-                            ),
-                          ],
+                        // Ô nhập niên khóa xếp dọc để tránh tràn chữ
+                        TextField(
+                          controller: _closingYearCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Niên khóa đóng sổ',
+                            hintText: 'VD: 2025-2026',
+                            helperText:
+                                'Thành tích thi đua sẽ được lưu trữ Bảng Vàng theo niên khóa này',
+                            helperMaxLines: 2,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _nextYearCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Niên khóa mới',
+                            hintText: 'VD: 2026-2027',
+                            helperText:
+                                'Năm học mới sẽ bắt đầu với điểm thi đua bằng 0',
+                            helperMaxLines: 2,
+                            contentPadding: EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                          ),
                         ),
                         const SizedBox(height: 16),
 
@@ -377,88 +361,100 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.insights_rounded,
-                                      size: 18, color: AppColors.primary),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Dữ liệu sẽ được lưu vào Bảng Vàng',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
+                              const Text(
+                                'Tóm tắt thành tích niên khóa',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
                               const SizedBox(height: 10),
+
+                              // 2 ô chỉ số KPI tự co giãn responsive
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    '• Tổng số lớp học: $_totalClasses lớp',
-                                    style: const TextStyle(fontSize: 12),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: AppColors.border),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Quy mô',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '$_totalClasses lớp',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                  Text(
-                                    '• Tổng điểm thi đua: +$_totalSchoolPoints đ',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.success,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: AppColors.border),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Tổng điểm toàn trường',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '+$_totalSchoolPoints đ',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
 
-                              // Top 3 dẫn đầu
+                              // Top 3 dẫn đầu dùng Wrap
                               if (_topClasses.isNotEmpty) ...[
+                                const SizedBox(height: 10),
                                 const Text(
-                                  'Top 3 lớp dẫn đầu năm học:',
+                                  'Top 3 lớp dẫn đầu:',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    if (_topClasses.isNotEmpty)
-                                      _buildTopBadge(
-                                        '🥇',
-                                        _topClasses[0].className,
-                                        _topClasses[0].totalPoints,
-                                      ),
-                                    if (_topClasses.length > 1) ...[
-                                      const SizedBox(width: 6),
-                                      _buildTopBadge(
-                                        '🥈',
-                                        _topClasses[1].className,
-                                        _topClasses[1].totalPoints,
-                                      ),
-                                    ],
-                                    if (_topClasses.length > 2) ...[
-                                      const SizedBox(width: 6),
-                                      _buildTopBadge(
-                                        '🥉',
-                                        _topClasses[2].className,
-                                        _topClasses[2].totalPoints,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-
-                              // Danh mục thu gom động 100%
-                              if (_categorySummaries.isNotEmpty) ...[
-                                const Text(
-                                  'Tổng sản lượng thu gom các loại (Động):',
-                                  style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
                                   ),
@@ -466,7 +462,44 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                                 const SizedBox(height: 6),
                                 Wrap(
                                   spacing: 6,
-                                  runSpacing: 4,
+                                  runSpacing: 6,
+                                  children: [
+                                    _buildTopBadge(
+                                      '🥇',
+                                      _topClasses[0].className,
+                                      _topClasses[0].totalPoints,
+                                    ),
+                                    if (_topClasses.length > 1)
+                                      _buildTopBadge(
+                                        '🥈',
+                                        _topClasses[1].className,
+                                        _topClasses[1].totalPoints,
+                                      ),
+                                    if (_topClasses.length > 2)
+                                      _buildTopBadge(
+                                        '🥉',
+                                        _topClasses[2].className,
+                                        _topClasses[2].totalPoints,
+                                      ),
+                                  ],
+                                ),
+                              ],
+
+                              // Danh mục thu gom dùng Wrap
+                              if (_categorySummaries.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Tổng thu gom theo loại:',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
                                   children: _categorySummaries.map((cat) {
                                     final qtyStr = cat.quantity % 1 == 0
                                         ? '${cat.quantity.toInt()}'
@@ -476,7 +509,8 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                                           horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius:
+                                            BorderRadius.circular(6),
                                         border: Border.all(
                                             color: AppColors.border),
                                       ),
@@ -498,27 +532,19 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
 
                         // Nhắc nhở an toàn
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.06),
+                            color: AppColors.surfaceVariant,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.shield_outlined,
-                                  size: 18, color: AppColors.primary),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Tất cả tài khoản và liên kết giáo viên (6A1, 7A2, email...) được giữ nguyên 100%. Toàn bộ điểm thi đua của các lớp sẽ được đặt lại về 0.',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: const Text(
+                            'Lưu ý: Dữ liệu tài khoản giáo viên và các lớp được giữ nguyên 100%. Sau khi đóng sổ, điểm thi đua của các lớp sẽ được đặt lại về 0 để bắt đầu niên khóa mới.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              height: 1.35,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -534,16 +560,16 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                               child: const Text('Hủy'),
                             ),
                             const SizedBox(width: 10),
-                            FilledButton.icon(
+                            FilledButton(
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 18, vertical: 12),
+                                    horizontal: 20, vertical: 12),
                               ),
                               onPressed: (_isSubmitting || _pendingCount > 0)
                                   ? null
                                   : _handleConfirm,
-                              icon: _isSubmitting
+                              child: _isSubmitting
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
@@ -552,14 +578,11 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Icon(Icons.archive_outlined, size: 18),
-                              label: Text(
-                                _isSubmitting
-                                    ? 'Đang xử lý...'
-                                    : 'Đóng Sổ & Reset Điểm',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
+                                  : const Text(
+                                      'Đóng Sổ & Reset Điểm',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
                             ),
                           ],
                         ),
