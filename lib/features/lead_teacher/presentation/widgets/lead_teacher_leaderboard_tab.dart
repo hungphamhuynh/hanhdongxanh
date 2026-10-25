@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/string_utils.dart';
 import '../../../admin/models/point_rule_model.dart';
+import '../../../admin/models/school_year_config_model.dart';
 import '../../../admin/presentation/widgets/past_school_years_sheet.dart';
+import '../../../admin/services/academic_year_service.dart';
 import '../../../admin/services/point_rule_service.dart';
+import '../../../teacher/models/point_record_model.dart';
 import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 
 /// Tab Hợp Nhất: Xếp Hạng & Thống Kê dành cho Tổng Phụ Trách
@@ -24,6 +27,7 @@ class LeadTeacherLeaderboardTab extends StatefulWidget {
 
 class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
   final PointRuleService _pointRuleService = PointRuleService();
+  final AcademicYearService _academicYearService = AcademicYearService();
 
   late int _selectedYear;
   int _selectedMonth = 0; // 0 = Cả năm, 1..12 = Tháng 1..12
@@ -32,6 +36,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
 
   late Stream<QuerySnapshot> _recordsStream;
   late final Stream<List<PointRuleModel>> _rulesStream;
+  late final Stream<SchoolYearConfigModel> _schoolYearConfigStream;
 
   Stream<QuerySnapshot> _buildRecordsStream(int year, int month) {
     final collection = FirebaseFirestore.instance.collection('point_records');
@@ -64,12 +69,18 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     _selectedMonth = now.month; // Mặc định mở tháng thi đua hiện tại
     _recordsStream = _buildRecordsStream(_selectedYear, _selectedMonth);
     _rulesStream = _pointRuleService.getPointRulesStream(onlyActive: true);
+    _schoolYearConfigStream = _academicYearService.getSchoolYearConfigStream();
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<PointRuleModel>>(
-      stream: _rulesStream,
+    return StreamBuilder<SchoolYearConfigModel>(
+      stream: _schoolYearConfigStream,
+      builder: (context, configSnap) {
+        final schoolConfig = configSnap.data;
+
+        return StreamBuilder<List<PointRuleModel>>(
+          stream: _rulesStream,
       builder: (context, rulesSnap) {
         final rules = rulesSnap.data ?? [];
 
@@ -102,6 +113,14 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               final data = doc.data() as Map<String, dynamic>? ?? {};
               final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
               if (createdAt == null) continue;
+
+              // Lọc chỉ tính toán các phiếu thuộc niên khóa hiện hành (loại bỏ phiếu của các năm học cũ đã đóng sổ)
+              if (schoolConfig != null) {
+                final rec = PointRecordModel.fromFirestore(doc);
+                if (!schoolConfig.isRecordInCurrentYear(rec)) {
+                  continue;
+                }
+              }
 
               // Lọc theo Năm
               if (createdAt.year != _selectedYear) continue;
@@ -250,6 +269,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                       totalPeriodPoints: totalPeriodPoints,
                       totalCategoryQty: totalCategoryQty,
                       activeClassesCount: rankedClasses.length,
+                      schoolConfig: schoolConfig,
                     ),
                   ),
                 ),
@@ -361,6 +381,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
         );
       },
     );
+  },
+);
   }
 
   /// Khung bộ lọc Năm, Tháng, Khối và Danh Mục
@@ -555,6 +577,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
     required int totalPeriodPoints,
     required double totalCategoryQty,
     required int activeClassesCount,
+    SchoolYearConfigModel? schoolConfig,
   }) {
     final isAll = selectedRule == null;
 
@@ -600,13 +623,14 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     const SizedBox(height: 2),
                     Text(
                       _selectedMonth == 0
-                          ? 'Năm $_selectedYear ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}'
-                          : 'Tháng $_selectedMonth/$_selectedYear ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}',
+                          ? 'Năm $_selectedYear${schoolConfig != null ? " (Niên khóa ${schoolConfig.currentAcademicYear})" : ""} ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}'
+                          : 'Tháng $_selectedMonth/$_selectedYear${schoolConfig != null ? " (Niên khóa ${schoolConfig.currentAcademicYear})" : ""} ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
