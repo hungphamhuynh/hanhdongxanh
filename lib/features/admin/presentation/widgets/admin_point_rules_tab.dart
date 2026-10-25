@@ -458,7 +458,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
     );
   }
 
-  void _showEditRuleDialog(BuildContext context, PointRuleModel rule) {
+  Future<void> _showEditRuleDialog(BuildContext context, PointRuleModel rule) async {
     final nameCtrl = TextEditingController(text: rule.name);
     String selectedUnit =
         rule.unit.toLowerCase().contains('kg') ? 'Kg' : 'Số lượng';
@@ -468,7 +468,8 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
     String selectedIcon = rule.iconName;
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -812,7 +813,13 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
         ),
       ),
     );
+  } finally {
+    nameCtrl.dispose();
+    unitQtyCtrl.dispose();
+    pointsCtrl.dispose();
+    descCtrl.dispose();
   }
+}
 
     Future<void> _confirmDeleteRule(
       BuildContext context, PointRuleModel rule) async {

@@ -417,7 +417,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  void _showAddUserDialog(BuildContext context) {
+  Future<void> _showAddUserDialog(BuildContext context) async {
     final emailCtrl = TextEditingController();
     final passCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
@@ -425,7 +425,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     UserRole selectedRole = UserRole.teacher;
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -562,7 +563,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       ),
     );
+  } finally {
+    emailCtrl.dispose();
+    passCtrl.dispose();
+    nameCtrl.dispose();
+    classCtrl.dispose();
   }
+}
 
   void _showAddClassDialog(BuildContext context) {
     int selectedGrade = 6;
@@ -789,7 +796,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  void _showAddPointRuleDialog(BuildContext context) {
+  Future<void> _showAddPointRuleDialog(BuildContext context) async {
     final nameCtrl = TextEditingController();
     String selectedUnit = 'Số lượng';
     final unitQtyCtrl = TextEditingController(text: '1');
@@ -798,7 +805,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     String selectedIcon = 'bottle';
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -1168,9 +1176,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       ),
     );
+  } finally {
+    nameCtrl.dispose();
+    unitQtyCtrl.dispose();
+    pointsCtrl.dispose();
+    descCtrl.dispose();
   }
+}
 
-  void _showAddRewardDialog(BuildContext context) {
+  Future<void> _showAddRewardDialog(BuildContext context) async {
     final nameCtrl = TextEditingController();
     final unitCtrl = TextEditingController(text: 'Cái');
     final pointsCtrl = TextEditingController(text: '10');
@@ -1178,7 +1192,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     String selectedIcon = 'gift';
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -1382,7 +1397,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
       ),
     );
+  } finally {
+    nameCtrl.dispose();
+    unitCtrl.dispose();
+    pointsCtrl.dispose();
+    descCtrl.dispose();
   }
+}
 
   // ignore: unused_element
   Widget _buildIconChip(

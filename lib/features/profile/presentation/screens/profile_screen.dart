@@ -103,14 +103,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _showChangePasswordDialog() {
+  Future<void> _showChangePasswordDialog() async {
     final newPassController = TextEditingController();
     final confirmPassController = TextEditingController();
     bool obscureNew = true;
     bool obscureConfirm = true;
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -236,7 +237,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  } finally {
+    newPassController.dispose();
+    confirmPassController.dispose();
   }
+}
 
   @override
   Widget build(BuildContext context) {

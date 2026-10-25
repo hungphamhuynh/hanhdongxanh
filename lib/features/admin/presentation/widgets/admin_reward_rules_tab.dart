@@ -447,7 +447,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
     );
   }
 
-  void _showEditRewardDialog(BuildContext context, RewardRuleModel rule) {
+  Future<void> _showEditRewardDialog(BuildContext context, RewardRuleModel rule) async {
     final nameCtrl = TextEditingController(text: rule.name);
     final unitCtrl = TextEditingController(text: rule.unit);
     final pointsCtrl = TextEditingController(text: '${rule.pointsCost}');
@@ -455,7 +455,8 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
     String selectedIcon = rule.iconName;
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -659,7 +660,13 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
         ),
       ),
     );
+  } finally {
+    nameCtrl.dispose();
+    unitCtrl.dispose();
+    pointsCtrl.dispose();
+    descCtrl.dispose();
   }
+}
 
   Future<void> _confirmDeleteReward(
       BuildContext context, RewardRuleModel rule) async {

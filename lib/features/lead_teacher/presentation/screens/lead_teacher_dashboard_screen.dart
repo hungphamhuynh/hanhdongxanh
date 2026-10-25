@@ -37,7 +37,7 @@ class _LeadTeacherDashboardScreenState
   final RewardService _rewardService = RewardService();
 
   int _currentTabIndex =
-      0; // 0: Thống kê, 1: Xếp hạng, 2: Đơn đổi quà, 3: Nhật ký
+      0; // 0: Xếp hạng & Thống kê, 1: Duyệt đổi quà, 2: Nhật ký toàn trường
   int _schoolHistoryTabIndex = 0; // 0: Thu gom (+), 1: Đổi quà (-)
 
   int _pointRecordsLimit = 25;

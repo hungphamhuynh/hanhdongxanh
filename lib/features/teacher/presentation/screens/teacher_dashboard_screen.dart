@@ -1519,7 +1519,8 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
             builder: (context, rulesSnap) {
               final rules = rulesSnap.data ?? [];
 
-              if (rulesSnap.connectionState == ConnectionState.waiting) {
+              if (rulesSnap.connectionState == ConnectionState.waiting &&
+                  !rulesSnap.hasData) {
                 return const SizedBox(
                   height: 200,
                   child: Center(child: CircularProgressIndicator()),
@@ -2073,7 +2074,8 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
       child: StreamBuilder<List<RewardRuleModel>>(
         stream: _rewardsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
             return const Center(
               heightFactor: 3,
               child: CircularProgressIndicator(),

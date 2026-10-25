@@ -479,13 +479,14 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
     required String currentName,
     required UserRole currentRole,
     required String currentClass,
-  }) {
+  }) async {
     final nameCtrl = TextEditingController(text: currentName);
     final classCtrl = TextEditingController(text: currentClass);
     UserRole selectedRole = currentRole;
     bool isLoading = false;
 
-    showDialog(
+    try {
+      await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -572,7 +573,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         ),
       ),
     );
+  } finally {
+    nameCtrl.dispose();
+    classCtrl.dispose();
   }
+}
 
   void _confirmToggleLock({
     required BuildContext context,

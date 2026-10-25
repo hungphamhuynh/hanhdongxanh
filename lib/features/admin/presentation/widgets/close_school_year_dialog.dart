@@ -103,37 +103,41 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
 
   Future<void> _editNextAcademicYear() async {
     final ctrl = TextEditingController(text: _nextAcademicYear);
-    final customYear = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Tùy chỉnh niên khóa mới',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    try {
+      final customYear = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text(
+            'Tùy chỉnh niên khóa mới',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Niên khóa mới',
+              hintText: 'VD: 2027-2028',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+              child: const Text('Lưu'),
+            ),
+          ],
         ),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Niên khóa mới',
-            hintText: 'VD: 2027-2028',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-            child: const Text('Lưu'),
-          ),
-        ],
-      ),
-    );
-    if (customYear != null && customYear.isNotEmpty && mounted) {
-      setState(() {
-        _nextAcademicYear = customYear;
-      });
+      );
+      if (customYear != null && customYear.isNotEmpty && mounted) {
+        setState(() {
+          _nextAcademicYear = customYear;
+        });
+      }
+    } finally {
+      ctrl.dispose();
     }
   }
 

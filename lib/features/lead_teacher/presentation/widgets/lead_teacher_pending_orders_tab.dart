@@ -22,6 +22,7 @@ class LeadTeacherPendingOrdersTab extends StatefulWidget {
 class _LeadTeacherPendingOrdersTabState
     extends State<LeadTeacherPendingOrdersTab> {
   final RewardService _rewardService = RewardService();
+  final Set<String> _processingOrderIds = <String>{};
   late Stream<List<RewardRecordModel>> _ordersStream;
 
   @override
@@ -70,6 +71,7 @@ class _LeadTeacherPendingOrdersTabState
     );
 
     if (confirm == true && mounted) {
+      setState(() => _processingOrderIds.add(order.id));
       try {
         await _rewardService.approveRewardOrder(
           orderId: order.id,
@@ -95,6 +97,10 @@ class _LeadTeacherPendingOrdersTabState
             ),
           );
         }
+      } finally {
+        if (mounted) {
+          setState(() => _processingOrderIds.remove(order.id));
+        }
       }
     }
   }
@@ -103,70 +109,79 @@ class _LeadTeacherPendingOrdersTabState
     RewardRecordModel order,
   ) async {
     final reasonCtrl = TextEditingController(text: 'Kho tạm hết quà');
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Từ chối yêu cầu đổi quà'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Từ chối yêu cầu đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?\n\n'
-              'Hệ thống sẽ tự động HOÀN LẠI ${order.totalPoints} điểm cho lớp.',
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Lý do từ chối *',
-                hintText: 'Ví dụ: Tạm hết phần quà trong kho, cần gom thêm...',
+    try {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Từ chối yêu cầu đổi quà'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Từ chối yêu cầu đổi "${order.quantity} ${order.unit} ${order.rewardName}" của lớp ${order.className}?\n\n'
+                'Hệ thống sẽ tự động HOÀN LẠI ${order.totalPoints} điểm cho lớp.',
               ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Lý do từ chối *',
+                  hintText: 'Ví dụ: Tạm hết phần quà trong kho, cần gom thêm...',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Xác Nhận & Hoàn Điểm'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Xác Nhận & Hoàn Điểm'),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (confirm == true && mounted) {
-      try {
-        await _rewardService.rejectRewardOrder(
-          orderId: order.id,
-          rejectionReason: reasonCtrl.text.trim(),
-          rejectedByEmail: widget.user?.email ?? 'tongphutrach@nth.com',
-          rejectedByUid: widget.user?.uid ?? '',
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Đã từ chối yêu cầu và hoàn lại ${order.totalPoints} điểm cho lớp ${order.className} thành công!',
+      if (confirm == true && mounted) {
+        setState(() => _processingOrderIds.add(order.id));
+        try {
+          await _rewardService.rejectRewardOrder(
+            orderId: order.id,
+            rejectionReason: reasonCtrl.text.trim(),
+            rejectedByEmail: widget.user?.email ?? 'tongphutrach@nth.com',
+            rejectedByUid: widget.user?.uid ?? '',
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Đã từ chối yêu cầu và hoàn lại ${order.totalPoints} điểm cho lớp ${order.className} thành công!',
+                ),
+                backgroundColor: AppColors.textSecondary,
               ),
-              backgroundColor: AppColors.textSecondary,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi: $e'),
-              backgroundColor: AppColors.error,
-            ),
-          );
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lỗi: $e'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        } finally {
+          if (mounted) {
+            setState(() => _processingOrderIds.remove(order.id));
+          }
         }
       }
+    } finally {
+      reasonCtrl.dispose();
     }
   }
 
@@ -276,6 +291,7 @@ class _LeadTeacherPendingOrdersTabState
           itemCount: orders.length,
           itemBuilder: (context, index) {
             final order = orders[index];
+            final isProcessing = _processingOrderIds.contains(order.id);
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               elevation: 0.8,
@@ -433,7 +449,9 @@ class _LeadTeacherPendingOrdersTabState
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () => _confirmRejectOrder(order),
+                            onPressed: isProcessing
+                                ? null
+                                : () => _confirmRejectOrder(order),
                             child: const Text('Từ Chối'),
                           ),
                         ),
@@ -448,8 +466,19 @@ class _LeadTeacherPendingOrdersTabState
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () => _confirmApproveOrder(order),
-                            child: const Text('Duyệt & Trao Quà'),
+                            onPressed: isProcessing
+                                ? null
+                                : () => _confirmApproveOrder(order),
+                            child: isProcessing
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Duyệt & Trao Quà'),
                           ),
                         ),
                       ],
