@@ -97,18 +97,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo Hành Động Xanh
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryMint,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.eco_rounded,
-                      size: 50,
-                      color: AppColors.primary,
+                  // Logo Trường THCS Nguyễn Thị Hương
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo_truong.png',
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 80,
+                          height: 80,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryMint,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.eco_rounded,
+                            size: 50,
+                            color: AppColors.primary,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),
