@@ -198,24 +198,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.eco_rounded,
-                        color: AppColors.primaryContainer,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'BẢNG ĐIỀU HÀNH TRUNG TÂM',
-                        style: TextStyle(
-                          color: AppColors.primaryContainer,
-                          letterSpacing: 1.2,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'BẢNG ĐIỀU HÀNH TRUNG TÂM',
+                    style: TextStyle(
+                      color: AppColors.primaryContainer,
+                      letterSpacing: 1.2,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -582,17 +572,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               vertical: 24,
             ),
             contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            title: const Row(
-              children: [
-                Icon(Icons.add_home_work_rounded, color: AppColors.primary),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Thêm Lớp Học Mới',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+            title: const Text(
+              'Thêm Lớp Học Mới',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             content: SingleChildScrollView(
               child: Column(
@@ -705,25 +687,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.verified_rounded,
-                              size: 16,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Lớp sẽ tạo: $className',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryDark,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Lớp sẽ tạo: $className',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryDark,
+                          ),
                         ),
                         const Divider(height: 16),
                         Text(
@@ -822,18 +792,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.add_circle_outline_rounded, color: AppColors.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Thêm Thể Loại Tích Điểm',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          title: const Text('Thêm Thể Loại Tích Điểm'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -845,7 +804,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Tên thể loại *',
                     hintText: 'Ví dụ: Vỏ chai nhựa, Pin con thỏ...',
-                    prefixIcon: Icon(Icons.edit_note_rounded),
                   ),
                   onChanged: (val) {
                     final lower = val.toLowerCase();
@@ -1214,18 +1172,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.card_giftcard_rounded, color: AppColors.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Thêm Quà Tặng Đổi Điểm',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          title: const Text('Thêm Quà Tặng Đổi Điểm'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1236,7 +1183,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Tên quà tặng / phần thưởng *',
                     hintText: 'Ví dụ: Chậu cây xanh, Tập vở viết...',
-                    prefixIcon: Icon(Icons.card_giftcard_rounded),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1246,7 +1192,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Đơn vị tính *',
                     hintText: 'Ví dụ: Cái, Cuốn, Chậu, Bộ, Suất...',
-                    prefixIcon: Icon(Icons.category_rounded),
                   ),
                 ),
                 const SizedBox(height: 14),

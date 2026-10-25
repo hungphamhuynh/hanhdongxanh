@@ -459,18 +459,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.edit_note_rounded, color: AppColors.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Chỉnh Sửa Quà Tặng',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          title: const Text('Chỉnh Sửa Quà Tặng'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -481,7 +470,6 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                   decoration: const InputDecoration(
                     labelText: 'Tên quà tặng / phần thưởng *',
                     hintText: 'Ví dụ: Chậu cây xanh, Tập vở viết...',
-                    prefixIcon: Icon(Icons.card_giftcard_rounded),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -491,7 +479,6 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
                   decoration: const InputDecoration(
                     labelText: 'Đơn vị tính *',
                     hintText: 'Ví dụ: Cái, Cuốn, Chậu, Bộ, Suất...',
-                    prefixIcon: Icon(Icons.category_rounded),
                   ),
                 ),
                 const SizedBox(height: 14),

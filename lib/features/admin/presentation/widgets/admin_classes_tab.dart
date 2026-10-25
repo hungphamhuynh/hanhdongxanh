@@ -232,10 +232,7 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                           labelText: 'Lọc theo khối lớp',
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          prefixIcon: Icon(Icons.school_rounded, size: 18),
-                          prefixIconConstraints:
-                              BoxConstraints(minWidth: 36, minHeight: 36),
+                              horizontal: 14, vertical: 10),
                         ),
                         items: [
                           const DropdownMenuItem<String?>(
@@ -363,20 +360,13 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
                               ],
                             ),
                             subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.account_circle_outlined,
-                                      size: 15, color: AppColors.textMuted),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    teacherEmail,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                teacherEmail,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ),
                             trailing: Row(

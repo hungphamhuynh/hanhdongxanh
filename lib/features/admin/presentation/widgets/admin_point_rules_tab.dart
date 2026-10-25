@@ -472,18 +472,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.edit_note_rounded, color: AppColors.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Chỉnh Sửa Thể Loại',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+          title: const Text('Chỉnh Sửa Thể Loại'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -495,7 +484,6 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                   decoration: const InputDecoration(
                     labelText: 'Tên thể loại *',
                     hintText: 'Ví dụ: Vỏ chai nhựa, Pin con thỏ...',
-                    prefixIcon: Icon(Icons.edit_note_rounded),
                   ),
                 ),
                 const SizedBox(height: 14),

@@ -140,10 +140,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                         labelText: 'Lọc theo vai trò',
                         isDense: true,
                         contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        prefixIcon: Icon(Icons.badge_rounded, size: 18),
-                        prefixIconConstraints:
-                            BoxConstraints(minWidth: 36, minHeight: 36),
+                            horizontal: 14, vertical: 10),
                       ),
                       items: const [
                         DropdownMenuItem<UserRole?>(
