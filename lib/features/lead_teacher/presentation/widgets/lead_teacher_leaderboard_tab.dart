@@ -623,8 +623,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                     const SizedBox(height: 2),
                     Text(
                       _selectedMonth == 0
-                          ? 'Năm $_selectedYear${schoolConfig != null ? " (Niên khóa ${schoolConfig.currentAcademicYear})" : ""} ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}'
-                          : 'Tháng $_selectedMonth/$_selectedYear${schoolConfig != null ? " (Niên khóa ${schoolConfig.currentAcademicYear})" : ""} ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}',
+                          ? 'Năm $_selectedYear ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}'
+                          : 'Tháng $_selectedMonth/$_selectedYear ${_selectedGrade != 0 ? "• Khối $_selectedGrade" : "• Toàn trường"}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 14,
@@ -632,6 +632,17 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (schoolConfig != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Niên khóa: ${schoolConfig.currentAcademicYear}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
