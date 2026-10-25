@@ -899,6 +899,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: [
                     Expanded(
                       child: ChoiceChip(
+                        showCheckmark: false,
                         label: const Center(child: Text('Số lượng')),
                         selected: selectedUnit == 'Số lượng',
                         selectedColor: AppColors.primary,
@@ -917,6 +918,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: ChoiceChip(
+                        showCheckmark: false,
                         label: const Center(child: Text('Kg')),
                         selected: selectedUnit == 'Kg',
                         selectedColor: AppColors.primary,
@@ -994,9 +996,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 4. Cấu hình tỷ lệ tích điểm (Nhập 2 đầu)
+                // 4. Cấu hình tỷ lệ tích điểm
                 const Text(
-                  'Tỷ lệ quy đổi điểm (Nhập 2 đầu) *:',
+                  'Tỷ lệ quy đổi điểm *:',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,

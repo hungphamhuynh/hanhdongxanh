@@ -514,6 +514,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                   children: [
                     Expanded(
                       child: ChoiceChip(
+                        showCheckmark: false,
                         label: const Center(child: Text('Số lượng')),
                         selected: selectedUnit == 'Số lượng',
                         selectedColor: AppColors.primary,
@@ -532,6 +533,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: ChoiceChip(
+                        showCheckmark: false,
                         label: const Center(child: Text('Kg')),
                         selected: selectedUnit == 'Kg',
                         selectedColor: AppColors.primary,
@@ -577,40 +579,40 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
                     final isSelected = selectedIcon == key;
 
                     return InkWell(
-                      onTap: () => setDialogState(() => selectedIcon = key),
-                      borderRadius: BorderRadius.circular(10),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.surfaceVariant,
+                          onTap: () => setDialogState(() => selectedIcon = key),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.border,
-                            width: isSelected ? 2 : 1,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.border,
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: Icon(
+                              icon,
+                              size: 22,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
                           ),
-                        ),
-                        child: Icon(
-                          icon,
-                          size: 22,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    );
+                        );
                   }).toList(),
                 ),
                 const SizedBox(height: 14),
 
-                // 4. Cấu hình tỷ lệ tích điểm (Nhập 2 đầu)
+                // 4. Cấu hình tỷ lệ tích điểm
                 const Text(
-                  'Tỷ lệ quy đổi điểm (Nhập 2 đầu) *:',
+                  'Tỷ lệ quy đổi điểm *:',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
