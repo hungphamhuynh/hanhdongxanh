@@ -93,16 +93,16 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     }
   }
 
-  String _getAppBarTitle(String assignedClass) {
+  String get _appBarTitle {
     switch (_currentTabIndex) {
       case 0:
-        return 'Lớp $assignedClass • Tổng Quan';
+        return 'Tổng Quan';
       case 1:
-        return 'Lớp $assignedClass • Lịch Sử Tích Điểm';
+        return 'Lịch Sử Tích Điểm';
       case 2:
-        return 'Lớp $assignedClass • Lịch Sử Đổi Điểm';
+        return 'Lịch Sử Đổi Điểm';
       default:
-        return 'Lớp $assignedClass';
+        return 'Tổng Quan';
     }
   }
 
@@ -238,7 +238,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           appBar: AppBar(
             centerTitle: true,
             title: Text(
-              _getAppBarTitle(assignedClass),
+              _appBarTitle,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             actions: [
