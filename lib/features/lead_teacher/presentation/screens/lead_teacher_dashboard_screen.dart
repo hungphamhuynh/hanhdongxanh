@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/string_utils.dart';
+import '../../../../core/widgets/large_quantity_confirm_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/services/point_rule_service.dart';
@@ -921,6 +922,12 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                   final bool isEnough = rule != null &&
                       currentQty >= rule.unitQuantity &&
                       estimatedPoints > 0;
+                  final bool isLargeQty = rule != null &&
+                      LargeQuantityHelper.isLargePointRecord(
+                        quantity: currentQty,
+                        isKg: rule.unit.toLowerCase().contains('kg'),
+                        calculatedPoints: estimatedPoints,
+                      );
 
                   return SingleChildScrollView(
                     child: Column(
@@ -1236,6 +1243,40 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                               ],
                             ),
                           ),
+                        if (rule != null && isEnough && isLargeQty) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: AppColors.warning.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.warning.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.info_outline_rounded,
+                                  color: Color(0xFFC2410C),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Lưu ý: Số lượng thu gom khá lớn ($currentQty ${rule.unit} = +$estimatedPoints điểm). Hệ thống sẽ yêu cầu xác nhận trước khi lưu.',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF9A3412),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 18),
 
                         FilledButton.icon(
@@ -1265,6 +1306,30 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                       ),
                                     );
                                     return;
+                                  }
+
+                                  if (qty > LargeQuantityHelper.maxPointRecordQuantity) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Số lượng vượt quá giới hạn cho phép (tối đa ${LargeQuantityHelper.maxPointRecordQuantity.toInt()} ${rule.unit})! Vui lòng kiểm tra lại.',
+                                        ),
+                                        backgroundColor: AppColors.error,
+                                      ),
+                                    );
+                                    return;
+                                  }
+
+                                  if (isLargeQty) {
+                                    final ok = await showConfirmLargePointRecordDialog(
+                                      context: context,
+                                      className: _selectedClass!,
+                                      categoryName: rule.name,
+                                      quantity: qty,
+                                      unit: rule.unit,
+                                      points: estimatedPoints,
+                                    );
+                                    if (!ok) return;
                                   }
 
                                   setState(() => _isLoading = true);

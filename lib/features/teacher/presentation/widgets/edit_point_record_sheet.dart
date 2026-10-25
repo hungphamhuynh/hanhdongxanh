@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/widgets/large_quantity_confirm_dialog.dart';
 import '../../models/point_record_model.dart';
 import '../../services/point_record_service.dart';
 
@@ -90,6 +91,12 @@ class _EditPointRecordSheetState extends State<EditPointRecordSheet> {
 
   int get _deltaPoints => _calculatedNewPoints - widget.record.totalPoints;
 
+  bool get _isLargeQty => LargeQuantityHelper.isLargePointRecord(
+        quantity: _enteredQty,
+        isKg: widget.record.isKg,
+        calculatedPoints: _calculatedNewPoints,
+      );
+
   Future<void> _handleSave(int currentClassPoints) async {
     final qty = _enteredQty;
     if (qty <= 0) {
@@ -116,6 +123,18 @@ class _EditPointRecordSheetState extends State<EditPointRecordSheet> {
       return;
     }
 
+    if (qty > LargeQuantityHelper.maxPointRecordQuantity) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Số lượng vượt quá giới hạn cho phép (tối đa ${LargeQuantityHelper.maxPointRecordQuantity.toInt()} ${widget.record.unit})! Vui lòng kiểm tra lại.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     if (_deltaPoints < 0 && currentClassPoints < -_deltaPoints) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -133,6 +152,19 @@ class _EditPointRecordSheetState extends State<EditPointRecordSheet> {
     if (qty == widget.record.quantity && newNote == widget.record.note.trim()) {
       Navigator.pop(context, false);
       return;
+    }
+
+    if (_isLargeQty) {
+      final ok = await showConfirmLargePointRecordDialog(
+        context: context,
+        className: widget.record.className,
+        categoryName: widget.record.categoryName,
+        quantity: qty,
+        unit: widget.record.unit,
+        points: _calculatedNewPoints,
+        isEdit: true,
+      );
+      if (!ok) return;
     }
 
     setState(() => _isLoading = true);
@@ -475,6 +507,43 @@ class _EditPointRecordSheetState extends State<EditPointRecordSheet> {
                                 color: AppColors.error,
                                 height: 1.35,
                                 fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Cảnh báo số lượng điều chỉnh lớn
+                  if (!isBelowMinimum && _isLargeQty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.warning.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            color: Color(0xFFC2410C),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Lưu ý: Số lượng điều chỉnh khá lớn ($_enteredQty ${rec.unit} = +$_calculatedNewPoints điểm). Hệ thống sẽ yêu cầu xác nhận trước khi lưu.',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF9A3412),
+                                height: 1.35,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),

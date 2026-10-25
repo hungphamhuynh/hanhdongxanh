@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/widgets/large_quantity_confirm_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/models/reward_rule_model.dart';
@@ -1379,6 +1380,11 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
               final int estimatedPoints = rule.calculatePoints(currentQty);
               final bool isEnough =
                   currentQty >= rule.unitQuantity && estimatedPoints > 0;
+              final bool isLargeQty = LargeQuantityHelper.isLargePointRecord(
+                quantity: currentQty,
+                isKg: rule.unit.toLowerCase().contains('kg'),
+                calculatedPoints: estimatedPoints,
+              );
 
               return SingleChildScrollView(
                 child: Column(
@@ -1683,6 +1689,40 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                           ],
                         ),
                       ),
+                    if (isEnough && isLargeQty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline_rounded,
+                              color: Color(0xFFC2410C),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Lưu ý: Số lượng thu gom khá lớn ($currentQty ${rule.unit} = +$estimatedPoints điểm). Hệ thống sẽ yêu cầu xác nhận trước khi lưu.',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF9A3412),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 18),
 
                     // Nút xác nhận tích điểm
@@ -1711,6 +1751,30 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                                   ),
                                 );
                                 return;
+                              }
+
+                              if (qty > LargeQuantityHelper.maxPointRecordQuantity) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Số lượng vượt quá giới hạn cho phép (tối đa ${LargeQuantityHelper.maxPointRecordQuantity.toInt()} ${rule.unit})! Vui lòng kiểm tra lại.',
+                                    ),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (isLargeQty) {
+                                final ok = await showConfirmLargePointRecordDialog(
+                                  context: context,
+                                  className: widget.className,
+                                  categoryName: rule.name,
+                                  quantity: qty,
+                                  unit: rule.unit,
+                                  points: estimatedPoints,
+                                );
+                                if (!ok) return;
                               }
 
                               setState(() => _isLoading = true);
@@ -1889,6 +1953,11 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
           final totalCost = qty * rule.pointsCost;
           final remainingPoints = widget.currentClassPoints - totalCost;
           final isEnough = widget.currentClassPoints >= totalCost && qty > 0;
+          final isLargeReward = LargeQuantityHelper.isLargeRewardOrder(
+            quantity: qty,
+            totalPointsCost: totalCost,
+            currentClassPoints: widget.currentClassPoints,
+          );
 
           return SingleChildScrollView(
             child: Column(
@@ -2078,6 +2147,40 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                     ],
                   ),
                 ),
+                if (isEnough && isLargeReward) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFC2410C).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          color: Color(0xFFC2410C),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Lưu ý: Bạn đang đặt đổi số lượng lớn ($qty ${rule.unit} = -$totalCost điểm). Hệ thống sẽ yêu cầu xác nhận trước khi gửi đơn.',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF9A3412),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 18),
 
                 // Nút gửi đơn
@@ -2092,6 +2195,31 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                   onPressed: _isLoading || !isEnough
                       ? null
                       : () async {
+                          if (qty > LargeQuantityHelper.maxRewardOrderQuantity) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Số lượng đổi vượt quá giới hạn (tối đa 1.000 phần)! Vui lòng kiểm tra lại.',
+                                ),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (isLargeReward) {
+                            final ok = await showConfirmLargeRewardOrderDialog(
+                              context: context,
+                              className: widget.className,
+                              rewardName: rule.name,
+                              quantity: qty,
+                              unit: rule.unit,
+                              totalPointsCost: totalCost,
+                              remainingPoints: remainingPoints,
+                            );
+                            if (!ok) return;
+                          }
+
                           setState(() => _isLoading = true);
                           try {
                             await _rewardService.createRewardOrder(
@@ -2118,7 +2246,9 @@ class _RewardOrderSheetState extends State<_RewardOrderSheet> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Lỗi: $e'),
+                                  content: Text(
+                                    FirebaseErrorMapper.getCleanErrorMessage(e),
+                                  ),
                                   backgroundColor: AppColors.error,
                                 ),
                               );
