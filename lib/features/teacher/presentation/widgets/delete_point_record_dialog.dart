@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../models/point_record_model.dart';
 import '../../services/point_record_service.dart';
 
@@ -111,7 +112,7 @@ Future<bool> showConfirmDeletePointRecordDialog({
       return true;
     } catch (e) {
       if (context.mounted) {
-        final errText = e.toString().replaceAll('Exception: ', '');
+        final errText = FirebaseErrorMapper.getCleanErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Không thể hủy phiếu: $errText'),

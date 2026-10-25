@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../core/utils/string_utils.dart';
 import '../models/academic_year_model.dart';
 
 class AcademicYearService {
@@ -91,7 +92,10 @@ class AcademicYearService {
       final cmp =
           (b['totalPoints'] as int).compareTo(a['totalPoints'] as int);
       if (cmp != 0) return cmp;
-      return (a['className'] as String).compareTo(b['className'] as String);
+      return StringUtils.compareNatural(
+        a['className'] as String,
+        b['className'] as String,
+      );
     });
 
     final List<ClassRankSnapshot> rankedSnapshots = [];

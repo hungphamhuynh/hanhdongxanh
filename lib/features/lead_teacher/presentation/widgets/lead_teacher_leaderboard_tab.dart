@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/string_utils.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/presentation/widgets/past_school_years_sheet.dart';
 import '../../../admin/services/point_rule_service.dart';
@@ -171,7 +172,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                   if (cmpTime != 0) return cmpTime;
                 }
 
-                return a.className.compareTo(b.className);
+                return StringUtils.compareNatural(a.className, b.className);
               });
             } else {
               // Xếp theo Số Lượng Thu Gom của danh mục được chọn
@@ -196,7 +197,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                   if (cmpTime != 0) return cmpTime;
                 }
 
-                return a.className.compareTo(b.className);
+                return StringUtils.compareNatural(a.className, b.className);
               });
             }
 

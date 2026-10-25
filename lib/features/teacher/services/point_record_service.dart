@@ -48,6 +48,12 @@ class PointRecordService {
     final calculatedPoints =
         ((quantity * effectivePoints) / effectiveUnitQty).round();
 
+    if (quantity < effectiveUnitQty || calculatedPoints <= 0) {
+      throw Exception(
+        'Chưa đủ số lượng quy đổi! Cần tối thiểu $effectiveUnitQty $unit để được tính điểm.',
+      );
+    }
+
     final recordRef = _firestore.collection('point_records').doc();
     final classRef = _firestore.collection('classes').doc(cleanClass);
 
@@ -96,6 +102,13 @@ class PointRecordService {
         oldRecord.unitQuantity > 0 ? oldRecord.unitQuantity : 1;
     final calculatedNewPoints =
         ((newQuantity * oldRecord.points) / effectiveUnitQty).round();
+
+    if (newQuantity < effectiveUnitQty || calculatedNewPoints <= 0) {
+      throw Exception(
+        'Chưa đủ số lượng quy đổi! Cần tối thiểu $effectiveUnitQty ${oldRecord.unit} để được tính điểm.',
+      );
+    }
+
     final deltaPoints = calculatedNewPoints - oldRecord.totalPoints;
 
     final cleanClass = oldRecord.className.trim().toUpperCase();

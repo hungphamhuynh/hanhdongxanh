@@ -32,11 +32,11 @@ enum UserRole {
   String get label {
     switch (this) {
       case UserRole.admin:
-        return 'Admin';
+        return 'Quản Trị Viên';
       case UserRole.leadTeacher:
-        return 'Lead Teacher';
+        return 'Tổng Phụ Trách';
       case UserRole.teacher:
-        return 'Teacher';
+        return 'Giáo Viên Chủ Nhiệm';
     }
   }
 

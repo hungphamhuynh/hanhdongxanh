@@ -192,7 +192,7 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Tích Điểm (+)',
+                                      'Tích Điểm',
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -232,7 +232,7 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Đổi Quà (-)',
+                                      'Đổi Quà',
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -296,7 +296,13 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
           itemCount: records.length,
           itemBuilder: (context, index) {
             final rec = records[index];
-            final color = rec.isBattery ? AppColors.warning : AppColors.primary;
+            final color = rec.categoryColor;
+            final formattedQty = rec.isKg
+                ? (rec.quantity.truncateToDouble() == rec.quantity
+                    ? rec.quantity.toInt().toString()
+                    : rec.quantity.toString())
+                : rec.quantity.toInt().toString();
+
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               elevation: 0.5,
@@ -314,19 +320,31 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                   child: Icon(rec.iconData, color: color, size: 22),
                 ),
                 title: Text(
-                  '${rec.categoryName}: ${rec.quantity} ${rec.unit}',
+                  rec.categoryName,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                subtitle: Text(
-                  '${_formatDateTime(rec.createdAt)} • Tỷ lệ: ${rec.ruleRateText}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 2),
+                    Text(
+                      '$formattedQty ${rec.unit} • Tỷ lệ: ${rec.ruleRateText}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                    Text(
+                      _formatDateTime(rec.createdAt),
+                      style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                    ),
+                  ],
                 ),
                 trailing: Text(
                   '+${rec.totalPoints}đ',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: color,
+                    color: AppColors.success,
                   ),
                 ),
               ),
@@ -394,18 +412,18 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Text(
+                                order.rewardName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      order.rewardName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 2),
@@ -423,14 +441,18 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
                                       ),
                                     ),
                                   ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'SL: ${order.quantity} ${order.unit} • ${_formatDateTime(order.createdAt)}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                                 ],
-                              ),
-                              Text(
-                                'SL: ${order.quantity} ${order.unit} • ${_formatDateTime(order.createdAt)}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary,
-                                ),
                               ),
                             ],
                           ),

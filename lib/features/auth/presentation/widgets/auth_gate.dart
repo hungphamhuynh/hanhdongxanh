@@ -50,7 +50,7 @@ class AuthGate extends StatelessWidget {
                       CircularProgressIndicator(),
                       SizedBox(height: 16),
                       Text(
-                        'Checking permissions...',
+                        'Đang kiểm tra quyền truy cập...',
                         style: TextStyle(color: Colors.grey),
                       ),
                     ],

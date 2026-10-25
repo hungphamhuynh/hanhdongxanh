@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/models/reward_rule_model.dart';
@@ -30,6 +32,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   final RewardService _rewardService = RewardService();
   final AuthService _authService = AuthService();
   int _historyTabIndex = 0; // 0 = Lịch sử tích điểm (+), 1 = Lịch sử đổi quà (-)
+  bool _isLoadingReward = false;
 
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'Vừa xong';
@@ -150,42 +153,78 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ? AppColors.primary
                 : const Color(0xFFC2410C),
             foregroundColor: Colors.white,
-            icon: Icon(_historyTabIndex == 0
-                ? Icons.add_task_rounded
-                : Icons.card_giftcard_rounded),
+            icon: _isLoadingReward
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(_historyTabIndex == 0
+                    ? Icons.add_task_rounded
+                    : Icons.card_giftcard_rounded),
             label: Text(
-              _historyTabIndex == 0 ? 'Tích Điểm Thu Gom' : 'Lên Đơn Đổi Quà',
+              _isLoadingReward
+                  ? 'Đang kiểm tra điểm...'
+                  : (_historyTabIndex == 0
+                      ? 'Tích Điểm Thu Gom'
+                      : 'Lên Đơn Đổi Quà'),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            onPressed: () {
-              if (_historyTabIndex == 0) {
-                _showRecordPointsModal(
-                  context: context,
-                  className: assignedClass,
-                  teacherUid: user.uid,
-                  teacherEmail: user.email ?? '',
-                );
-              } else {
-                // Lấy điểm hiện tại của lớp
-                FirebaseFirestore.instance
-                    .collection('classes')
-                    .doc(assignedClass)
-                    .get()
-                    .then((doc) {
-                  final pts =
-                      ((doc.data()?['totalPoints']) as num?)?.toInt() ?? 0;
-                  if (context.mounted) {
-                    _showRewardOrderModal(
-                      context: context,
-                      className: assignedClass,
-                      currentClassPoints: pts,
-                      teacherUid: user.uid,
-                      teacherEmail: user.email ?? '',
-                    );
-                  }
-                });
-              }
-            },
+            onPressed: _isLoadingReward
+                ? null
+                : () async {
+                    if (_historyTabIndex == 0) {
+                      _showRecordPointsModal(
+                        context: context,
+                        className: assignedClass,
+                        teacherUid: user.uid,
+                        teacherEmail: user.email ?? '',
+                      );
+                    } else {
+                      setState(() => _isLoadingReward = true);
+                      try {
+                        final doc = await FirebaseFirestore.instance
+                            .collection('classes')
+                            .doc(assignedClass)
+                            .get()
+                            .timeout(const Duration(seconds: 4));
+                        final pts =
+                            ((doc.data()?['totalPoints']) as num?)?.toInt() ??
+                                0;
+                        if (mounted) {
+                          setState(() => _isLoadingReward = false);
+                        }
+                        if (context.mounted) {
+                          _showRewardOrderModal(
+                            context: context,
+                            className: assignedClass,
+                            currentClassPoints: pts,
+                            teacherUid: user.uid,
+                            teacherEmail: user.email ?? '',
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          setState(() => _isLoadingReward = false);
+                        }
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e is TimeoutException
+                                    ? 'Mạng không ổn định, vui lòng kiểm tra lại kết nối!'
+                                    : FirebaseErrorMapper.getCleanErrorMessage(e),
+                              ),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
           ),
           body: ResponsiveContainer(
             maxWidth: 850,
@@ -251,7 +290,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
-                                          'Lịch Sử Tích Điểm (+)',
+                                          'Lịch Sử Tích Điểm',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -290,7 +329,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
-                                          'Lịch Sử Đổi Điểm (-)',
+                                          'Lịch Sử Đổi Điểm',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.bold,
@@ -822,47 +861,39 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Text(
+                    record.categoryName,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
-                      Text(
-                        record.categoryName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
+                          color: color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           unitDisplay,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: color,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Text(
-                        _formatDateTime(record.createdAt),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      if (record.isEdited) ...[
-                        const SizedBox(width: 6),
+                      if (record.isEdited)
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 1),
@@ -879,8 +910,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                             ),
                           ),
                         ),
-                      ],
                     ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _formatDateTime(record.createdAt),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   if (record.note.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -891,6 +929,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                         fontStyle: FontStyle.italic,
                         color: AppColors.textSecondary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ],
@@ -1053,6 +1093,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Widget _buildRewardOrderCard(BuildContext context, RewardRecordModel order) {
+    const rewardColor = Color(0xFFC2410C);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0.5,
@@ -1062,147 +1104,156 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                // Icon quà
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC2410C).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    order.iconData,
-                    color: const Color(0xFFC2410C),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
+            // Icon quà bên trái
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: rewardColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                order.iconData,
+                color: rewardColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
 
-                // Thông tin quà & số lượng
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            // Thông tin quà & trạng thái ở giữa
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    order.rewardName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              order.rewardName,
-                              style: const TextStyle(
-                                fontSize: 15,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: order.statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(order.statusIcon,
+                                size: 11, color: order.statusColor),
+                            const SizedBox(width: 3),
+                            Text(
+                              order.statusLabel,
+                              style: TextStyle(
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: order.statusColor,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: order.statusColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(order.statusIcon,
-                                    size: 13, color: order.statusColor),
-                                const SizedBox(width: 4),
-                                Text(
-                                  order.statusLabel,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: order.statusColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Số lượng: ${order.quantity} ${order.unit} (${order.pointsCost}đ/${order.unit})',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: rewardColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${order.quantity} ${order.unit}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: rewardColor,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-
-                // Số điểm trừ
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      '-${order.totalPoints}đ',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFC2410C),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (order.note.isNotEmpty ||
-                (order.isRejected && order.rejectionReason.isNotEmpty)) ...[
-              const SizedBox(height: 8),
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: order.isRejected
-                      ? AppColors.errorLight
-                      : AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  order.isRejected
-                      ? 'Lý do từ chối: ${order.rejectionReason}'
-                      : 'Ghi chú: ${order.note}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: order.isRejected
-                        ? AppColors.error
-                        : AppColors.textSecondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _formatDateTime(order.createdAt),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                if (order.isApproved && order.approvedByEmail != null)
+                  const SizedBox(height: 3),
                   Text(
-                    'Đã duyệt bởi: ${order.approvedByEmail}',
+                    order.isApproved && order.approvedByEmail != null
+                        ? '${_formatDateTime(order.createdAt)} • Duyệt: ${order.approvedByEmail}'
+                        : _formatDateTime(order.createdAt),
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (order.isRejected && order.rejectionReason.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Lý do từ chối: ${order.rejectionReason}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.error,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ] else if (order.note.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Ghi chú: ${order.note}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Điểm số trừ ở bên phải
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: rewardColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '-${order.totalPoints}đ',
+                    style: const TextStyle(
+                      color: rewardColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${order.pointsCost}đ/${order.unit}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ],
@@ -1232,10 +1283,11 @@ class _RecordPointsSheet extends StatefulWidget {
 }
 
 class _RecordPointsSheetState extends State<_RecordPointsSheet> {
-  final TextEditingController _qtyCtrl = TextEditingController(text: '1');
+  final TextEditingController _qtyCtrl = TextEditingController();
   final TextEditingController _noteCtrl = TextEditingController();
   PointRuleModel? _selectedRule;
   bool _isLoading = false;
+  bool _hasInitializedQty = false;
   late final Stream<List<PointRuleModel>> _rulesStream;
 
   @override
@@ -1313,9 +1365,20 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
               _selectedRule ??= rules.first;
               final rule = _selectedRule!;
 
+              if (!_hasInitializedQty) {
+                _hasInitializedQty = true;
+                _qtyCtrl.text = rule.unit.toLowerCase().contains('kg')
+                    ? (rule.unitQuantity.truncateToDouble() == rule.unitQuantity
+                        ? rule.unitQuantity.toInt().toString()
+                        : rule.unitQuantity.toString())
+                    : rule.unitQuantity.toInt().toString();
+              }
+
               final double currentQty =
                   double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
               final int estimatedPoints = rule.calculatePoints(currentQty);
+              final bool isEnough =
+                  currentQty >= rule.unitQuantity && estimatedPoints > 0;
 
               return SingleChildScrollView(
                 child: Column(
@@ -1401,7 +1464,18 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                       }).toList(),
                       onChanged: (val) {
                         if (val != null) {
-                          setState(() => _selectedRule = val);
+                          setState(() {
+                            _selectedRule = val;
+                            final cur =
+                                double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
+                            if (cur < val.unitQuantity) {
+                              _qtyCtrl.text = val.unit.toLowerCase().contains('kg')
+                                  ? (val.unitQuantity.truncateToDouble() == val.unitQuantity
+                                      ? val.unitQuantity.toInt().toString()
+                                      : val.unitQuantity.toString())
+                                  : val.unitQuantity.toInt().toString();
+                            }
+                          });
                         }
                       },
                     ),
@@ -1427,8 +1501,76 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                               : Icons.format_list_numbered_rounded,
                         ),
                         suffixText: rule.unit,
+                        helperText:
+                            'Tối thiểu: ${rule.unitQuantity} ${rule.unit} (${rule.ruleRateText})',
+                        errorText: (currentQty > 0 && !isEnough)
+                            ? 'Chưa đủ mốc! Cần tối thiểu ${rule.unitQuantity} ${rule.unit} để được 1 điểm'
+                            : null,
                       ),
                       onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Tăng nhanh
+                    Row(
+                      children: [
+                        const Text(
+                          'Tăng nhanh:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ...{
+                          rule.unitQuantity,
+                          rule.unitQuantity * 2,
+                          rule.unitQuantity * 5,
+                        }.map((addQty) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: InkWell(
+                              onTap: () {
+                                final cur =
+                                    double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
+                                final next = (cur <= 0 ? 0 : cur) + addQty;
+                                _qtyCtrl.text = rule.unit
+                                        .toLowerCase()
+                                        .contains('kg')
+                                    ? (next.truncateToDouble() == next
+                                        ? next.toInt().toString()
+                                        : next.toStringAsFixed(1))
+                                    : next.toInt().toString();
+                                setState(() {});
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary
+                                      .withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Text(
+                                  '+$addQty',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
@@ -1443,93 +1585,128 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Thẻ tóm tắt tính điểm theo thời gian thực
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Tỷ lệ: ${rule.ruleRateText}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primaryDark,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'Quy đổi: $currentQty ${rule.unit} → $estimatedPoints điểm',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
+                    // Thẻ tóm tắt tính điểm hoặc cảnh báo chưa đủ mốc
+                    if (!isEnough)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorLight,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.5),
                           ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppColors.error,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Chưa đủ số lượng quy đổi! Cần tối thiểu ${rule.unitQuantity} ${rule.unit} để được tính điểm (${rule.ruleRateText}).',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceVariant,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.add_circle_rounded,
-                                    color: AppColors.success,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 4),
                                   Text(
-                                    '$estimatedPoints điểm',
+                                    'Tỷ lệ: ${rule.ruleRateText}',
                                     style: const TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.success,
+                                      color: AppColors.primaryDark,
                                     ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    'Quy đổi: $currentQty ${rule.unit} → $estimatedPoints điểm',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.add_circle_rounded,
+                                      color: AppColors.success,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$estimatedPoints điểm',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.success,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 18),
 
                     // Nút xác nhận tích điểm
                     FilledButton.icon(
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: isEnough
+                            ? AppColors.primary
+                            : Colors.grey.shade400,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: _isLoading
+                      onPressed: _isLoading || !isEnough
                           ? null
                           : () async {
                               final qty =
                                   double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
-                              if (qty <= 0) {
+                              if (qty < rule.unitQuantity || estimatedPoints <= 0) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
-                                        'Vui lòng nhập số lượng hoặc khối lượng > 0!'),
+                                      'Chưa đủ số lượng quy đổi! Cần tối thiểu ${rule.unitQuantity} ${rule.unit} để được tính điểm.',
+                                    ),
                                     backgroundColor: AppColors.error,
                                   ),
                                 );
@@ -1567,7 +1744,9 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Lỗi: $e'),
+                                      content: Text(
+                                        FirebaseErrorMapper.getCleanErrorMessage(e),
+                                      ),
                                       backgroundColor: AppColors.error,
                                     ),
                                   );
@@ -1589,7 +1768,11 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                             )
                           : const Icon(Icons.check_circle_outline_rounded),
                       label: Text(
-                        _isLoading ? 'Đang Lưu...' : 'Xác Nhận Tích Điểm',
+                        _isLoading
+                            ? 'Đang Lưu...'
+                            : (!isEnough
+                                ? 'Chưa Đủ Mốc Tối Thiểu (${rule.unitQuantity} ${rule.unit})'
+                                : 'Xác Nhận Tích Điểm'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

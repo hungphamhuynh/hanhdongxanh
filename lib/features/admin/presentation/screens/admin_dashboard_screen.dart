@@ -932,6 +932,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ('paper', Icons.newspaper_rounded),
                         ('box', Icons.inventory_2_rounded),
                         ('battery', Icons.battery_charging_full_rounded),
+                        ('pen', Icons.edit_rounded),
                       ].map((item) {
                         final key = item.$1;
                         final icon = item.$2;

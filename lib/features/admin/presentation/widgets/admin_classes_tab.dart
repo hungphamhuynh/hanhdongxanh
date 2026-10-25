@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/string_utils.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../teacher/presentation/widgets/class_details_sheet.dart';
 import '../../services/admin_class_service.dart';
@@ -84,11 +85,11 @@ class _AdminClassesTabState extends State<AdminClassesTab> {
           return matchesSearch && matchesGrade;
         }).toList();
 
-        // Sắp xếp lớp học theo thứ tự tự nhiên (ví dụ 6A1, 6A2 ... 9A12)
+        // Sắp xếp lớp học theo thứ tự tự nhiên (ví dụ 6A1, 6A2 ... 6A12 ... 9A12)
         filteredClasses.sort((a, b) {
           final nameA = (a.data() as Map<String, dynamic>)['className'] as String? ?? '';
           final nameB = (b.data() as Map<String, dynamic>)['className'] as String? ?? '';
-          return nameA.compareTo(nameB);
+          return StringUtils.compareNatural(nameA, nameB);
         });
 
         return ResponsiveContainer(

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
+import '../../../../core/utils/string_utils.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/services/point_rule_service.dart';
@@ -235,7 +237,7 @@ class _LeadTeacherDashboardScreenState
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Thu Gom Phế Liệu (+)',
+                            'Thu Gom Phế Liệu',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -274,7 +276,7 @@ class _LeadTeacherDashboardScreenState
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Đổi Điểm Lấy Quà (-)',
+                            'Đổi Điểm Lấy Quà',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -378,10 +380,12 @@ class _LeadTeacherDashboardScreenState
                         }
 
                         final rec = records[index];
-                        final isBattery = rec.isBattery;
-                        final color = isBattery
-                            ? AppColors.warning
-                            : AppColors.primary;
+                        final color = rec.categoryColor;
+                        final formattedQty = rec.isKg
+                            ? (rec.quantity.truncateToDouble() == rec.quantity
+                                ? rec.quantity.toInt().toString()
+                                : rec.quantity.toString())
+                            : rec.quantity.toInt().toString();
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
@@ -422,7 +426,7 @@ class _LeadTeacherDashboardScreenState
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    '${rec.categoryName}: ${rec.quantity} ${rec.unit}',
+                                    rec.categoryName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -435,12 +439,21 @@ class _LeadTeacherDashboardScreenState
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const SizedBox(height: 3),
+                                Text(
+                                  'Số lượng: $formattedQty ${rec.unit} • Tỷ lệ: ${rec.ruleRateText}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        '${_formatDateTime(rec.createdAt)} • Người ghi: ${rec.createdByEmail}',
+                                        '${_formatDateTime(rec.createdAt)} • ${rec.createdByEmail}',
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: AppColors.textSecondary,
@@ -686,7 +699,7 @@ class _LeadTeacherDashboardScreenState
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    '${order.rewardName} (${order.quantity} ${order.unit})',
+                                    order.rewardName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -694,31 +707,49 @@ class _LeadTeacherDashboardScreenState
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: order.statusColor.withValues(
-                                      alpha: 0.12,
-                                    ),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    order.statusLabel,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: order.statusColor,
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: order.statusColor.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        order.statusLabel,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: order.statusColor,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Số lượng: ${order.quantity} ${order.unit} (${order.pointsCost}đ/${order.unit})',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${_formatDateTime(order.createdAt)} • Người xin: ${order.createdByEmail}',
@@ -808,11 +839,12 @@ class _LeadRecordPointsSheet extends StatefulWidget {
 }
 
 class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
-  final TextEditingController _qtyCtrl = TextEditingController(text: '1');
+  final TextEditingController _qtyCtrl = TextEditingController();
   final TextEditingController _noteCtrl = TextEditingController();
   String? _selectedClass;
   PointRuleModel? _selectedRule;
   bool _isLoading = false;
+  bool _hasInitializedQty = false;
   late final Stream<QuerySnapshot> _classesStream;
   late final Stream<List<PointRuleModel>> _rulesStream;
 
@@ -860,7 +892,7 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                         d.id,
                   )
                   .toList();
-              classNames.sort();
+              classNames.sort(StringUtils.compareNatural);
 
               if (classNames.isNotEmpty && _selectedClass == null) {
                 _selectedClass = classNames.first;
@@ -876,11 +908,19 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                   }
 
                   final rule = _selectedRule;
+                  if (rule != null && !_hasInitializedQty) {
+                    _hasInitializedQty = true;
+                    _qtyCtrl.text = '${rule.unitQuantity}';
+                  }
+
                   final double currentQty =
                       double.tryParse(_qtyCtrl.text.trim()) ?? 0.0;
                   final int estimatedPoints = rule != null
                       ? rule.calculatePoints(currentQty)
                       : 0;
+                  final bool isEnough = rule != null &&
+                      currentQty >= rule.unitQuantity &&
+                      estimatedPoints > 0;
 
                   return SingleChildScrollView(
                     child: Column(
@@ -988,7 +1028,15 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                             }).toList(),
                             onChanged: (val) {
                               if (val != null) {
-                                setState(() => _selectedRule = val);
+                                setState(() {
+                                  _selectedRule = val;
+                                  final cur =
+                                      double.tryParse(_qtyCtrl.text.trim()) ??
+                                          0.0;
+                                  if (cur < val.unitQuantity) {
+                                    _qtyCtrl.text = '${val.unitQuantity}';
+                                  }
+                                });
                               }
                             },
                           ),
@@ -1010,9 +1058,83 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                 'Nhập ${rule?.unit ?? 'số lượng'} thu gom *',
                             suffixText: rule?.unit ?? '',
                             prefixIcon: const Icon(Icons.scale_rounded),
+                            helperText: rule != null
+                                ? 'Tối thiểu: ${rule.unitQuantity} ${rule.unit} (${rule.ruleRateText})'
+                                : null,
+                            errorText: (rule != null &&
+                                    currentQty > 0 &&
+                                    !isEnough)
+                                ? 'Chưa đủ mốc! Cần tối thiểu ${rule.unitQuantity} ${rule.unit} để được 1 điểm'
+                                : null,
                           ),
                           onChanged: (_) => setState(() {}),
                         ),
+                        if (rule != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Text(
+                                'Tăng nhanh:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ...{
+                                rule.unitQuantity,
+                                rule.unitQuantity * 2,
+                                rule.unitQuantity * 5
+                              }.map((addQty) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: InkWell(
+                                    onTap: () {
+                                      final cur = double.tryParse(
+                                              _qtyCtrl.text.trim()) ??
+                                          0.0;
+                                      final next =
+                                          (cur <= 0 ? 0 : cur) + addQty;
+                                      _qtyCtrl.text = rule.unit
+                                              .toLowerCase()
+                                              .contains('kg')
+                                          ? (next.truncateToDouble() == next
+                                              ? next.toInt().toString()
+                                              : next.toStringAsFixed(1))
+                                          : next.toInt().toString();
+                                      setState(() {});
+                                    },
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.08),
+                                        borderRadius:
+                                            BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.25),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '+$addQty',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryDark,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 12),
 
                         // Ghi chú
@@ -1026,82 +1148,118 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                         const SizedBox(height: 16),
 
                         // Tóm tắt quy đổi
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceVariant,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Cộng vào: Lớp ${_selectedClass ?? ''}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryDark,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    if (rule != null) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Tỷ lệ: ${rule.ruleRateText} ($currentQty ${rule.unit})',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ],
-                                ),
+                        if (rule != null && !isEnough)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.error.withValues(alpha: 0.5),
                               ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppColors.error,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
                                   child: Text(
-                                    '+$estimatedPoints điểm',
+                                    'Chưa đủ số lượng quy đổi! Cần tối thiểu ${rule.unitQuantity} ${rule.unit} để được tính điểm (${rule.ruleRateText}).',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: AppColors.success,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.error,
                                     ),
                                   ),
                                 ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.3),
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Cộng vào: Lớp ${_selectedClass ?? ''}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primaryDark,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (rule != null) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Tỷ lệ: ${rule.ruleRateText} ($currentQty ${rule.unit})',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      '+$estimatedPoints điểm',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: AppColors.success,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 18),
 
                         FilledButton.icon(
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: isEnough
+                                ? AppColors.primary
+                                : Colors.grey.shade400,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed:
-                              _isLoading ||
+                          onPressed: _isLoading ||
                                   rule == null ||
-                                  _selectedClass == null
+                                  _selectedClass == null ||
+                                  !isEnough
                               ? null
                               : () async {
                                   final qty =
                                       double.tryParse(_qtyCtrl.text.trim()) ??
                                       0.0;
-                                  if (qty <= 0) {
+                                  if (qty < rule.unitQuantity ||
+                                      estimatedPoints <= 0) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                      SnackBar(
                                         content: Text(
-                                          'Vui lòng nhập số lượng hoặc khối lượng > 0!',
+                                          'Chưa đủ số lượng quy đổi! Cần tối thiểu ${rule.unitQuantity} ${rule.unit} để được tính điểm.',
                                         ),
                                         backgroundColor: AppColors.error,
                                       ),
@@ -1144,7 +1302,10 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                             SnackBar(
-                                              content: Text('Lỗi: $e'),
+                                              content: Text(
+                                                FirebaseErrorMapper
+                                                    .getCleanErrorMessage(e),
+                                              ),
                                               backgroundColor: AppColors.error,
                                             ),
                                           );
@@ -1164,9 +1325,17 @@ class _LeadRecordPointsSheetState extends State<_LeadRecordPointsSheet> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Icon(Icons.check_circle_outline_rounded),
+                              : Icon(
+                                  isEnough
+                                      ? Icons.check_circle_rounded
+                                      : Icons.lock_outline_rounded,
+                                ),
                           label: Text(
-                            _isLoading ? 'Đang Lưu...' : 'Xác Nhận Tích Điểm',
+                            _isLoading
+                                ? 'Đang Lưu...'
+                                : (isEnough
+                                    ? 'Xác Nhận Tích +$estimatedPoints Điểm'
+                                    : 'Chưa Đủ Mốc Tối Thiểu (${rule?.unitQuantity ?? 1} ${rule?.unit ?? ""})'),
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
