@@ -940,6 +940,7 @@ class _AdminPointRulesTabState extends State<AdminPointRulesTab> {
   }
 
   void _showHistoryModal(BuildContext context, {PointRuleModel? rule}) {
+    _pointRuleService.alignInitialHistoryDatesToAug27();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

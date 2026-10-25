@@ -51,6 +51,7 @@ class RewardService {
     String iconName = 'gift',
     required String changedByEmail,
     required String changedByUid,
+    DateTime? customCreatedAt,
   }) async {
     if (pointsCost <= 0) {
       throw Exception('Số điểm đổi phải lớn hơn 0!');
@@ -67,8 +68,15 @@ class RewardService {
       isActive: true,
     );
 
+    final createdAtTimestamp = customCreatedAt != null
+        ? Timestamp.fromDate(customCreatedAt)
+        : FieldValue.serverTimestamp();
+
     final batch = _firestore.batch();
-    batch.set(docRef, newRule.toMap());
+    batch.set(docRef, {
+      ...newRule.toMap(),
+      if (customCreatedAt != null) 'createdAt': createdAtTimestamp,
+    });
 
     final historyRef = _historyCol.doc();
     batch.set(historyRef, {
@@ -79,7 +87,7 @@ class RewardService {
       'newValues': newRule.toMap(),
       'changedByEmail': changedByEmail.trim(),
       'changedByUid': changedByUid.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAtTimestamp,
     });
 
     await batch.commit();
@@ -219,6 +227,7 @@ class RewardService {
       },
     ];
 
+    final initialDate = DateTime(2026, 8, 27, 8, 0, 0);
     for (final item in sampleRewards) {
       await createRewardRule(
         name: item['name'] as String,
@@ -228,8 +237,30 @@ class RewardService {
         iconName: item['iconName'] as String,
         changedByEmail: changedByEmail,
         changedByUid: changedByUid,
+        customCreatedAt: initialDate,
       );
     }
+  }
+
+  /// Đồng bộ ngày tạo của các bản ghi lịch sử tạo mới quà tặng ban đầu về ngày 27/08/2026
+  Future<void> alignInitialHistoryDatesToAug27() async {
+    try {
+      final snap = await _historyCol.where('action', isEqualTo: 'create').get();
+      final targetDate = Timestamp.fromDate(DateTime(2026, 8, 27, 8, 0, 0));
+      final batch = _firestore.batch();
+      bool hasUpdate = false;
+      for (final doc in snap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+        if (createdAt == null || createdAt.day != 27 || createdAt.month != 8 || createdAt.year != 2026) {
+          batch.update(doc.reference, {'createdAt': targetDate});
+          hasUpdate = true;
+        }
+      }
+      if (hasUpdate) {
+        await batch.commit();
+      }
+    } catch (_) {}
   }
 
   // ==========================================

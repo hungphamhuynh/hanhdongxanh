@@ -726,6 +726,7 @@ class _AdminRewardRulesTabState extends State<AdminRewardRulesTab> {
   }
 
   void _showHistoryModal(BuildContext context, {RewardRuleModel? rule}) {
+    _rewardService.alignInitialHistoryDatesToAug27();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

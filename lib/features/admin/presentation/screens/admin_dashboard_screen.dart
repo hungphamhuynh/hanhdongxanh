@@ -48,6 +48,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         FirebaseFirestore.instance.collection('point_rules').snapshots();
     _rewardRulesCountStream =
         FirebaseFirestore.instance.collection('reward_rules').snapshots();
+    _pointRuleService.alignInitialHistoryDatesToAug27();
+    _rewardService.alignInitialHistoryDatesToAug27();
   }
 
   String get _appBarTitle {

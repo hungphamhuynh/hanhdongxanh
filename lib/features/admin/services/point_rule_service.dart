@@ -329,9 +329,14 @@ class PointRuleService {
       }
     }
 
+    final initialDate = Timestamp.fromDate(DateTime(2026, 8, 27, 8, 0, 0));
     for (final item in defaultCategories) {
       final docRef = _rulesCollection.doc();
-      batch.set(docRef, item);
+      batch.set(docRef, {
+        ...item,
+        'createdAt': initialDate,
+        'updatedAt': initialDate,
+      });
 
       final historyRef = _historyCollection.doc();
       batch.set(historyRef, {
@@ -342,9 +347,30 @@ class PointRuleService {
         'newValues': Map<String, dynamic>.from(item),
         'changedByEmail': changedByEmail.trim(),
         'changedByUid': changedByUid.trim(),
-        'createdAt': FieldValue.serverTimestamp(),
+        'createdAt': initialDate,
       });
     }
     await batch.commit();
+  }
+
+  /// Đồng bộ ngày tạo của các bản ghi lịch sử tạo mới ban đầu về ngày 27/08/2026
+  Future<void> alignInitialHistoryDatesToAug27() async {
+    try {
+      final snap = await _historyCollection.where('action', isEqualTo: 'create').get();
+      final targetDate = Timestamp.fromDate(DateTime(2026, 8, 27, 8, 0, 0));
+      final batch = _firestore.batch();
+      bool hasUpdate = false;
+      for (final doc in snap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+        if (createdAt == null || createdAt.day != 27 || createdAt.month != 8 || createdAt.year != 2026) {
+          batch.update(doc.reference, {'createdAt': targetDate});
+          hasUpdate = true;
+        }
+      }
+      if (hasUpdate) {
+        await batch.commit();
+      }
+    } catch (_) {}
   }
 }
