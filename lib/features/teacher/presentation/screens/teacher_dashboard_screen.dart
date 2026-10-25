@@ -365,8 +365,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   assignedClass: assignedClass,
                   fullName: fullName,
                   totalPoints: totalPoints,
-                  context: context,
-                  user: user,
                 ),
                 const SizedBox(height: 16),
                 // Card danh sách thu gom gần nhất
@@ -683,8 +681,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required String assignedClass,
     required String fullName,
     required int totalPoints,
-    required BuildContext context,
-    required User user,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -899,72 +895,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ],
               );
             },
-          ),
-          const SizedBox(height: 18),
-          // 2 nút thao tác nhanh
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primaryDark,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () => _showRecordPointsModal(
-                    context: context,
-                    className: assignedClass,
-                    teacherUid: user.uid,
-                    teacherEmail: user.email ?? '',
-                  ),
-                  icon: const Icon(Icons.add_task_rounded, size: 18),
-                  label: const Text(
-                    'Tích Điểm',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.22),
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white38),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: _isLoadingReward
-                      ? null
-                      : () => _handleOpenRewardOrder(
-                            context: context,
-                            assignedClass: assignedClass,
-                            user: user,
-                          ),
-                  icon: _isLoadingReward
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.card_giftcard_rounded, size: 18),
-                  label: Text(
-                    _isLoadingReward ? 'Kiểm tra...' : 'Đổi Quà',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
       ),
