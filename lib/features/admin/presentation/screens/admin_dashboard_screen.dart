@@ -577,11 +577,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           final email = '${selectedGrade}a$selectedClassNum@nth.com';
 
           return AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 24,
+            ),
+            contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             title: const Row(
               children: [
                 Icon(Icons.add_home_work_rounded, color: AppColors.primary),
                 SizedBox(width: 8),
-                Text('Thêm Lớp Học Mới'),
+                Expanded(
+                  child: Text(
+                    'Thêm Lớp Học Mới',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             ),
             content: SingleChildScrollView(
@@ -600,23 +610,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 14),
                   // Bộ chọn chuẩn hóa: Khối + 'A' + Số lớp (Không cho nhập tự do)
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Chọn Khối (6, 7, 8, 9)
                       Expanded(
                         flex: 5,
                         child: DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: selectedGrade,
                           decoration: const InputDecoration(
+                            isDense: true,
                             labelText: 'Khối',
                             contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 14,
+                              horizontal: 8,
+                              vertical: 10,
                             ),
                           ),
                           items: [6, 7, 8, 9].map((g) {
                             return DropdownMenuItem<int>(
                               value: g,
-                              child: Text('Khối $g'),
+                              child: Text(
+                                'Khối $g',
+                                style: const TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -626,17 +643,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
 
                       // Ký tự cố định 'A'
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
+                        width: 36,
+                        height: 46,
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: AppColors.primaryMint,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: AppColors.primary.withValues(alpha: 0.4),
                             width: 1.5,
@@ -651,24 +667,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
 
                       // Chọn Số thứ tự lớp (1 -> 20)
                       Expanded(
                         flex: 5,
                         child: DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: selectedClassNum,
                           decoration: const InputDecoration(
+                            isDense: true,
                             labelText: 'Số lớp',
                             contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 14,
+                              horizontal: 8,
+                              vertical: 10,
                             ),
                           ),
                           items: List.generate(20, (i) => i + 1).map((n) {
                             return DropdownMenuItem<int>(
                               value: n,
-                              child: Text('Lớp $n'),
+                              child: Text(
+                                'Lớp $n',
+                                style: const TextStyle(fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -701,12 +723,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               color: AppColors.primary,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              'Lớp sẽ tạo: $className',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryDark,
+                            Expanded(
+                              child: Text(
+                                'Lớp sẽ tạo: $className',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryDark,
+                                ),
                               ),
                             ),
                           ],
