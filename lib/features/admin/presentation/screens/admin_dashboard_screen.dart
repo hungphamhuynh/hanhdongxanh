@@ -646,24 +646,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       const SizedBox(width: 6),
 
                       // Ký tự cố định 'A'
-                      Container(
-                        width: 36,
-                        height: 46,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryMint,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Text(
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
                           'A',
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
