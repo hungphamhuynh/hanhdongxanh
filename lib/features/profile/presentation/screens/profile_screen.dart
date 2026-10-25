@@ -23,6 +23,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   bool _isEditingInfo = false;
   bool _isSavingInfo = false;
+  Stream<DocumentSnapshot>? _userDocStream;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_user != null) {
+      _userDocStream = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user.uid)
+          .snapshots();
+    }
+  }
 
   @override
   void dispose() {
@@ -240,12 +252,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(_user.uid)
-            .snapshots(),
+        stream: _userDocStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 

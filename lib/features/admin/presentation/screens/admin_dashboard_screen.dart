@@ -32,6 +32,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final _pointRuleService = PointRuleService();
   final _rewardService = RewardService();
 
+  late final Stream<QuerySnapshot> _usersCountStream;
+  late final Stream<QuerySnapshot> _classesCountStream;
+  late final Stream<QuerySnapshot> _pointRulesCountStream;
+  late final Stream<QuerySnapshot> _rewardRulesCountStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersCountStream =
+        FirebaseFirestore.instance.collection('users').snapshots();
+    _classesCountStream =
+        FirebaseFirestore.instance.collection('classes').snapshots();
+    _pointRulesCountStream =
+        FirebaseFirestore.instance.collection('point_rules').snapshots();
+    _rewardRulesCountStream =
+        FirebaseFirestore.instance.collection('reward_rules').snapshots();
+  }
+
   String get _appBarTitle {
     switch (_currentTabIndex) {
       case 1:
@@ -235,9 +253,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             // Module 1: Quản lý tài khoản (Đang có)
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .snapshots(),
+              stream: _usersCountStream,
               builder: (context, snapshot) {
                 final count = snapshot.data?.docs.length ?? 0;
 
@@ -258,9 +274,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             // Module 2: Lớp học & Thi đua
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('classes')
-                  .snapshots(),
+              stream: _classesCountStream,
               builder: (context, snapshot) {
                 final classCount = snapshot.data?.docs.length ?? 0;
 
@@ -282,9 +296,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             // Module 3: Cấu hình quy định điểm
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('point_rules')
-                  .snapshots(),
+              stream: _pointRulesCountStream,
               builder: (context, snapshot) {
                 final ruleCount = snapshot.data?.docs.length ?? 0;
 
@@ -306,9 +318,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
             // Module 4: Cấu hình đổi điểm lấy quà
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('reward_rules')
-                  .snapshots(),
+              stream: _rewardRulesCountStream,
               builder: (context, snapshot) {
                 final rewardCount = snapshot.data?.docs.length ?? 0;
 

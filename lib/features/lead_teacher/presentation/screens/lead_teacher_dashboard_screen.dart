@@ -64,7 +64,7 @@ class _LeadTeacherDashboardScreenState
       case 0:
         return 'Xếp Hạng & Thống Kê';
       case 1:
-        return 'Duyệt Đơn Đổi Quà';
+        return 'Duyệt Đổi Quà';
       case 2:
         return 'Nhật Ký Toàn Trường';
       default:
@@ -155,7 +155,7 @@ class _LeadTeacherDashboardScreenState
                 );
               },
             ),
-            label: 'Đơn Đổi Quà',
+            label: 'Duyệt Đổi Quà',
           ),
           const NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
@@ -289,7 +289,8 @@ class _LeadTeacherDashboardScreenState
                       );
                     }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
@@ -577,7 +578,8 @@ class _LeadTeacherDashboardScreenState
                       );
                     }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
 

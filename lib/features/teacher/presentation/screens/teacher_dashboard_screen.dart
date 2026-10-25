@@ -60,6 +60,40 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return _rewardRecordsStream!;
   }
 
+  Stream<DocumentSnapshot>? _userDocStream;
+  String? _cachedUserUid;
+
+  Stream<DocumentSnapshot> _getUserDocStream(String uid) {
+    if (_userDocStream == null || _cachedUserUid != uid) {
+      _cachedUserUid = uid;
+      _userDocStream = FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
+    }
+    return _userDocStream!;
+  }
+
+  Stream<DocumentSnapshot>? _classDocStream;
+  String? _cachedClassDocName;
+
+  Stream<DocumentSnapshot> _getClassDocStream(String assignedClass) {
+    if (_classDocStream == null || _cachedClassDocName != assignedClass) {
+      _cachedClassDocName = assignedClass;
+      _classDocStream = FirebaseFirestore.instance.collection('classes').doc(assignedClass).snapshots();
+    }
+    return _classDocStream!;
+  }
+
+  Stream<SchoolYearConfigModel>? _schoolYearConfigStream;
+  Stream<SchoolYearConfigModel> _getSchoolYearConfigStream() {
+    _schoolYearConfigStream ??= _academicYearService.getSchoolYearConfigStream();
+    return _schoolYearConfigStream!;
+  }
+
+  Stream<List<PointRuleModel>>? _activePointRulesStream;
+  Stream<List<PointRuleModel>> _getActivePointRulesStream() {
+    _activePointRulesStream ??= _pointRuleService.getPointRulesStream(onlyActive: true);
+    return _activePointRulesStream!;
+  }
+
   @override
   void dispose() {
     _isLoadingRewardNotifier.dispose();
@@ -200,10 +234,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     }
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots(),
+      stream: _getUserDocStream(user.uid),
       builder: (context, userSnap) {
         if (!userSnap.hasData) {
           return const Scaffold(
@@ -336,8 +367,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               ),
               NavigationDestination(
                 icon: StreamBuilder<List<RewardRecordModel>>(
-                  stream: _rewardService
-                      .getRewardRecordsByClassStream(assignedClass),
+                  stream: _getRewardRecordsStream(assignedClass),
                   builder: (context, snapshot) {
                     final pendingCount = (snapshot.data ?? [])
                         .where((o) => o.isPending)
@@ -350,8 +380,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   },
                 ),
                 selectedIcon: StreamBuilder<List<RewardRecordModel>>(
-                  stream: _rewardService
-                      .getRewardRecordsByClassStream(assignedClass),
+                  stream: _getRewardRecordsStream(assignedClass),
                   builder: (context, snapshot) {
                     final pendingCount = (snapshot.data ?? [])
                         .where((o) => o.isPending)
@@ -379,10 +408,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required User user,
   }) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('classes')
-          .doc(assignedClass)
-          .snapshots(),
+      stream: _getClassDocStream(assignedClass),
       builder: (context, classSnap) {
         final classData = classSnap.data?.data() as Map<String, dynamic>? ?? {};
         final totalPoints = (classData['totalPoints'] as num?)?.toInt() ?? 0;
@@ -457,10 +483,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       StreamBuilder<List<PointRecordModel>>(
-                        stream: _pointRecordService
-                            .getRecordsByClassStream(assignedClass),
+                        stream: _getPointRecordsStream(assignedClass),
                         builder: (context, snap) {
-                          if (snap.connectionState == ConnectionState.waiting) {
+                          if (snap.connectionState == ConnectionState.waiting &&
+                              !snap.hasData) {
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(16.0),
@@ -785,7 +811,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
           // Khối điểm tích lũy & Các ô thống kê phế liệu ĐỘNG theo niên khóa hiện hành
           StreamBuilder<SchoolYearConfigModel>(
-            stream: _academicYearService.getSchoolYearConfigStream(),
+            stream: _getSchoolYearConfigStream(),
             builder: (context, configSnap) {
               final schoolConfig = configSnap.data;
               final yearSubtitle = schoolConfig != null
@@ -861,8 +887,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
                   // Các ô thống kê phế liệu ĐỘNG 100% (tính từ các thể loại đang áp dụng và lịch sử thu gom của lớp trong niên khóa hiện tại)
                   StreamBuilder<List<PointRuleModel>>(
-                    stream:
-                        _pointRuleService.getPointRulesStream(onlyActive: true),
+                    stream: _getActivePointRulesStream(),
                     builder: (context, rulesSnap) {
                       final rules = rulesSnap.data ?? [];
                       if (rules.isEmpty) {
@@ -870,8 +895,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       }
 
                       return StreamBuilder<List<PointRecordModel>>(
-                        stream: _pointRecordService
-                            .getRecordsByClassStream(assignedClass),
+                        stream: _getPointRecordsStream(assignedClass),
                         builder: (context, recordsSnap) {
                           final records = recordsSnap.data ?? [];
                           final Map<String, double> collectedMap = {};

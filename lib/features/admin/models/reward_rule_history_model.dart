@@ -128,7 +128,7 @@ class RewardRuleHistoryModel {
       final isActive = newValues['isActive'] as bool? ?? true;
       list.add(isActive
           ? 'Mở lại cho phép các lớp đổi món quà này'
-          : 'Tạm ngừng / Khóa đổi món quà này (hết hàng)');
+          : 'Tạm ngừng / Khóa đổi món quà này (hết quà)');
       return list;
     }
 

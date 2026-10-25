@@ -33,6 +33,24 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
   final _rewardService = RewardService();
   int _tabIndex = 0; // 0 = Tích điểm (+), 1 = Đổi quà (-)
 
+  late final Stream<DocumentSnapshot> _classStream;
+  late final Stream<List<PointRecordModel>> _pointRecordsStream;
+  late final Stream<List<RewardRecordModel>> _rewardRecordsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final cleanClass = widget.className.trim().toUpperCase();
+    _classStream = FirebaseFirestore.instance
+        .collection('classes')
+        .doc(cleanClass)
+        .snapshots();
+    _pointRecordsStream =
+        _pointRecordService.getRecordsByClassStream(cleanClass);
+    _rewardRecordsStream =
+        _rewardService.getRewardRecordsByClassStream(cleanClass);
+  }
+
   String _formatDateTime(DateTime? dt) {
     if (dt == null) return 'Vừa xong';
     final day = dt.day.toString().padLeft(2, '0');
@@ -58,10 +76,7 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('classes')
-                .doc(cleanClass)
-                .snapshots(),
+            stream: _classStream,
             builder: (context, classSnap) {
               final classData =
                   classSnap.data?.data() as Map<String, dynamic>? ?? {};
@@ -271,9 +286,10 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
   Widget _buildPointHistoryList(
       String className, ScrollController scrollController) {
     return StreamBuilder<List<PointRecordModel>>(
-      stream: _pointRecordService.getRecordsByClassStream(className),
+      stream: _pointRecordsStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -358,9 +374,10 @@ class _ClassDetailsSheetState extends State<ClassDetailsSheet> {
   Widget _buildRewardHistoryList(
       String className, ScrollController scrollController) {
     return StreamBuilder<List<RewardRecordModel>>(
-      stream: _rewardService.getRewardRecordsByClassStream(className),
+      stream: _rewardRecordsStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 

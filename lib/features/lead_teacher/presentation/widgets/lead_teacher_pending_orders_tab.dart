@@ -120,7 +120,7 @@ class _LeadTeacherPendingOrdersTabState
               controller: reasonCtrl,
               decoration: const InputDecoration(
                 labelText: 'Lý do từ chối *',
-                hintText: 'Ví dụ: Tạm hết hàng trong kho, cần gom thêm...',
+                hintText: 'Ví dụ: Tạm hết phần quà trong kho, cần gom thêm...',
               ),
             ),
           ],
@@ -222,7 +222,8 @@ class _LeadTeacherPendingOrdersTabState
           );
         }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 

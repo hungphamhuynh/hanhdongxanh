@@ -76,7 +76,8 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
         return StreamBuilder<QuerySnapshot>(
           stream: _recordsStream,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
 
