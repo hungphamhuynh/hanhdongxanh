@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/utils/string_utils.dart';
 import '../models/academic_year_model.dart';
+import '../models/school_year_config_model.dart';
 
 class AcademicYearService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -15,29 +16,36 @@ class AcademicYearService {
     return snap.docs.length;
   }
 
-  /// Lấy niên khóa hiện hành được cấu hình trong hệ thống
-  Future<String> getCurrentAcademicYear() async {
+  /// Stream cấu hình năm học thời gian thực
+  Stream<SchoolYearConfigModel> getSchoolYearConfigStream() {
+    return _firestore
+        .collection('system_settings')
+        .doc('school_year_config')
+        .snapshots()
+        .map((doc) => SchoolYearConfigModel.fromFirestore(doc));
+  }
+
+  /// Lấy cấu hình năm học bất đồng bộ
+  Future<SchoolYearConfigModel> getSchoolYearConfig() async {
     try {
       final doc = await _firestore
           .collection('system_settings')
           .doc('school_year_config')
           .get();
-
-      if (doc.exists && doc.data() != null) {
-        final year = doc.data()!['currentAcademicYear'] as String?;
-        if (year != null && year.trim().isNotEmpty) {
-          return year.trim();
-        }
-      }
-    } catch (_) {}
-
-    // Niên khóa mặc định theo thời gian thực (Năm học bắt đầu từ tháng 8 hoặc 9)
-    final now = DateTime.now();
-    if (now.month >= 8) {
-      return '${now.year}-${now.year + 1}';
-    } else {
-      return '${now.year - 1}-${now.year}';
+      return SchoolYearConfigModel.fromFirestore(doc);
+    } catch (_) {
+      final now = DateTime.now();
+      final defaultYear = now.month >= 8
+          ? '${now.year}-${now.year + 1}'
+          : '${now.year - 1}-${now.year}';
+      return SchoolYearConfigModel(currentAcademicYear: defaultYear);
     }
+  }
+
+  /// Lấy niên khóa hiện hành được cấu hình trong hệ thống
+  Future<String> getCurrentAcademicYear() async {
+    final config = await getSchoolYearConfig();
+    return config.currentAcademicYear;
   }
 
   /// Stream danh sách các niên khóa đã đóng sổ trong quá khứ
@@ -64,7 +72,10 @@ class AcademicYearService {
   }
 
   /// Lấy dữ liệu xem trước (Preview) trước khi bấm xác nhận đóng sổ
-  Future<Map<String, dynamic>> previewClosureData() async {
+  /// - [targetAcademicYear]: Niên khóa cần đóng sổ (nếu truyền vào)
+  Future<Map<String, dynamic>> previewClosureData({
+    String? targetAcademicYear,
+  }) async {
     // 1. Kiểm tra đơn pending
     final pendingCount = await countPendingRewardOrders();
 
@@ -107,12 +118,34 @@ class AcademicYearService {
       ));
     }
 
-    // 3. Tổng hợp danh mục phế liệu phát sinh ĐỘNG 100% từ point_records
+    // 3. Tổng hợp danh mục phế liệu phát sinh ĐỘNG 100% từ point_records thuộc niên khóa cần đóng sổ
+    final config = await getSchoolYearConfig();
+    final effectiveYear = (targetAcademicYear != null && targetAcademicYear.trim().isNotEmpty)
+        ? targetAcademicYear.trim()
+        : config.currentAcademicYear;
+    final lastClosedAt = config.lastClosedAt;
+
     final recordsSnap = await _firestore.collection('point_records').get();
     final Map<String, Map<String, dynamic>> categoryMap = {};
 
     for (var doc in recordsSnap.docs) {
       final data = doc.data();
+      final recordYear = (data['academicYearId'] as String? ?? '').trim();
+      final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+
+      // Kiểm tra tính hợp lệ của niên khóa (ưu tiên academicYearId, fallback mốc thời gian)
+      final bool belongsToYear;
+      if (recordYear.isNotEmpty) {
+        belongsToYear = recordYear == effectiveYear;
+      } else if (lastClosedAt != null && createdAt != null) {
+        belongsToYear = createdAt.isAfter(lastClosedAt);
+      } else {
+        // Chưa có academicYearId và chưa từng có mốc đóng sổ trước đó -> thuộc niên khóa đầu tiên
+        belongsToYear = true;
+      }
+
+      if (!belongsToYear) continue;
+
       final categoryName =
           (data['categoryName'] as String? ?? '').trim();
       if (categoryName.isEmpty) continue;
@@ -185,8 +218,8 @@ class AcademicYearService {
           'Niên khóa $cleanYearId đã được đóng sổ trước đó! Vui lòng chọn hoặc nhập mã niên khóa khác.');
     }
 
-    // 2. Thu thập dữ liệu snapshot
-    final preview = await previewClosureData();
+    // 2. Thu thập dữ liệu snapshot của riêng niên khóa đang đóng sổ
+    final preview = await previewClosureData(targetAcademicYear: cleanYearId);
     final totalClasses = preview['totalClasses'] as int;
     final totalSchoolPoints = preview['totalSchoolPoints'] as int;
     final topClasses = preview['topClasses'] as List<ClassRankSnapshot>;
@@ -213,7 +246,7 @@ class AcademicYearService {
     final yearRef = _firestore.collection('academic_years').doc(cleanYearId);
     batch.set(yearRef, yearModel.toMap());
 
-    // Cập nhật cấu hình năm học mới
+    // Cập nhật cấu hình năm học mới & lưu mốc thời gian bắt đầu năm học mới
     final configRef =
         _firestore.collection('system_settings').doc('school_year_config');
     batch.set(
@@ -221,6 +254,8 @@ class AcademicYearService {
       {
         'currentAcademicYear': nextAcademicYearId.trim(),
         'lastClosedAcademicYear': cleanYearId,
+        'lastClosedAt': FieldValue.serverTimestamp(),
+        'currentYearStartedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'updatedByEmail': userEmail.trim(),
         'updatedByUid': userUid.trim(),

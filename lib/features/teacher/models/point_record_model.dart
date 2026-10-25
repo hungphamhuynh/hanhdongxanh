@@ -15,6 +15,7 @@ class PointRecordModel {
   final int pointsPerUnit; // Giữ để tương thích ngược
   final int totalPoints; // Tổng điểm nhận được
   final String note;
+  final String academicYearId; // Niên khóa (Ví dụ: "2025-2026")
   final String createdByEmail;
   final String createdByUid;
   final DateTime? createdAt;
@@ -34,6 +35,7 @@ class PointRecordModel {
     required this.pointsPerUnit,
     required this.totalPoints,
     this.note = '',
+    this.academicYearId = '',
     required this.createdByEmail,
     required this.createdByUid,
     this.createdAt,
@@ -66,6 +68,7 @@ class PointRecordModel {
       pointsPerUnit: (data['pointsPerUnit'] as num?)?.toInt() ?? pts,
       totalPoints: (data['totalPoints'] as num?)?.toInt() ?? 0,
       note: data['note'] ?? '',
+      academicYearId: (data['academicYearId'] as String? ?? '').trim(),
       createdByEmail: data['createdByEmail'] ?? '',
       createdByUid: data['createdByUid'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
@@ -87,6 +90,7 @@ class PointRecordModel {
       'pointsPerUnit': pointsPerUnit,
       'totalPoints': totalPoints,
       'note': note.trim(),
+      if (academicYearId.isNotEmpty) 'academicYearId': academicYearId.trim(),
       'createdByEmail': createdByEmail.trim(),
       'createdByUid': createdByUid.trim(),
       'createdAt': FieldValue.serverTimestamp(),

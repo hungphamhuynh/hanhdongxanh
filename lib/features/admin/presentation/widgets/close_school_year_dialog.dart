@@ -68,7 +68,8 @@ class _CloseSchoolYearDialogState extends State<CloseSchoolYearDialog> {
   Future<void> _loadInitialData() async {
     try {
       final currentYear = await _service.getCurrentAcademicYear();
-      final preview = await _service.previewClosureData();
+      final preview =
+          await _service.previewClosureData(targetAcademicYear: currentYear);
 
       // Tính năm học kế tiếp từ currentYear (Ví dụ: "2025-2026" -> "2026-2027")
       String nextYear = '';

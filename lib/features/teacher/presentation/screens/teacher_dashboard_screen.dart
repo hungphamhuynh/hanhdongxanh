@@ -10,6 +10,8 @@ import '../../../../core/widgets/large_quantity_confirm_dialog.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../../admin/models/point_rule_model.dart';
 import '../../../admin/models/reward_rule_model.dart';
+import '../../../admin/models/school_year_config_model.dart';
+import '../../../admin/services/academic_year_service.dart';
 import '../../../admin/services/point_rule_service.dart';
 import '../../../admin/services/reward_service.dart';
 import '../../../auth/services/auth_service.dart';
@@ -31,6 +33,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   final PointRecordService _pointRecordService = PointRecordService();
   final PointRuleService _pointRuleService = PointRuleService();
   final RewardService _rewardService = RewardService();
+  final AcademicYearService _academicYearService = AcademicYearService();
   final AuthService _authService = AuthService();
   int _historyTabIndex = 0; // 0 = Lịch sử tích điểm (+), 1 = Lịch sử đổi quà (-)
   bool _isLoadingReward = false;
@@ -634,125 +637,156 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Khối điểm tích lũy lớn
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.25),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TỔNG ĐIỂM SINH THÁI',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                        letterSpacing: 0.8,
-                        fontWeight: FontWeight.w600,
+          // Khối điểm tích lũy & Các ô thống kê phế liệu ĐỘNG theo niên khóa hiện hành
+          StreamBuilder<SchoolYearConfigModel>(
+            stream: _academicYearService.getSchoolYearConfigStream(),
+            builder: (context, configSnap) {
+              final schoolConfig = configSnap.data;
+              final yearSubtitle = schoolConfig != null
+                  ? 'Năm học ${schoolConfig.currentAcademicYear}'
+                  : 'Điểm thi đua phong trào';
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Khối điểm tích lũy lớn
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Điểm thi đua phong trào',
-                      style: TextStyle(
-                        color: Colors.white60,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '$totalPoints',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'điểm',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Các ô thống kê phế liệu ĐỘNG 100% (tính từ các thể loại đang áp dụng và lịch sử thu gom của lớp)
-          StreamBuilder<List<PointRuleModel>>(
-            stream: _pointRuleService.getPointRulesStream(onlyActive: true),
-            builder: (context, rulesSnap) {
-              final rules = rulesSnap.data ?? [];
-              if (rules.isEmpty) {
-                return const SizedBox.shrink();
-              }
-
-              return StreamBuilder<List<PointRecordModel>>(
-                stream: _pointRecordService.getRecordsByClassStream(assignedClass),
-                builder: (context, recordsSnap) {
-                  final records = recordsSnap.data ?? [];
-                  final Map<String, double> collectedMap = {};
-                  for (final rec in records) {
-                    final keyById = rec.ruleId;
-                    final keyByName = rec.categoryName.trim().toLowerCase();
-                    if (keyById.isNotEmpty) {
-                      collectedMap[keyById] =
-                          (collectedMap[keyById] ?? 0.0) + rec.quantity;
-                    }
-                    collectedMap[keyByName] =
-                        (collectedMap[keyByName] ?? 0.0) + rec.quantity;
-                  }
-
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final itemWidth = (constraints.maxWidth - 8) / 2;
-                      return Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: rules.map((rule) {
-                          final qty = collectedMap[rule.id] ??
-                              collectedMap[rule.name.trim().toLowerCase()] ??
-                              0.0;
-                          final isKg = rule.isKg;
-                          final valueStr = isKg
-                              ? (qty > 0
-                                  ? '${qty.toStringAsFixed(qty.truncateToDouble() == qty ? 0 : 1)} ${rule.unit}'
-                                  : '0 ${rule.unit}')
-                              : '${qty.toInt()} ${rule.unit}';
-
-                          return SizedBox(
-                            width: itemWidth > 0 ? itemWidth : 160,
-                            child: _buildScrapMiniTile(
-                              icon: rule.iconData,
-                              iconColor: rule.categoryColor,
-                              label: rule.name,
-                              value: valueStr,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'TỔNG ĐIỂM SINH THÁI',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                                letterSpacing: 0.8,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
+                            const SizedBox(height: 2),
+                            Text(
+                              yearSubtitle,
+                              style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '$totalPoints',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'điểm',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Các ô thống kê phế liệu ĐỘNG 100% (tính từ các thể loại đang áp dụng và lịch sử thu gom của lớp trong niên khóa hiện tại)
+                  StreamBuilder<List<PointRuleModel>>(
+                    stream:
+                        _pointRuleService.getPointRulesStream(onlyActive: true),
+                    builder: (context, rulesSnap) {
+                      final rules = rulesSnap.data ?? [];
+                      if (rules.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+
+                      return StreamBuilder<List<PointRecordModel>>(
+                        stream: _pointRecordService
+                            .getRecordsByClassStream(assignedClass),
+                        builder: (context, recordsSnap) {
+                          final records = recordsSnap.data ?? [];
+                          final Map<String, double> collectedMap = {};
+                          for (final rec in records) {
+                            // Lọc chỉ tính toán các lượt thu gom phát sinh trong niên khóa hiện hành
+                            if (schoolConfig != null &&
+                                !schoolConfig.isRecordInCurrentYear(rec)) {
+                              continue;
+                            }
+
+                            final keyById = rec.ruleId;
+                            final keyByName =
+                                rec.categoryName.trim().toLowerCase();
+                            if (keyById.isNotEmpty) {
+                              collectedMap[keyById] =
+                                  (collectedMap[keyById] ?? 0.0) +
+                                      rec.quantity;
+                            }
+                            collectedMap[keyByName] =
+                                (collectedMap[keyByName] ?? 0.0) +
+                                    rec.quantity;
+                          }
+
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final itemWidth =
+                                  (constraints.maxWidth - 8) / 2;
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: rules.map((rule) {
+                                  final qty = collectedMap[rule.id] ??
+                                      collectedMap[rule.name
+                                          .trim()
+                                          .toLowerCase()] ??
+                                      0.0;
+                                  final isKg = rule.isKg;
+                                  final valueStr = isKg
+                                      ? (qty > 0
+                                          ? '${qty.toStringAsFixed(qty.truncateToDouble() == qty ? 0 : 1)} ${rule.unit}'
+                                          : '0 ${rule.unit}')
+                                      : '${qty.toInt()} ${rule.unit}';
+
+                                  return SizedBox(
+                                    width: itemWidth > 0 ? itemWidth : 160,
+                                    child: _buildScrapMiniTile(
+                                      icon: rule.iconData,
+                                      iconColor: rule.categoryColor,
+                                      label: rule.name,
+                                      value: valueStr,
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            },
                           );
-                        }).toList(),
+                        },
                       );
                     },
-                  );
-                },
+                  ),
+                ],
               );
             },
           ),
@@ -1711,7 +1745,7 @@ class _RecordPointsSheetState extends State<_RecordPointsSheet> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Lưu ý: Số lượng thu gom khá lớn ($currentQty ${rule.unit} = +$estimatedPoints điểm). Hệ thống sẽ yêu cầu xác nhận trước khi lưu.',
+                                'Lưu ý: Số lượng thu gom khá lớn ($currentQty ${rule.unit} = $estimatedPoints điểm). Hệ thống sẽ yêu cầu xác nhận trước khi lưu.',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../admin/services/academic_year_service.dart';
 import '../models/point_record_model.dart';
 
 class PointRecordService {
@@ -41,6 +42,7 @@ class PointRecordService {
     String note = '',
     required String createdByEmail,
     required String createdByUid,
+    String? academicYearId,
   }) async {
     final cleanClass = className.trim().toUpperCase();
     final effectiveUnitQty = unitQuantity > 0 ? unitQuantity : 1;
@@ -52,6 +54,12 @@ class PointRecordService {
       throw Exception(
         'Chưa đủ số lượng quy đổi! Cần tối thiểu $effectiveUnitQty $unit để được tính điểm.',
       );
+    }
+
+    // Tự động nhận diện niên khóa hiện hành nếu chưa truyền vào
+    String resolvedYearId = (academicYearId ?? '').trim();
+    if (resolvedYearId.isEmpty) {
+      resolvedYearId = await AcademicYearService().getCurrentAcademicYear();
     }
 
     final recordRef = _firestore.collection('point_records').doc();
@@ -70,6 +78,7 @@ class PointRecordService {
       'points': effectivePoints,
       'pointsPerUnit': effectivePoints,
       'totalPoints': calculatedPoints,
+      'academicYearId': resolvedYearId,
       'note': note.trim(),
       'createdByEmail': createdByEmail.trim(),
       'createdByUid': createdByUid.trim(),
