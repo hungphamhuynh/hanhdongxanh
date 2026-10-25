@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/network/network_service.dart';
@@ -7,7 +8,12 @@ import '../../../../core/widgets/responsive_container.dart';
 import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final VoidCallback? onOpenLanding;
+
+  const LoginScreen({
+    super.key,
+    this.onOpenLanding,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -253,6 +259,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  if (kIsWeb && widget.onOpenLanding != null) ...[
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: widget.onOpenLanding,
+                        icon: const Icon(Icons.info_outline_rounded, size: 18),
+                        label: const Text(
+                          'Giới thiệu hệ thống & Tải app Android (.APK)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Footer trường học
                   const Text(

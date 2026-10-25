@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/constants/user_role.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -9,16 +11,66 @@ import '../../../lead_teacher/presentation/screens/lead_teacher_dashboard_screen
 import '../../../teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../services/auth_service.dart';
 import '../screens/login_screen.dart';
+import '../screens/web_landing_screen.dart';
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authService = AuthService();
+  State<AuthGate> createState() => _AuthGateState();
+}
 
+class _AuthGateState extends State<AuthGate> {
+  final _authService = AuthService();
+  bool _checkedWebVisit = false;
+  bool _showLanding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      _checkWebLanding();
+    } else {
+      _checkedWebVisit = true;
+    }
+  }
+
+  Future<void> _checkWebLanding() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasVisited = prefs.getBool('has_visited_web') ?? false;
+      if (mounted) {
+        setState(() {
+          _showLanding = !hasVisited;
+          _checkedWebVisit = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _showLanding = false;
+          _checkedWebVisit = true;
+        });
+      }
+    }
+  }
+
+  void _continueToLogin() {
+    setState(() {
+      _showLanding = false;
+    });
+  }
+
+  void _openLanding() {
+    setState(() {
+      _showLanding = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: authService.authStateChanges,
+      stream: _authService.authStateChanges,
       builder: (context, authSnapshot) {
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -29,6 +81,27 @@ class AuthGate extends StatelessWidget {
         }
 
         if (!authSnapshot.hasData || authSnapshot.data == null) {
+          if (kIsWeb) {
+            if (!_checkedWebVisit) {
+              return const Scaffold(
+                backgroundColor: AppColors.background,
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (_showLanding) {
+              return WebLandingScreen(
+                onContinueToLogin: _continueToLogin,
+              );
+            }
+
+            return LoginScreen(
+              onOpenLanding: _openLanding,
+            );
+          }
+
           return const LoginScreen();
         }
 
@@ -105,7 +178,7 @@ class AuthGate extends StatelessWidget {
                           ),
                           const SizedBox(height: 32),
                           OutlinedButton.icon(
-                            onPressed: () => authService.signOut(),
+                            onPressed: () => _authService.signOut(),
                             icon: const Icon(Icons.logout),
                             label: const Text('Đăng Xuất'),
                             style: OutlinedButton.styleFrom(
