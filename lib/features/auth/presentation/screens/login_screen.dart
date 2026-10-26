@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/widgets/responsive_container.dart';
 import '../../services/auth_service.dart';
+import '../widgets/monthly_achievements_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback? onOpenLanding;
@@ -95,14 +96,21 @@ class _LoginScreenState extends State<LoginScreen> {
         child: ResponsiveContainer(
           maxWidth: 440,
           alignment: Alignment.center,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+          child: LayoutBuilder(
+            builder: (context, viewportConstraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: viewportConstraints.maxHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                   // Logo Trường THCS Nguyễn Thị Hương
                   Center(
                     child: Image.asset(
@@ -230,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
 
                   // Thông báo tài khoản nội bộ (Không cho phép đăng ký tự do)
                   Container(
@@ -258,38 +266,73 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
+                  // ================= ĐẨY FOOTER XUỐNG SÁT ĐÁY =================
+                  const Spacer(),
+                  const SizedBox(height: 20),
+
+                  // ================= FOOTER DƯỚI CÙNG =================
+                  // 1. Nút nhỏ xem thành tích thi đua tháng này
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () => MonthlyAchievementsSheet.show(context),
+                      icon: const Icon(
+                        Icons.emoji_events_rounded,
+                        size: 17,
+                        color: Color(0xFFD97706),
+                      ),
+                      label: const Text(
+                        'Xem Thành Tích Tháng Này',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF86EFAC), width: 1.2),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 2. Nút Giới thiệu phong trào & Tải app Android (trên web)
                   if (kIsWeb && widget.onOpenLanding != null) ...[
                     Center(
                       child: TextButton.icon(
                         onPressed: widget.onOpenLanding,
-                        icon: const Icon(Icons.info_outline_rounded, size: 18),
+                        icon: const Icon(Icons.info_outline_rounded, size: 17),
                         label: const Text(
-                          'Giới thiệu hệ thống & Tải app Android (.APK)',
+                          'Giới thiệu phong trào & Tải app Android (.APK)',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary,
                           ),
                         ),
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                   ],
 
-                  // Footer trường học
+                  // 3. Chân trang (Footer)
                   const Text(
-                    'Trường THCS Nguyễn Thị Hương',
+                    'Phát triển bởi Trường THCS Nguyễn Thị Hương',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textMuted,
                     ),
@@ -301,5 +344,10 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
+  },
+),
+),
+),
+);
+}
 }
