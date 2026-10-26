@@ -269,7 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
 
                   // ================= FOOTER DƯỚI CÙNG =================
-                  // 1. Nút nhỏ xem thành tích thi đua tháng này
+                  // 1. Nút nhỏ xem bảng xếp hạng thi đua
                   Center(
                     child: OutlinedButton.icon(
                       onPressed: () => MonthlyAchievementsSheet.show(context),
@@ -279,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Color(0xFFD97706),
                       ),
                       label: const Text(
-                        'Xem Thành Tích Tháng Này',
+                        'Xem Bảng Xếp Hạng Thi Đua',
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.bold,
