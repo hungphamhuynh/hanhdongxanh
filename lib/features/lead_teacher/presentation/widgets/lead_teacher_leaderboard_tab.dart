@@ -221,29 +221,27 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
               });
             }
 
-            // 4. Gán thứ hạng hiển thị có xử lý Đồng Hạng (Tie rank)
-            int currentRank = 1;
-            for (int i = 0; i < rankedClasses.length; i++) {
-              if (i > 0) {
-                final prev = rankedClasses[i - 1];
-                final curr = rankedClasses[i];
-                final isTie = selectedRule == null
-                    ? (curr.totalPoints == prev.totalPoints &&
-                        curr.submissionCount == prev.submissionCount)
-                    : (curr.categoryQuantity == prev.categoryQuantity &&
-                        curr.totalPoints == prev.totalPoints &&
-                        curr.submissionCount == prev.submissionCount);
+            // 4. Gán thứ hạng hiển thị chuẩn DENSE RANKING & Xử lý Đồng Hạng công bằng cho toàn bộ các lớp
+            int currentRank = 0;
+            num? previousScore;
 
-                if (isTie) {
-                  curr.isTieWithPrevious = true;
-                  curr.displayRank = prev.displayRank;
-                } else {
-                  currentRank = i + 1;
-                  curr.displayRank = currentRank;
-                }
-              } else {
-                rankedClasses[i].displayRank = 1;
+            for (int i = 0; i < rankedClasses.length; i++) {
+              final curr = rankedClasses[i];
+              final score = selectedRule == null ? curr.totalPoints : curr.categoryQuantity;
+              if (previousScore == null || score != previousScore) {
+                currentRank++;
+                previousScore = score;
               }
+              curr.displayRank = currentRank;
+            }
+
+            // Đánh dấu Đồng hạng cho TẤT CẢ các lớp trong cụm bằng điểm (kể cả lớp đầu tiên của cụm)
+            for (int i = 0; i < rankedClasses.length; i++) {
+              final curr = rankedClasses[i];
+              final hasScore = selectedRule == null ? curr.totalPoints > 0 : curr.categoryQuantity > 0;
+              final hasSameRankBefore = i > 0 && rankedClasses[i].displayRank == rankedClasses[i - 1].displayRank;
+              final hasSameRankAfter = i < rankedClasses.length - 1 && rankedClasses[i].displayRank == rankedClasses[i + 1].displayRank;
+              curr.isTie = (hasSameRankBefore || hasSameRankAfter) && hasScore;
             }
 
             final currentYear = DateTime.now().year;
@@ -826,7 +824,7 @@ class _LeadTeacherLeaderboardTabState extends State<LeadTeacherLeaderboardTab> {
                 ),
               ),
             ),
-            if (stats.isTieWithPrevious) ...[
+            if (stats.isTie) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -882,7 +880,8 @@ class _ClassStatsData {
   int submissionCount = 0;
   DateTime? latestSubmissionTime;
   int displayRank = 1;
-  bool isTieWithPrevious = false;
+  bool isTie = false;
+  bool get isTieWithPrevious => isTie;
 
   _ClassStatsData({
     required this.className,
